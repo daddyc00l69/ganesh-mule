@@ -243,9 +243,9 @@ function CheckoutContent() {
       }
       const data = await res.json();
       if (data.success) {
-        const resolvedTown = data.defaultTown || data.city || data.district || '';
-        if (resolvedTown) {
-          setCity(resolvedTown);
+        const resolvedCity = data.city || data.defaultTown || data.district || '';
+        if (resolvedCity) {
+          setCity(resolvedCity);
         }
         if (data.state) {
           setState(data.state);
@@ -255,7 +255,7 @@ function CheckoutContent() {
         } else {
           setAvailableTowns([]);
         }
-        setPinAutoDetected(`${resolvedTown}${resolvedTown && data.state ? ', ' : ''}${data.state}`);
+        setPinAutoDetected(`${resolvedCity}${resolvedCity && data.state ? ', ' : ''}${data.state}`);
       }
     } catch (err: any) {
       if (err.name !== 'AbortError') {
@@ -1057,13 +1057,16 @@ function CheckoutContent() {
                         type="text"
                         required
                         value={city}
-                        onChange={(e) => setCity(e.target.value)}
+                        onChange={(e) => {
+                          setCity(e.target.value);
+                          setPinAutoDetected(`${e.target.value}${e.target.value && state ? ', ' : ''}${state}`);
+                        }}
                         placeholder="Town or City"
                         className="w-full h-11 px-3.5 text-xs rounded-[12px] border border-[#d2d2d7] bg-[#f5f5f7]/50 text-[#1d1d1f] focus:outline-none focus:bg-white focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all"
                       />
                       {availableTowns.length > 0 && (
                         <div className="flex flex-wrap gap-1 pt-0.5 max-h-16 overflow-y-auto">
-                          {availableTowns.slice(0, 5).map((t) => (
+                          {availableTowns.slice(0, 6).map((t) => (
                             <button
                               key={t}
                               type="button"
@@ -1092,7 +1095,10 @@ function CheckoutContent() {
                       <select
                         required
                         value={state}
-                        onChange={(e) => setState(e.target.value)}
+                        onChange={(e) => {
+                          setState(e.target.value);
+                          setPinAutoDetected(`${city}${city && e.target.value ? ', ' : ''}${e.target.value}`);
+                        }}
                         className="w-full h-11 px-3.5 text-xs rounded-[12px] border border-[#d2d2d7] bg-[#f5f5f7]/50 text-[#1d1d1f] focus:outline-none focus:bg-white focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all cursor-pointer"
                       >
                         <optgroup label="States (28)">

@@ -11,7 +11,6 @@ function normalizeStateName(rawState: string): string {
   );
   if (found) return found.name;
 
-  // Handle common discrepancies in India Post records
   if (clean.includes('orissa')) return 'Odisha';
   if (clean.includes('uttaranchal')) return 'Uttarakhand';
   if (clean.includes('pondicherry')) return 'Puducherry';
@@ -20,6 +19,13 @@ function normalizeStateName(rawState: string): string {
   if (clean.includes('andaman')) return 'Andaman and Nicobar Islands';
 
   return rawState;
+}
+
+function cleanPostOfficeName(name: string): string {
+  return (name || '')
+    .replace(/\b(G\.?P\.?O\.?|H\.?O\.?|S\.?O\.?|B\.?O\.?|R\.?S\.?)\b/gi, '')
+    .replace(/\(.*?\)/g, '')
+    .trim();
 }
 
 export async function GET(
@@ -41,6 +47,9 @@ export async function GET(
     if (pincodeCache.has(pin)) {
       return NextResponse.json(pincodeCache.get(pin));
     }
+
+    // Local heuristic guess for instant baseline
+    const localGuess = guessCityStateFromPin(pin);
 
     // 2. Query India Post Public API with 2.5s timeout
     let fetchedData: any = null;
@@ -69,31 +78,87 @@ export async function GET(
     if (fetchedData && fetchedData.length > 0) {
       const first = fetchedData[0];
       const rawState = first.State || '';
-      const district = first.District || first.Block || '';
-      const state = normalizeStateName(rawState);
+      let rawDistrict = (first.District || first.Block || '').replace(/ district/i, '').trim();
+      const rawBlock = (first.Block || '').trim();
 
-      // Extract unique post office locality/town names
-      const postOffices = Array.from(
-        new Set(
-          fetchedData
-            .map((po: any) => po.Name)
-            .filter(Boolean)
-            .map((name: string) => name.replace(/\s*\(.*?\)\s*/g, '').trim())
-        )
-      ) as string[];
+      // Normalize common district names
+      if (/ahmed\s*nagar/i.test(rawDistrict)) rawDistrict = 'Ahmednagar';
+      if (/bangalore/i.test(rawDistrict)) rawDistrict = 'Bengaluru';
+      if (/aurangabad/i.test(rawDistrict)) rawDistrict = 'Chhatrapati Sambhajinagar';
+      if (/central delhi|new delhi/i.test(rawDistrict)) rawDistrict = 'New Delhi';
 
-      // Best primary town/city representation
-      const defaultTown = postOffices[0] || district;
-      const city = district || defaultTown;
+      // Sort offices: Head Post Office (1) > Sub Post Office (2) > Branch Post Office (3)
+      const rank = (type: string) => {
+        if (/head/i.test(type)) return 1;
+        if (/sub/i.test(type)) return 2;
+        return 3;
+      };
+
+      const sortedOffices = [...fetchedData].sort((a, b) => rank(a.BranchType || '') - rank(b.BranchType || ''));
+
+      // Determine best primary Town/City name
+      let primaryTown = '';
+
+      // Rule A: Check if any post office matches the local guess (e.g. "Lonavala" for 410401)
+      if (localGuess?.city) {
+        const target = localGuess.city.toLowerCase().trim();
+        const match = sortedOffices.find(
+          (o) =>
+            cleanPostOfficeName(o.Name).toLowerCase() === target ||
+            cleanPostOfficeName(o.Name).toLowerCase().includes(target)
+        );
+        if (match) primaryTown = cleanPostOfficeName(match.Name);
+      }
+
+      // Rule B: Check if any office name matches the district (e.g. "Solapur" or "Kolhapur")
+      if (!primaryTown) {
+        const distMatch = sortedOffices.find(
+          (o) => cleanPostOfficeName(o.Name).toLowerCase() === rawDistrict.toLowerCase()
+        );
+        if (distMatch) primaryTown = cleanPostOfficeName(distMatch.Name);
+      }
+
+      // Rule C: Head Post Office
+      if (!primaryTown) {
+        const ho = sortedOffices.find((o) => /head/i.test(o.BranchType || ''));
+        if (ho) primaryTown = cleanPostOfficeName(ho.Name);
+      }
+
+      // Rule D: Sub Post Office
+      if (!primaryTown) {
+        const so = sortedOffices.find((o) => /sub/i.test(o.BranchType || ''));
+        if (so) primaryTown = cleanPostOfficeName(so.Name);
+      }
+
+      // Rule E: Fallback
+      if (!primaryTown) {
+        primaryTown = localGuess?.city || rawDistrict || rawBlock;
+      }
+
+      // Final City display
+      const isMetro = ['mumbai', 'pune', 'bengaluru', 'hyderabad', 'chennai', 'kolkata', 'ahmedabad'].includes(
+        rawDistrict.toLowerCase()
+      );
+      const city = isMetro ? rawDistrict : primaryTown || rawDistrict;
+
+      // Extract unique clean post office names with primaryTown first
+      const allOffices = Array.from(
+        new Set(sortedOffices.map((o) => cleanPostOfficeName(o.Name)).filter(Boolean))
+      );
+      allOffices.sort((a, b) => {
+        if (a.toLowerCase() === primaryTown.toLowerCase()) return -1;
+        if (b.toLowerCase() === primaryTown.toLowerCase()) return 1;
+        return 0;
+      });
 
       const payload = {
         success: true,
         postalCode: pin,
         city,
-        district,
-        state,
-        defaultTown,
-        postOffices,
+        district: rawDistrict,
+        state: normalizeStateName(rawState),
+        defaultTown: primaryTown,
+        postOffices: allOffices,
         source: 'INDIA_POST_LIVE',
       };
 
@@ -102,16 +167,16 @@ export async function GET(
     }
 
     // 4. Fallback to comprehensive local dictionary
-    const localGuess = guessCityStateFromPin(pin);
     if (localGuess && localGuess.state) {
+      const city = localGuess.city || 'District City';
       const payload = {
         success: true,
         postalCode: pin,
-        city: localGuess.city || '',
-        district: localGuess.city || '',
+        city,
+        district: city,
         state: localGuess.state,
-        defaultTown: localGuess.city || '',
-        postOffices: localGuess.city ? [localGuess.city] : [],
+        defaultTown: city,
+        postOffices: [city],
         source: 'LOCAL_REGISTRY',
       };
       pincodeCache.set(pin, payload);

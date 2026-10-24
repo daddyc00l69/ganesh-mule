@@ -120,27 +120,27 @@ export function guessCityStateFromPin(pin: string): { city?: string; state?: str
 
   // Maharashtra & Goa
   if (prefix === '400') return { city: 'Mumbai', state: 'Maharashtra' };
-  if (prefix === '401') return { city: 'Thane / Palghar', state: 'Maharashtra' };
+  if (prefix === '401') return { city: 'Thane', state: 'Maharashtra' };
   if (prefix === '402') return { city: 'Raigad', state: 'Maharashtra' };
   if (prefix === '403') return { city: 'Goa', state: 'Goa' };
-  if (prefix === '410') return { city: 'Lonavala / Raigad', state: 'Maharashtra' };
+  if (prefix === '410') return { city: 'Lonavala', state: 'Maharashtra' };
   if (prefix === '411') return { city: 'Pune', state: 'Maharashtra' };
-  if (prefix === '412') return { city: 'Pune Rural', state: 'Maharashtra' };
-  if (prefix === '413') return { city: 'Solapur / Osmanabad', state: 'Maharashtra' };
+  if (prefix === '412') return { city: 'Pune', state: 'Maharashtra' };
+  if (prefix === '413') return { city: 'Solapur', state: 'Maharashtra' };
   if (prefix === '414') return { city: 'Ahmednagar', state: 'Maharashtra' };
-  if (prefix === '415') return { city: 'Satara / Ratnagiri', state: 'Maharashtra' };
-  if (prefix === '416') return { city: 'Kolhapur / Sangli', state: 'Maharashtra' };
-  if (prefix === '421') return { city: 'Kalyan / Dombivli', state: 'Maharashtra' };
+  if (prefix === '415') return { city: 'Satara', state: 'Maharashtra' };
+  if (prefix === '416') return { city: 'Kolhapur', state: 'Maharashtra' };
+  if (prefix === '421') return { city: 'Kalyan', state: 'Maharashtra' };
   if (prefix === '422') return { city: 'Nashik', state: 'Maharashtra' };
   if (prefix === '423') return { city: 'Malegaon', state: 'Maharashtra' };
   if (prefix === '424') return { city: 'Dhule', state: 'Maharashtra' };
   if (prefix === '425') return { city: 'Jalgaon', state: 'Maharashtra' };
   if (prefix === '431') return { city: 'Chhatrapati Sambhajinagar', state: 'Maharashtra' };
   if (prefix === '440') return { city: 'Nagpur', state: 'Maharashtra' };
-  if (prefix === '441') return { city: 'Wardha / Bhandara', state: 'Maharashtra' };
+  if (prefix === '441') return { city: 'Wardha', state: 'Maharashtra' };
   if (prefix === '442') return { city: 'Chandrapur', state: 'Maharashtra' };
   if (prefix === '443') return { city: 'Buldhana', state: 'Maharashtra' };
-  if (prefix === '444') return { city: 'Akola / Amravati', state: 'Maharashtra' };
+  if (prefix === '444') return { city: 'Akola', state: 'Maharashtra' };
   if (prefix === '445') return { city: 'Yavatmal', state: 'Maharashtra' };
 
   // Delhi NCR

@@ -111,7 +111,7 @@ describe('Indian Geography, GST State Codes and Address Validation', () => {
 
       // 3. Re-entered Pune / Lonavala PIN
       const pin3 = guessCityStateFromPin('410401');
-      expect(pin3?.city).toBe('Lonavala / Raigad');
+      expect(pin3?.city).toBe('Lonavala');
       expect(pin3?.state).toBe('Maharashtra');
 
       // 4. Re-entered Lucknow PIN
