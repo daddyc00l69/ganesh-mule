@@ -1,32 +1,62 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { useCart } from '@/lib/cart/cart-context';
 import { formatCurrency } from '@/lib/utils';
+import { calculateOrderFees } from '@/lib/config/fee-settings';
 import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, Truck, Droplets } from 'lucide-react';
 
 export const CartDrawer: React.FC = () => {
   const { items, removeFromCart, updateQuantity, subtotal, totalItems, isCartOpen, setIsCartOpen } = useCart();
 
+  // Lock main page body scroll when cart drawer is active
+  useEffect(() => {
+    if (!isCartOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    const originalPaddingRight = document.body.style.paddingRight;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    document.body.style.overflow = 'hidden';
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsCartOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.body.style.paddingRight = originalPaddingRight;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isCartOpen, setIsCartOpen]);
+
   if (!isCartOpen) return null;
 
+  const fees = calculateOrderFees(subtotal);
   const freeShippingThreshold = 99900; // ₹999.00
   const freeShippingNeeded = Math.max(0, freeShippingThreshold - subtotal);
-  const shippingCost = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : 5000; // ₹50
-  const estimatedTax = Math.round(subtotal * 0.05); // 5% GST on honey
-  const total = subtotal + shippingCost + estimatedTax;
+  const shippingCost = fees.shippingTotal; // ₹70 + 18% GST (₹82.60) or 0 if free
+  const estimatedTax = fees.productGst; // 5% GST on honey products
+  const total = fees.grandTotal;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
-      {/* Frosted Apple Backdrop */}
+    <div className="fixed inset-0 z-50 overflow-hidden overscroll-contain">
+      {/* Frosted Apple Backdrop with touch & gesture containment */}
       <div
         onClick={() => setIsCartOpen(false)}
-        className="absolute inset-0 bg-black/30 backdrop-blur-md transition-opacity animate-in fade-in"
+        className="absolute inset-0 bg-black/30 backdrop-blur-md transition-opacity animate-in fade-in touch-none"
       />
 
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-6 sm:pl-10">
-        <div className="w-screen max-w-md bg-white text-[#1d1d1f] flex flex-col shadow-2xl animate-in slide-in-from-right duration-300 border-l border-[#d2d2d7]/50">
+      <div className="fixed inset-y-0 right-0 max-w-full flex pl-6 sm:pl-10 overscroll-contain">
+        <div className="w-screen max-w-md bg-white text-[#1d1d1f] flex flex-col shadow-2xl animate-in slide-in-from-right duration-300 border-l border-[#d2d2d7]/50 overscroll-contain">
           {/* Apple Bag Header */}
           <div className="p-5 sm:p-6 border-b border-[#d2d2d7]/40 flex items-center justify-between bg-[#f5f5f7]/60 backdrop-blur-sm">
             <div>
@@ -79,7 +109,7 @@ export const CartDrawer: React.FC = () => {
           )}
 
           {/* Bag Items List */}
-          <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+          <div className="flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-4">
             {items.length === 0 ? (
               <div className="text-center py-20 space-y-4">
                 <div className="w-16 h-16 rounded-full bg-[#f5f5f7] flex items-center justify-center mx-auto text-[#86868b]">

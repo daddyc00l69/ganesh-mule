@@ -97,5 +97,55 @@ describe('Indian Geography, GST State Codes and Address Validation', () => {
       expect(match?.city).toBe('Hyderabad');
       expect(match?.state).toBe('Telangana');
     });
+
+    it('should correctly re-detect when user switches between different state PINs', () => {
+      // 1. Initial Mumbai PIN
+      const pin1 = guessCityStateFromPin('400053');
+      expect(pin1?.city).toBe('Mumbai');
+      expect(pin1?.state).toBe('Maharashtra');
+
+      // 2. Re-entered Jaipur PIN
+      const pin2 = guessCityStateFromPin('302001');
+      expect(pin2?.city).toBe('Jaipur');
+      expect(pin2?.state).toBe('Rajasthan');
+
+      // 3. Re-entered Pune / Lonavala PIN
+      const pin3 = guessCityStateFromPin('410401');
+      expect(pin3?.city).toBe('Lonavala / Raigad');
+      expect(pin3?.state).toBe('Maharashtra');
+
+      // 4. Re-entered Lucknow PIN
+      const pin4 = guessCityStateFromPin('226001');
+      expect(pin4?.city).toBe('Lucknow');
+      expect(pin4?.state).toBe('Uttar Pradesh');
+
+      // 5. Re-entered Kolkata PIN
+      const pin5 = guessCityStateFromPin('700001');
+      expect(pin5?.city).toBe('Kolkata');
+      expect(pin5?.state).toBe('West Bengal');
+    });
+  });
+
+  describe('Pincode API Handler (/api/pincode/[pin])', () => {
+    it('should resolve postal details via API route handler', async () => {
+      const { GET } = await import('@/app/api/pincode/[pin]/route');
+      const req = new Request('http://localhost:3000/api/pincode/400053');
+      const res = await GET(req as any, { params: Promise.resolve({ pin: '400053' }) });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.success).toBe(true);
+      expect(data.postalCode).toBe('400053');
+      expect(data.state).toBe('Maharashtra');
+    });
+
+    it('should reject invalid PIN code formats with HTTP 400', async () => {
+      const { GET } = await import('@/app/api/pincode/[pin]/route');
+      const req = new Request('http://localhost:3000/api/pincode/123');
+      const res = await GET(req as any, { params: Promise.resolve({ pin: '123' }) });
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.success).toBe(false);
+    });
   });
 });
+

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { StoreProvider } from '@/components/storefront/store-provider';
@@ -31,6 +31,8 @@ import {
   Navigation,
   Globe,
   Clock,
+  Loader2,
+  RefreshCw,
 } from 'lucide-react';
 import {
   INDIAN_STATES,
@@ -76,6 +78,10 @@ function CheckoutContent() {
   const [city, setCity] = useState('Mumbai');
   const [state, setState] = useState('Maharashtra');
   const [pinAutoDetected, setPinAutoDetected] = useState<string | null>('Mumbai, Maharashtra');
+  const [pinLoading, setPinLoading] = useState(false);
+  const [pinError, setPinError] = useState<string | null>(null);
+  const [availableTowns, setAvailableTowns] = useState<string[]>([]);
+  const pincodeAbortRef = useRef<AbortController | null>(null);
 
   // Coupon Code States
   const [couponInput, setCouponInput] = useState('');
@@ -219,22 +225,81 @@ function CheckoutContent() {
     setCouponError(null);
   };
 
+  const fetchPinDetails = async (pin: string) => {
+    if (pincodeAbortRef.current) {
+      pincodeAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    pincodeAbortRef.current = controller;
+
+    setPinLoading(true);
+    setPinError(null);
+
+    try {
+      const res = await fetch(`/api/pincode/${pin}`, { signal: controller.signal });
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || 'PIN lookup failed');
+      }
+      const data = await res.json();
+      if (data.success) {
+        const resolvedTown = data.defaultTown || data.city || data.district || '';
+        if (resolvedTown) {
+          setCity(resolvedTown);
+        }
+        if (data.state) {
+          setState(data.state);
+        }
+        if (Array.isArray(data.postOffices) && data.postOffices.length > 0) {
+          setAvailableTowns(data.postOffices);
+        } else {
+          setAvailableTowns([]);
+        }
+        setPinAutoDetected(`${resolvedTown}${resolvedTown && data.state ? ', ' : ''}${data.state}`);
+      }
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        const local = guessCityStateFromPin(pin);
+        if (local) {
+          if (local.city) setCity(local.city);
+          if (local.state) setState(local.state);
+          setPinAutoDetected(`${local.city || ''}${local.city && local.state ? ', ' : ''}${local.state || ''}`);
+        } else {
+          setPinAutoDetected(null);
+          setPinError('Could not auto-detect. Please enter Town/City manually.');
+        }
+      }
+    } finally {
+      setPinLoading(false);
+    }
+  };
+
   // PIN Code input handler with auto-detection of Town/City & State
   const handlePincodeChange = (val: string) => {
     const clean = val.replace(/\D/g, '').slice(0, 6);
     setPostalCode(clean);
 
-    if (clean.length === 6) {
-      const guessed = guessCityStateFromPin(clean);
-      if (guessed) {
-        if (guessed.city) setCity(guessed.city);
-        if (guessed.state) setState(guessed.state);
-        setPinAutoDetected(`${guessed.city || ''}${guessed.city && guessed.state ? ', ' : ''}${guessed.state || ''}`);
-      } else {
-        setPinAutoDetected(null);
+    if (clean.length < 6) {
+      if (pincodeAbortRef.current) {
+        pincodeAbortRef.current.abort();
       }
-    } else {
       setPinAutoDetected(null);
+      setPinError(null);
+      setAvailableTowns([]);
+      return;
+    }
+
+    if (clean.length === 6) {
+      // 1. Instant local guess for 0ms UI update
+      const instant = guessCityStateFromPin(clean);
+      if (instant) {
+        if (instant.city) setCity(instant.city);
+        if (instant.state) setState(instant.state);
+        setPinAutoDetected(`${instant.city || ''}${instant.city && instant.state ? ', ' : ''}${instant.state || ''}`);
+      }
+
+      // 2. Authoritative live resolution (fetches all post offices & exact district)
+      fetchPinDetails(clean);
     }
   };
 
@@ -944,24 +1009,49 @@ function CheckoutContent() {
                           </span>
                         )}
                       </label>
-                      <input
-                        type="text"
-                        required
-                        maxLength={6}
-                        value={postalCode}
-                        onChange={(e) => handlePincodeChange(e.target.value)}
-                        placeholder="e.g. 400053"
-                        className="w-full h-11 px-3.5 text-xs rounded-[12px] border border-[#d2d2d7] bg-[#f5f5f7]/50 text-[#1d1d1f] focus:outline-none focus:bg-white focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-mono"
-                      />
-                      {pinAutoDetected && (
-                        <p className="text-[10px] text-emerald-700 font-medium">Auto: {pinAutoDetected}</p>
-                      )}
+                      <div className="relative">
+                        <input
+                          type="text"
+                          required
+                          maxLength={6}
+                          value={postalCode}
+                          onChange={(e) => handlePincodeChange(e.target.value)}
+                          placeholder="e.g. 400053"
+                          className="w-full h-11 px-3.5 pr-8 text-xs rounded-[12px] border border-[#d2d2d7] bg-[#f5f5f7]/50 text-[#1d1d1f] focus:outline-none focus:bg-white focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-mono"
+                        />
+                        {pinLoading && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#0071e3]" />
+                          </div>
+                        )}
+                      </div>
+                      {pinAutoDetected ? (
+                        <div className="text-[10px] text-emerald-700 font-medium flex items-center justify-between">
+                          <span className="truncate">Auto: {pinAutoDetected}</span>
+                          <button
+                            type="button"
+                            onClick={() => fetchPinDetails(postalCode)}
+                            className="text-[9px] text-[#0071e3] hover:underline cursor-pointer shrink-0 ml-1 flex items-center gap-0.5"
+                          >
+                            <RefreshCw className="w-2.5 h-2.5" /> Re-check
+                          </button>
+                        </div>
+                      ) : postalCode.length > 0 && postalCode.length < 6 ? (
+                        <p className="text-[10px] text-[#86868b]">Enter 6 digits for auto-fill</p>
+                      ) : pinError ? (
+                        <p className="text-[10px] text-amber-600">{pinError}</p>
+                      ) : null}
                     </div>
 
                     {/* Town / City */}
                     <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-[#1d1d1f]">
+                      <label className="text-xs font-medium text-[#1d1d1f] flex items-center justify-between">
                         <span>Town / City <span className="text-rose-500">*</span></span>
+                        {availableTowns.length > 0 && (
+                          <span className="text-[10px] text-[#86868b]">
+                            {availableTowns.length} {availableTowns.length === 1 ? 'locality' : 'localities'}
+                          </span>
+                        )}
                       </label>
                       <input
                         type="text"
@@ -971,6 +1061,27 @@ function CheckoutContent() {
                         placeholder="Town or City"
                         className="w-full h-11 px-3.5 text-xs rounded-[12px] border border-[#d2d2d7] bg-[#f5f5f7]/50 text-[#1d1d1f] focus:outline-none focus:bg-white focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all"
                       />
+                      {availableTowns.length > 0 && (
+                        <div className="flex flex-wrap gap-1 pt-0.5 max-h-16 overflow-y-auto">
+                          {availableTowns.slice(0, 5).map((t) => (
+                            <button
+                              key={t}
+                              type="button"
+                              onClick={() => {
+                                setCity(t);
+                                setPinAutoDetected(`${t}, ${state}`);
+                              }}
+                              className={`text-[9px] px-1.5 py-0.5 rounded-md transition-colors cursor-pointer border ${
+                                city === t
+                                  ? 'bg-[#0071e3] text-white border-[#0071e3]'
+                                  : 'bg-[#f5f5f7] hover:bg-[#e8e8ed] text-[#1d1d1f] border-[#d2d2d7]/60'
+                              }`}
+                            >
+                              {t}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     {/* State: Dropdown containing all 28 States and 8 Union Territories */}

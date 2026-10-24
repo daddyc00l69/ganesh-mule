@@ -118,45 +118,114 @@ export function guessCityStateFromPin(pin: string): { city?: string; state?: str
   const prefix = clean.substring(0, 3);
   const p2 = clean.substring(0, 2);
 
-  // Mumbai (400)
+  // Maharashtra & Goa
   if (prefix === '400') return { city: 'Mumbai', state: 'Maharashtra' };
   if (prefix === '401') return { city: 'Thane / Palghar', state: 'Maharashtra' };
+  if (prefix === '402') return { city: 'Raigad', state: 'Maharashtra' };
+  if (prefix === '403') return { city: 'Goa', state: 'Goa' };
   if (prefix === '410') return { city: 'Lonavala / Raigad', state: 'Maharashtra' };
   if (prefix === '411') return { city: 'Pune', state: 'Maharashtra' };
   if (prefix === '412') return { city: 'Pune Rural', state: 'Maharashtra' };
-  if (prefix === '413') return { city: 'Solapur', state: 'Maharashtra' };
+  if (prefix === '413') return { city: 'Solapur / Osmanabad', state: 'Maharashtra' };
   if (prefix === '414') return { city: 'Ahmednagar', state: 'Maharashtra' };
   if (prefix === '415') return { city: 'Satara / Ratnagiri', state: 'Maharashtra' };
   if (prefix === '416') return { city: 'Kolhapur / Sangli', state: 'Maharashtra' };
   if (prefix === '421') return { city: 'Kalyan / Dombivli', state: 'Maharashtra' };
   if (prefix === '422') return { city: 'Nashik', state: 'Maharashtra' };
-  if (prefix === '440') return { city: 'Nagpur', state: 'Maharashtra' };
-  if (prefix === '444') return { city: 'Akola / Amravati', state: 'Maharashtra' };
+  if (prefix === '423') return { city: 'Malegaon', state: 'Maharashtra' };
+  if (prefix === '424') return { city: 'Dhule', state: 'Maharashtra' };
+  if (prefix === '425') return { city: 'Jalgaon', state: 'Maharashtra' };
   if (prefix === '431') return { city: 'Chhatrapati Sambhajinagar', state: 'Maharashtra' };
+  if (prefix === '440') return { city: 'Nagpur', state: 'Maharashtra' };
+  if (prefix === '441') return { city: 'Wardha / Bhandara', state: 'Maharashtra' };
+  if (prefix === '442') return { city: 'Chandrapur', state: 'Maharashtra' };
+  if (prefix === '443') return { city: 'Buldhana', state: 'Maharashtra' };
+  if (prefix === '444') return { city: 'Akola / Amravati', state: 'Maharashtra' };
+  if (prefix === '445') return { city: 'Yavatmal', state: 'Maharashtra' };
 
-  // Delhi (110)
+  // Delhi NCR
   if (prefix === '110') return { city: 'New Delhi', state: 'Delhi' };
 
-  // Bengaluru (560, 562)
-  if (prefix === '560' || prefix === '562') return { city: 'Bengaluru', state: 'Karnataka' };
+  // Karnataka
+  if (prefix === '560') return { city: 'Bengaluru', state: 'Karnataka' };
+  if (prefix === '562') return { city: 'Bengaluru Rural', state: 'Karnataka' };
+  if (prefix === '570') return { city: 'Mysuru', state: 'Karnataka' };
+  if (prefix === '575') return { city: 'Mangaluru', state: 'Karnataka' };
+  if (prefix === '580') return { city: 'Hubballi-Dharwad', state: 'Karnataka' };
+  if (prefix === '590') return { city: 'Belagavi', state: 'Karnataka' };
+  if (prefix === '585') return { city: 'Kalaburagi', state: 'Karnataka' };
 
-  // Hyderabad (500)
+  // Telangana & Andhra Pradesh
   if (prefix === '500') return { city: 'Hyderabad', state: 'Telangana' };
+  if (prefix === '506') return { city: 'Warangal', state: 'Telangana' };
+  if (prefix === '505') return { city: 'Karimnagar', state: 'Telangana' };
+  if (prefix === '530') return { city: 'Visakhapatnam', state: 'Andhra Pradesh' };
+  if (prefix === '520') return { city: 'Vijayawada', state: 'Andhra Pradesh' };
+  if (prefix === '522') return { city: 'Guntur', state: 'Andhra Pradesh' };
+  if (prefix === '517') return { city: 'Tirupati', state: 'Andhra Pradesh' };
 
-  // Chennai (600)
+  // Tamil Nadu
   if (prefix === '600') return { city: 'Chennai', state: 'Tamil Nadu' };
+  if (prefix === '641') return { city: 'Coimbatore', state: 'Tamil Nadu' };
+  if (prefix === '625') return { city: 'Madurai', state: 'Tamil Nadu' };
+  if (prefix === '620') return { city: 'Tiruchirappalli', state: 'Tamil Nadu' };
+  if (prefix === '636') return { city: 'Salem', state: 'Tamil Nadu' };
 
-  // Kolkata (700)
+  // Kerala
+  if (prefix === '682') return { city: 'Kochi / Ernakulam', state: 'Kerala' };
+  if (prefix === '695') return { city: 'Thiruvananthapuram', state: 'Kerala' };
+  if (prefix === '673') return { city: 'Kozhikode', state: 'Kerala' };
+  if (prefix === '680') return { city: 'Thrissur', state: 'Kerala' };
+
+  // West Bengal
   if (prefix === '700') return { city: 'Kolkata', state: 'West Bengal' };
+  if (prefix === '711') return { city: 'Howrah', state: 'West Bengal' };
+  if (prefix === '734') return { city: 'Siliguri', state: 'West Bengal' };
+  if (prefix === '713') return { city: 'Durgapur / Asansol', state: 'West Bengal' };
 
-  // Ahmedabad (380)
+  // Gujarat
   if (prefix === '380') return { city: 'Ahmedabad', state: 'Gujarat' };
+  if (prefix === '395') return { city: 'Surat', state: 'Gujarat' };
+  if (prefix === '390') return { city: 'Vadodara', state: 'Gujarat' };
+  if (prefix === '360') return { city: 'Rajkot', state: 'Gujarat' };
 
-  // Gurugram (122)
+  // Rajasthan
+  if (prefix === '302') return { city: 'Jaipur', state: 'Rajasthan' };
+  if (prefix === '342') return { city: 'Jodhpur', state: 'Rajasthan' };
+  if (prefix === '313') return { city: 'Udaipur', state: 'Rajasthan' };
+  if (prefix === '324') return { city: 'Kota', state: 'Rajasthan' };
+  if (prefix === '305') return { city: 'Ajmer', state: 'Rajasthan' };
+
+  // Uttar Pradesh & Haryana
+  if (prefix === '121') return { city: 'Faridabad', state: 'Haryana' };
   if (prefix === '122') return { city: 'Gurugram', state: 'Haryana' };
-
-  // Noida (201)
   if (prefix === '201') return { city: 'Noida / Ghaziabad', state: 'Uttar Pradesh' };
+  if (prefix === '208') return { city: 'Kanpur', state: 'Uttar Pradesh' };
+  if (prefix === '226') return { city: 'Lucknow', state: 'Uttar Pradesh' };
+  if (prefix === '221') return { city: 'Varanasi', state: 'Uttar Pradesh' };
+  if (prefix === '282') return { city: 'Agra', state: 'Uttar Pradesh' };
+  if (prefix === '211') return { city: 'Prayagraj', state: 'Uttar Pradesh' };
+  if (prefix === '250') return { city: 'Meerut', state: 'Uttar Pradesh' };
+
+  // Madhya Pradesh & Chhattisgarh
+  if (prefix === '452') return { city: 'Indore', state: 'Madhya Pradesh' };
+  if (prefix === '462') return { city: 'Bhopal', state: 'Madhya Pradesh' };
+  if (prefix === '474') return { city: 'Gwalior', state: 'Madhya Pradesh' };
+  if (prefix === '482') return { city: 'Jabalpur', state: 'Madhya Pradesh' };
+  if (prefix === '492') return { city: 'Raipur', state: 'Chhattisgarh' };
+
+  // Punjab, Chandigarh, Bihar, Odisha
+  if (prefix === '160') return { city: 'Chandigarh', state: 'Chandigarh' };
+  if (prefix === '141') return { city: 'Ludhiana', state: 'Punjab' };
+  if (prefix === '143') return { city: 'Amritsar', state: 'Punjab' };
+  if (prefix === '800') return { city: 'Patna', state: 'Bihar' };
+  if (prefix === '834') return { city: 'Ranchi', state: 'Jharkhand' };
+  if (prefix === '751') return { city: 'Bhubaneswar', state: 'Odisha' };
+  if (prefix === '248') return { city: 'Dehradun', state: 'Uttarakhand' };
+  if (prefix === '171') return { city: 'Shimla', state: 'Himachal Pradesh' };
+  if (prefix === '190') return { city: 'Srinagar', state: 'Jammu and Kashmir' };
+  if (prefix === '180') return { city: 'Jammu', state: 'Jammu and Kashmir' };
+  if (prefix === '781') return { city: 'Guwahati', state: 'Assam' };
 
   // Broad state zones by first 2 digits
   if (p2 === '40' || p2 === '41' || p2 === '42' || p2 === '43' || p2 === '44') return { state: 'Maharashtra' };
@@ -172,8 +241,16 @@ export function guessCityStateFromPin(pin: string): { city?: string; state?: str
   if (p2 === '30' || p2 === '31' || p2 === '32' || p2 === '33' || p2 === '34') return { state: 'Rajasthan' };
   if (p2 === '67' || p2 === '68' || p2 === '69') return { state: 'Kerala' };
   if (p2 === '45' || p2 === '46' || p2 === '47' || p2 === '48') return { state: 'Madhya Pradesh' };
+  if (p2 === '49') return { state: 'Chhattisgarh' };
   if (p2 === '14' || p2 === '15' || p2 === '16') return { state: 'Punjab' };
   if (p2 === '80' || p2 === '81' || p2 === '82' || p2 === '84' || p2 === '85') return { state: 'Bihar' };
+  if (p2 === '83') return { state: 'Jharkhand' };
+  if (p2 === '75' || p2 === '76' || p2 === '77') return { state: 'Odisha' };
+  if (p2 === '24') return { state: 'Uttarakhand' };
+  if (p2 === '17') return { state: 'Himachal Pradesh' };
+  if (p2 === '18' || p2 === '19') return { state: 'Jammu and Kashmir' };
+  if (p2 === '78') return { state: 'Assam' };
+  if (p2 === '79') return { state: 'Tripura' };
 
   return null;
 }
