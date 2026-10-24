@@ -1,0 +1,963 @@
+MASTER PROMPT: Production-Ready Full-Stack E-Commerce Platform
+
+Act as a senior full-stack software architect, UI/UX designer, database engineer, security engineer, and DevOps engineer.
+
+Build a complete, production-oriented e-commerce web application where customers can purchase products online, administrators can manage the business, and managers can handle orders, inventory, and customer support.
+
+Do not create only a UI prototype. Build a working full-stack application with a real database, authentication, authorization, backend APIs, payment integration, inventory management, and customer support integration.
+
+Work incrementally, test the implementation, and document all setup instructions.
+
+1. PROJECT OBJECTIVE
+
+Build an e-commerce platform with three main interfaces:
+
+Customer-facing online store.
+Admin dashboard.
+Manager dashboard.
+
+Use the Solid Glass design reference for the Admin and Manager dashboards:
+
+https://deeplethe.github.io/solid-glass/
+
+Study the reference website first. Reproduce its visual language, layout, component styling, colors, typography, glass effects, navigation, spacing, and responsive behavior as closely as practical.
+
+Do not assume that the reference website provides a compatible component library or npm package. Inspect its available implementation and use compatible components or recreate the design system with the chosen frontend technologies. Do not copy unavailable source files or invent library APIs.
+
+The customer-facing store should have its own polished e-commerce design while remaining visually consistent with the overall brand.
+
+2. REQUIRED TECHNOLOGY STACK
+
+Use the following stack unless a concrete compatibility issue requires an alternative.
+
+Frontend:
+
+Next.js with App Router.
+React.
+TypeScript with strict mode.
+Tailwind CSS.
+shadcn/ui where useful and compatible with the Solid Glass design.
+Lucide icons.
+React Hook Form and Zod for form validation.
+Recharts for analytics.
+
+Backend:
+
+Next.js Route Handlers and server-side application services.
+PostgreSQL.
+Prisma ORM.
+Secure, server-managed authentication sessions.
+Role-based access control (RBAC).
+
+Integrations:
+
+Razorpay for online payments.
+Chatwoot for website live chat and customer support.
+S3-compatible object storage for product images, or a compatible provider.
+Email service abstraction for order confirmations, password recovery, and notifications.
+
+Testing:
+
+Vitest or Jest for unit tests.
+Integration tests for backend services.
+Playwright for end-to-end tests.
+
+Deployment:
+
+Vercel or another compatible frontend/backend host.
+Managed PostgreSQL.
+Environment-based configuration.
+Production logging and error monitoring.
+
+Use stable, mutually compatible package versions. Check current official documentation when implementing third-party integrations.
+
+3. DESIGN SYSTEM: SOLID GLASS UI
+
+Use this design reference for both internal dashboards:
+
+https://deeplethe.github.io/solid-glass/
+
+Before implementing the dashboards:
+
+Inspect the reference website.
+Identify its background, glass surfaces, gradients, typography, shadows, borders, and navigation patterns.
+Identify available components and their licensing or usage restrictions.
+Create a reusable design system that follows the reference.
+Document any visual differences caused by technical limitations.
+
+Design requirements:
+
+Modern glassmorphism.
+Translucent surfaces and layered panels.
+Subtle backdrop blur.
+Refined borders and shadows.
+Elegant gradients and background decoration.
+Readable text with sufficient contrast.
+Consistent spacing and typography.
+Smooth, restrained hover and focus effects.
+Responsive sidebar and navigation.
+Accessible forms, dialogs, tables, and buttons.
+Loading skeletons, empty states, error states, and success feedback.
+Light and dark themes if practical.
+Reduced-motion support.
+
+Avoid excessive blur, low-contrast text, unnecessary animations, and visual effects that reduce usability.
+
+Create reusable components such as:
+
+DashboardLayout
+Sidebar
+Topbar
+Breadcrumbs
+StatCard
+ChartCard
+DataTable
+SearchInput
+FilterBar
+Pagination
+StatusBadge
+ConfirmDialog
+FormDialog
+ToastNotifications
+LoadingSkeleton
+EmptyState
+ErrorState
+
+Use consistent design tokens instead of scattering hardcoded styles across pages.
+
+4. USER ROLES AND PERMISSIONS
+
+Implement three principal roles:
+
+A. ADMIN
+
+The admin has full business-management privileges.
+
+Admin capabilities:
+
+View the complete business dashboard.
+Create, edit, activate, deactivate, and suspend manager accounts.
+Assign permitted capabilities to managers.
+Manage products and categories.
+Manage prices, product images, SKU values, and stock.
+View and manage all orders.
+View customers and customer order history.
+Manage refunds through authorized payment workflows.
+View inventory reports.
+View sales analytics and business reports.
+Configure shipping rules and applicable taxes.
+Configure payment and integration settings.
+Review audit logs.
+Configure business settings.
+Manage support assignments and team settings where permitted.
+
+The system must have a secure initial admin setup procedure. Never create a publicly accessible default administrator account with hardcoded credentials.
+
+B. MANAGER
+
+Managers operate the daily business.
+
+Manager capabilities:
+
+View an operational dashboard.
+View and process orders.
+Update order statuses according to allowed transitions.
+View and manage products if their permissions allow it.
+Update stock and inventory.
+Review low-stock products.
+Manage customer records within their authorized scope.
+Access Chatwoot customer conversations.
+Process returns or refund requests within granted permissions.
+View operational reports.
+Receive notifications about new orders and inventory issues.
+
+Managers must not:
+
+Create or promote administrators.
+Change administrator credentials.
+Manage other managers unless explicitly authorized.
+Modify sensitive system configuration.
+Access secrets, payment keys, or unrestricted audit data.
+Approve their own privileged permission escalation.
+
+Support granular permissions such as:
+
+products.read
+products.create
+products.update
+inventory.read
+inventory.update
+orders.read
+orders.update
+customers.read
+support.manage
+refunds.request
+refunds.approve
+reports.read
+managers.manage
+settings.manage
+
+The admin assigns permissions to managers.
+
+C. CUSTOMER
+
+Customer capabilities:
+
+Register and log in.
+Browse and search products.
+Filter and sort products.
+View product details.
+Add and remove cart items.
+Update quantities.
+Manage delivery addresses.
+Checkout securely.
+Pay through Razorpay.
+View payment status and order history.
+Track order status.
+Request cancellation or returns according to business rules.
+Contact support through Chatwoot.
+
+Customers must only be able to access their own addresses, orders, and account information.
+
+5. AUTHENTICATION AND AUTHORIZATION
+
+Build a secure authentication system.
+
+Required features:
+
+Customer registration and login.
+Separate admin and manager login experience.
+Secure password hashing using Argon2id or an appropriate secure alternative.
+HTTP-only, Secure-in-production, SameSite session cookies.
+Server-side session validation.
+Session expiration and logout.
+Password reset using expiring, single-use tokens.
+Rate limiting for login, password recovery, and sensitive actions.
+Input validation with Zod.
+CSRF protection where required by the chosen authentication architecture.
+Protection against brute force, session fixation, privilege escalation, and IDOR.
+Audit logging for sensitive administrative actions.
+
+Do not trust a role supplied by the browser, local storage, query parameters, or request body.
+
+Every protected API and server action must independently validate the current user and required permissions.
+
+Protect admin and manager routes with server-side authorization. Redirect unauthorized users appropriately.
+
+Do not store authentication tokens or sensitive secrets in localStorage.
+
+Never log passwords, session tokens, payment secrets, or full payment credentials.
+
+6. CUSTOMER-FACING STOREFRONT
+
+Build a polished, mobile-first online store.
+
+Pages:
+
+Home.
+Product listing.
+Category listing.
+Product detail.
+Search results.
+Shopping cart.
+Checkout.
+Login and registration.
+Forgot password and reset password.
+Customer account.
+Address management.
+Order history.
+Order detail and tracking.
+Cancellation and return requests.
+Contact and support.
+Privacy policy, terms, shipping policy, and return policy.
+
+Homepage:
+
+Navigation bar.
+Search.
+Hero section.
+Featured categories.
+Featured products.
+Best sellers.
+Promotional banners.
+New arrivals.
+Customer benefits.
+Footer.
+
+Product listing:
+
+Product image.
+Product name.
+Price and optional comparison price.
+Stock availability.
+Category filters.
+Price filters.
+Sorting.
+Pagination or accessible incremental loading.
+
+Product detail:
+
+Product image gallery.
+Product description.
+Price.
+SKU.
+Available variants where applicable.
+Current stock availability.
+Quantity selection.
+Add to cart.
+Delivery information.
+Related products.
+
+Cart:
+
+Display current cart items.
+Change quantity.
+Remove products.
+Calculate subtotal and applicable discounts.
+Calculate shipping and tax where configured.
+Show the final estimated total.
+Revalidate inventory and prices on the server.
+
+Checkout:
+
+Guest checkout if enabled.
+Authenticated checkout.
+Address selection and validation.
+Shipping method selection.
+Order summary.
+Razorpay payment initiation.
+Clear payment success, pending, failure, and retry states.
+
+Never trust client-calculated prices, totals, stock values, or discounts.
+
+7. ADMIN DASHBOARD
+
+Use the Solid Glass design reference.
+
+Create these sections:
+
+Overview
+Total revenue.
+Orders today.
+Total orders.
+Pending orders.
+Products in stock.
+Low-stock products.
+Customer count.
+Sales charts.
+Recent orders.
+Top-selling products.
+Recent activity.
+Manager Management
+Manager list.
+Search and filtering.
+Create manager.
+Edit manager profile.
+Assign permissions.
+Activate or deactivate account.
+Review account activity.
+Reset access through a secure recovery process.
+Products
+Product table.
+Create product.
+Edit product.
+Delete or archive product.
+Upload images.
+Manage SKU, description, price, categories, variants, and status.
+Manage stock thresholds.
+Categories
+Create and edit categories.
+Manage category images.
+Configure category visibility.
+Prevent deletion of categories that still have dependent products unless reassignment is handled.
+Orders
+Order list.
+Order detail.
+Payment status.
+Fulfillment status.
+Customer details.
+Shipping address.
+Item details.
+Order timeline.
+Cancellation and return requests.
+Refund workflow.
+Inventory
+Current stock.
+Available and reserved quantities.
+Low-stock alerts.
+Stock adjustments.
+Inventory movement history.
+Reasons and actor for each adjustment.
+Customers
+Customer list.
+Search.
+Account details.
+Order history.
+Support references.
+Account status.
+Reports
+Sales by date range.
+Order volume.
+Product performance.
+Inventory valuation where supported.
+Refund summaries.
+Exportable reports with permission checks.
+Settings
+Store information.
+Currency and locale.
+Tax settings.
+Shipping settings.
+Payment configuration status.
+Chatwoot integration status.
+Notification settings.
+
+Secrets must be configured using secure environment variables or an appropriate secrets-management system. Do not reveal secrets in dashboard API responses.
+
+8. MANAGER DASHBOARD
+
+Use the same Solid Glass design language while prioritizing operational tasks.
+
+Create these sections:
+
+Overview
+New orders.
+Orders awaiting processing.
+Orders ready for shipment.
+Low-stock alerts.
+Open support conversations.
+Recent activity.
+Order Management
+Search and filter orders.
+View order detail.
+Verify payment status.
+Update permitted order statuses.
+Add shipment tracking information.
+Record fulfillment events.
+View cancellation and return requests.
+
+Enforce valid order-state transitions. Managers must not mark an order paid merely by editing its status.
+
+Inventory Management
+Search products.
+View current stock.
+Record stock adjustments.
+View stock movement history.
+Receive low-stock alerts.
+Prevent negative inventory unless a specifically authorized business rule permits it.
+Customer Support
+Provide access to Chatwoot through the configured agent experience.
+Display support-related order references only when authorized.
+Allow assignment and escalation through Chatwoot where supported.
+Avoid copying sensitive customer data into unnecessary third-party systems.
+Reporting
+Operational order statistics.
+Inventory alerts.
+Processing time.
+Permitted date-range reports.
+
+Managers must only see data and actions granted by their assigned permissions.
+
+9. RAZORPAY PAYMENT INTEGRATION
+
+Integrate Razorpay using the current official documentation:
+
+https://razorpay.com/docs/
+
+Requirements:
+
+Use Razorpay test mode during development.
+Keep the Razorpay key secret on the server.
+Create payment orders through a protected backend endpoint.
+Calculate the payable amount on the server.
+Store monetary values as integer minor units, such as paise for INR.
+Create a local order and payment record with appropriate pending states.
+Associate the Razorpay order ID with the internal order.
+Open Razorpay Checkout on the frontend.
+Verify the checkout payment signature on the backend using the official documented algorithm.
+Never treat an unverified browser callback as proof of payment.
+Verify webhook signatures using the raw request body and webhook secret.
+Handle duplicate and out-of-order webhook events safely.
+Store webhook event IDs and make processing idempotent.
+Reconcile payment status with Razorpay when necessary.
+Handle success, failure, timeout, retry, and abandoned checkout.
+Prevent duplicate charges and duplicate order fulfillment.
+Record payment attempts and state transitions.
+Support refunds through authorized server-side workflows.
+Update the order's payment status only after verified evidence.
+Keep payment state separate from fulfillment state.
+
+Use explicit statuses such as:
+
+CREATED
+PENDING
+AUTHORIZED, if applicable to the configured flow
+PAID
+FAILED
+REFUND_PENDING
+PARTIALLY_REFUNDED
+REFUNDED
+
+Use valid transitions based on the actual Razorpay payment lifecycle.
+
+Never store card numbers, CVVs, UPI PINs, or other sensitive payment credentials.
+
+Provide webhook configuration instructions, test cases, and reconciliation procedures.
+
+10. CHATWOOT CUSTOMER SUPPORT INTEGRATION
+
+Use Chatwoot's official documentation:
+
+https://www.chatwoot.com/hc/user-guide/en/
+
+https://developers.chatwoot.com/
+
+Requirements:
+
+Install the Chatwoot website widget on the storefront.
+Configure the website inbox and support team.
+Enable managers to handle support through authorized Chatwoot agent accounts.
+Use supported Chatwoot APIs for required integration features.
+Keep API access tokens on the server.
+Do not expose Chatwoot administrative tokens in browser code.
+Support customer conversation identification.
+Add useful order references or customer metadata only when necessary and authorized.
+Keep customer support permissions separate from platform administrator privileges.
+Document inbox configuration, agent setup, widget configuration, and production deployment.
+
+If embedding or synchronizing Chatwoot conversations inside the manager dashboard is required, implement it only through documented, supported APIs and secure authentication.
+
+Do not assume Chatwoot automatically shares the e-commerce application's users, roles, or permissions.
+
+Use a configurable Chatwoot base URL and website token. Support a hosted Chatwoot service or a self-hosted instance.
+
+11. DATABASE DESIGN
+
+Design a normalized PostgreSQL schema using Prisma.
+
+Include the following entities as appropriate:
+
+User
+CustomerProfile
+ManagerProfile, if needed
+Role
+Permission
+UserRole
+RolePermission
+Address
+Product
+ProductImage
+Category
+ProductCategory
+ProductVariant
+Inventory
+InventoryMovement
+Cart
+CartItem
+Order
+OrderItem
+OrderAddressSnapshot
+Payment
+PaymentAttempt
+Refund
+WebhookEvent
+Shipment
+ReturnRequest
+Discount
+Notification
+AuditLog
+ChatwootIdentityMapping, if needed
+StoreSettings
+
+Schema requirements:
+
+Primary and foreign keys.
+Appropriate unique constraints.
+Useful indexes.
+Creation and update timestamps.
+Soft deletion or archival where appropriate.
+Decimal-free monetary storage using integer minor units and currency codes.
+Consistent enum or state-machine definitions.
+Referential integrity.
+Safe migration strategy.
+
+Inventory:
+
+Track stock movements.
+Prevent overselling using database transactions and appropriate locking or conditional updates.
+Reserve inventory when appropriate.
+Release reservations on failed or expired orders.
+Define when inventory is deducted and when reservations are released.
+Make concurrent checkout safe.
+
+Orders:
+
+Snapshot product names, SKUs, prices, and relevant item details at purchase time.
+Preserve shipping and billing address snapshots.
+Do not allow later product edits to rewrite historical orders.
+
+Payments:
+
+Store provider references, amounts, currency, status, timestamps, and relevant non-sensitive metadata.
+Enforce unique provider event identifiers where appropriate.
+
+Audit logs:
+
+Record important manager and administrator actions.
+Capture the actor, action, affected entity, timestamp, and safe metadata.
+Never record secrets or authentication credentials.
+
+Create Prisma migrations and a development seed script. Do not seed production with default administrator credentials.
+
+12. BACKEND API ARCHITECTURE
+
+Organize the backend into clear modules:
+
+Authentication.
+Users and permissions.
+Products.
+Categories.
+Inventory.
+Cart.
+Checkout.
+Orders.
+Payments.
+Refunds.
+Shipping.
+Customers.
+Reports.
+Chatwoot integration.
+Notifications.
+Settings.
+Audit logs.
+
+Create documented endpoints for:
+
+Authentication and account management.
+Product catalog and search.
+Cart operations.
+Checkout and order creation.
+Razorpay order creation and payment verification.
+Razorpay webhook processing.
+Order management.
+Inventory management.
+Manager management.
+Reports.
+Support integration.
+
+Backend requirements:
+
+Validate all request parameters and bodies.
+Authenticate and authorize every protected operation.
+Return consistent HTTP status codes and error structures.
+Paginate list endpoints.
+Support search and filtering safely.
+Prevent mass assignment.
+Avoid leaking internal exceptions.
+Add rate limiting to sensitive endpoints.
+Use transactions for multi-step operations.
+Add idempotency protection where duplicate requests could create financial or inventory problems.
+Document the API with OpenAPI where practical.
+
+Use a clean separation between route handlers, business services, database access, and validation schemas.
+
+13. SECURITY REQUIREMENTS
+
+Implement security throughout the application.
+
+Include:
+
+Server-side RBAC.
+Secure authentication and session management.
+Password hashing.
+Input validation.
+Output encoding and XSS protection.
+SQL injection prevention through safe ORM usage.
+CSRF protection as applicable.
+Rate limiting.
+Secure cookie configuration.
+Authorization checks against object ownership.
+Safe image upload validation.
+Upload size limits.
+File type validation and secure storage.
+Secure environment variable handling.
+Payment signature verification.
+Webhook verification and replay protection.
+Audit logging.
+Dependency vulnerability checks.
+Appropriate HTTP security headers.
+Data minimization and retention policies.
+Safe error messages.
+
+Never:
+
+Hardcode production secrets.
+Commit .env files containing credentials.
+Expose server-only environment variables.
+Rely only on frontend authorization.
+Trust payment amounts supplied by the browser.
+Trust client-side order status changes.
+Allow users to assign themselves privileged roles.
+Disable security checks to make tests pass.
+
+Provide an .env.example containing placeholder values only.
+
+14. USER EXPERIENCE AND PERFORMANCE
+
+Build responsive layouts for mobile, tablet, laptop, and desktop.
+
+Requirements:
+
+Accessible semantic HTML.
+Keyboard navigation.
+Visible focus indicators.
+Responsive tables or mobile-friendly alternatives.
+Image optimization.
+Lazy loading where appropriate.
+Server-side rendering for appropriate storefront pages.
+Loading skeletons.
+Empty states.
+Form validation messages.
+Error boundaries and recoverable errors.
+Confirmation dialogs for destructive actions.
+Success and failure notifications.
+Efficient database queries.
+Pagination.
+Avoid unnecessary client-side JavaScript.
+Avoid N+1 query patterns.
+Use caching only where safe for authenticated or customer-specific data.
+
+Do not use static placeholder data as the final implementation of core features.
+
+Mock data is acceptable for initial UI development but must be replaced with real backend data and clearly separated from production functionality.
+
+15. TESTING REQUIREMENTS
+
+Create automated tests for critical business logic.
+
+Authentication:
+
+Valid and invalid login.
+Session expiration.
+Password recovery.
+Unauthorized access.
+Manager permission enforcement.
+Customer ownership enforcement.
+
+Products and inventory:
+
+Product creation and updates.
+Stock adjustment.
+Concurrent checkout.
+Overselling prevention.
+Inventory reservation and release.
+
+Orders:
+
+Valid order creation.
+Invalid state transitions.
+Cancellation rules.
+Refund permissions.
+Historical price snapshots.
+
+Payments:
+
+Valid signature.
+Invalid signature.
+Invalid webhook.
+Duplicate webhook.
+Out-of-order webhook.
+Failed payment.
+Payment retry.
+Duplicate fulfillment prevention.
+Refund processing.
+
+Chatwoot:
+
+Widget configuration.
+Secure token handling.
+Failure behavior when the integration is unavailable.
+
+End-to-end:
+
+Admin signs in.
+Admin creates a manager and assigns permissions.
+Manager signs in.
+Manager updates inventory.
+Customer registers and adds a product to cart.
+Customer checks out using Razorpay test mode.
+A verified payment event updates payment status.
+The order appears in the manager dashboard.
+Manager processes the order.
+Customer can view the updated order status.
+Customer can initiate a support conversation.
+
+Include linting, type checking, unit tests, integration tests, and production build verification.
+
+16. PROJECT STRUCTURE
+
+Use a maintainable structure similar to:
+
+src/ app/ (store)/ (auth)/ admin/ manager/ api/ components/ ui/ storefront/ dashboards/ forms/ tables/ charts/ features/ auth/ users/ products/ categories/ inventory/ cart/ checkout/ orders/ payments/ refunds/ customers/ reports/ support/ lib/ auth/ db/ permissions/ validation/ payments/ chatwoot/ storage/ email/ logging/ server/ services/ repositories/ types/
+
+prisma/ schema.prisma migrations/ seed.ts
+
+tests/ unit/ integration/ e2e/
+
+public/ images/
+
+Also include:
+
+package.json
+README.md
+.env.example
+.gitignore
+Prisma configuration
+Tailwind configuration as appropriate for the selected version
+Testing configuration
+Linting and formatting configuration
+Deployment documentation
+
+Adapt the structure where necessary for the selected Next.js version. Avoid unnecessary abstractions and duplicate implementations.
+
+17. ENVIRONMENT CONFIGURATION
+
+Create an .env.example with placeholders for the variables actually used by the application, such as:
+
+DATABASE_URL=
+
+SESSION_SECRET=
+
+APP_URL=
+
+RAZORPAY_KEY_ID= RAZORPAY_KEY_SECRET= RAZORPAY_WEBHOOK_SECRET=
+
+CHATWOOT_BASE_URL= CHATWOOT_WEBSITE_TOKEN= CHATWOOT_API_TOKEN=
+
+OBJECT_STORAGE_ENDPOINT= OBJECT_STORAGE_BUCKET= OBJECT_STORAGE_ACCESS_KEY= OBJECT_STORAGE_SECRET_KEY=
+
+EMAIL_FROM= EMAIL_PROVIDER_API_KEY=
+
+Do not assume every provider requires every variable. Document which variables are required, optional, browser-safe, or server-only.
+
+The Razorpay secret, webhook secret, Chatwoot API token, session secret, database credentials, and storage secret must never be exposed to client-side code.
+
+Do not invent real credentials. Provide setup instructions for obtaining them.
+
+18. DEVELOPMENT WORKFLOW
+
+Follow this implementation sequence.
+
+Phase 1: Project foundation
+
+Inspect the repository and existing code.
+Inspect the Solid Glass design reference.
+Confirm compatible framework versions.
+Set up Next.js, TypeScript, Tailwind, and the UI primitives.
+Establish the design tokens and shared layouts.
+Set up PostgreSQL and Prisma.
+
+Phase 2: Dashboard UI
+
+Build the admin login screen.
+Build the manager login screen.
+Build the admin dashboard shell.
+Build the manager dashboard shell.
+Build the sidebar, topbar, stat cards, charts, tables, and forms.
+Make all pages responsive.
+Use clearly identified temporary mock data during this phase.
+
+Phase 3: Database and authentication
+
+Implement the schema and migrations.
+Implement secure login and logout.
+Implement server-managed sessions.
+Implement admin provisioning.
+Implement role-based permissions.
+Add authorization tests.
+
+Phase 4: Product catalog and inventory
+
+Implement products and categories.
+Implement product images.
+Implement inventory movements.
+Add concurrency-safe stock operations.
+
+Phase 5: Customer storefront
+
+Build catalog, search, product details, cart, addresses, and checkout.
+Connect the frontend to the actual backend.
+Implement server-side price and inventory validation.
+
+Phase 6: Orders and Razorpay
+
+Implement order creation.
+Integrate Razorpay Checkout.
+Implement signature verification and webhooks.
+Implement payment reconciliation.
+Implement cancellations and authorized refunds.
+
+Phase 7: Chatwoot
+
+Configure the widget.
+Document inbox and agent setup.
+Implement only the required secure backend integration.
+Test unavailable-provider and API error scenarios.
+
+Phase 8: Production hardening
+
+Add notifications, audit logs, reports, and shipping workflows.
+Complete automated tests.
+Run lint, type checking, tests, and production build.
+Fix errors instead of suppressing them.
+Document deployment, migrations, backups, and webhook setup.
+
+Do not attempt to implement the entire platform as one enormous source file.
+
+After each phase:
+
+Summarize what was implemented.
+List created or changed files.
+Run the appropriate tests and checks.
+Report actual results and remaining issues.
+Continue to the next phase when the current phase is stable.
+
+If repository access or tool limitations prevent a task, explain the limitation clearly and provide the next actionable step.
+
+19. DEFINITION OF DONE
+
+The project is ready for production review only when:
+
+Customer storefront pages work.
+Admin and manager dashboards follow the Solid Glass design reference.
+Admins can securely create and manage managers.
+Manager permissions are enforced by the backend.
+Products and categories persist in PostgreSQL.
+Inventory changes are concurrency-safe and auditable.
+Customers can place orders.
+Razorpay payments are verified server-side.
+Webhooks are authenticated and idempotent.
+Payment failures do not incorrectly mark orders as paid.
+Chatwoot is configured according to its supported integration model.
+Customer order data is properly isolated.
+Critical automated tests pass.
+Production builds complete successfully.
+Environment variables and deployment steps are documented.
+No known critical security vulnerabilities remain unresolved.
+
+Never claim that an integration works unless it has been implemented and tested. Clearly distinguish implemented functionality, mocked functionality, and external setup still required.
+
+20. START NOW
+
+Begin by inspecting the existing project repository and the Solid Glass reference.
+
+Then provide:
+
+A concise architecture proposal.
+The proposed folder structure.
+The initial database schema.
+The implementation plan.
+Any important compatibility decisions.
+
+After that, start implementing Phase 1 and continue incrementally. Do not stop after generating a plan or a few static UI screens. Build, test, debug, and document the application phase by phase.
+
+Prioritize correctness, security, maintainability, responsive design, and working business logic over unnecessary complexity.

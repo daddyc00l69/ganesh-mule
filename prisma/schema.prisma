@@ -1,0 +1,348 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  CUSTOMER
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURN_REQUESTED
+  RETURNED
+}
+
+enum PaymentStatus {
+  CREATED
+  PENDING
+  AUTHORIZED
+  PAID
+  FAILED
+  REFUND_PENDING
+  PARTIALLY_REFUNDED
+  REFUNDED
+}
+
+enum MovementReason {
+  ORDER_RESERVATION
+  ORDER_FULFILLMENT
+  ORDER_CANCELLATION
+  MANUAL_ADJUSTMENT
+  RESTOCK
+  RETURN_RESTOCK
+  DAMAGE_WRITE_OFF
+}
+
+model User {
+  id              String           @id @default(cuid())
+  email           String           @unique
+  passwordHash    String
+  name            String
+  role            Role             @default(CUSTOMER)
+  isActive        Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  customerProfile CustomerProfile?
+  managerProfile  ManagerProfile?
+  sessions        Session[]
+  addresses       Address[]
+  orders          Order[]
+  auditLogs       AuditLog[]       @relation("ActorAuditLogs")
+
+  @@index([email])
+  @@index([role])
+}
+
+model ManagerProfile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permissions String[] // Stored as granular permission keys
+  department  String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model CustomerProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phone     String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([userId])
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  name        String
+  description String?
+  imageUrl    String?
+  isVisible   Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+
+  @@index([slug])
+}
+
+model Product {
+  id                 String              @id @default(cuid())
+  slug               String              @unique
+  sku                String              @unique
+  name               String
+  description        String
+  price              Int                 // Stored in minor units (e.g. Paise for INR, 100 paise = 1 INR)
+  compareAtPrice     Int?
+  costPrice          Int?
+  categoryId         String
+  category           Category            @relation(fields: [categoryId], references: [id])
+  stockQuantity      Int                 @default(0)
+  reservedQuantity   Int                 @default(0)
+  lowStockThreshold  Int                 @default(5)
+  isPublished        Boolean             @default(true)
+  images             ProductImage[]
+  inventoryMovements InventoryMovement[]
+  orderItems         OrderItem[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@index([slug])
+  @@index([sku])
+  @@index([categoryId])
+}
+
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  altText   String?
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+}
+
+model InventoryMovement {
+  id            String         @id @default(cuid())
+  productId     String
+  product       Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  delta         Int            // Positive for stock in, negative for stock out
+  quantityAfter Int
+  reason        MovementReason
+  referenceId   String?        // OrderId, adjustment ticket, etc.
+  actorId       String?        // Admin or Manager userId
+  notes         String?
+  createdAt     DateTime       @default(now())
+
+  @@index([productId])
+  @@index([createdAt])
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName   String
+  phone      String
+  street     String
+  city       String
+  state      String
+  postalCode String
+  country    String   @default("IN")
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  orders     Order[]
+
+  @@index([userId])
+}
+
+model Order {
+  id              String         @id @default(cuid())
+  orderNumber     String         @unique
+  userId          String
+  user            User           @relation(fields: [userId], references: [id])
+  addressId       String?
+  address         Address?       @relation(fields: [addressId], references: [id])
+  
+  // Historical snapshots
+  customerName    String
+  customerEmail   String
+  customerPhone   String?
+  shippingAddress Json           // Full address snapshot at purchase time
+
+  subtotal        Int            // Minor units
+  shippingCost    Int            @default(0)
+  taxAmount       Int            @default(0)
+  discountAmount  Int            @default(0)
+  totalAmount     Int            // Minor units
+
+  orderStatus     OrderStatus    @default(PENDING)
+  paymentStatus   PaymentStatus  @default(CREATED)
+  
+  trackingNumber  String?
+  carrier         String?
+  notes           String?
+
+  items           OrderItem[]
+  payments        Payment[]
+  refunds         Refund[]
+  shipments       Shipment[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([orderNumber])
+  @@index([userId])
+  @@index([orderStatus])
+  @@index([paymentStatus])
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  productName String   // Snapshot
+  sku         String   // Snapshot
+  price       Int      // Snapshot in minor units
+  quantity    Int
+  total       Int      // price * quantity
+  createdAt   DateTime @default(now())
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Payment {
+  id                String         @id @default(cuid())
+  orderId           String
+  order             Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider          String         @default("RAZORPAY")
+  razorpayOrderId   String?        @unique
+  razorpayPaymentId String?        @unique
+  amount            Int            // Minor units
+  currency          String         @default("INR")
+  status            PaymentStatus  @default(PENDING)
+  errorDescription  String?
+  rawResponse       Json?
+  attempts          PaymentAttempt[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([orderId])
+  @@index([razorpayOrderId])
+  @@index([razorpayPaymentId])
+}
+
+model PaymentAttempt {
+  id         String   @id @default(cuid())
+  paymentId  String
+  payment    Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  status     String
+  attemptRef String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([paymentId])
+}
+
+model Refund {
+  id               String   @id @default(cuid())
+  orderId          String
+  order            Order    @relation(fields: [orderId], references: [id])
+  razorpayRefundId String?  @unique
+  amount           Int      // Minor units
+  reason           String
+  status           String   @default("COMPLETED")
+  actorId          String?  // Admin or Manager userId
+  createdAt        DateTime @default(now())
+
+  @@index([orderId])
+}
+
+model WebhookEvent {
+  id        String   @id @default(cuid())
+  eventId   String   @unique
+  provider  String   @default("RAZORPAY")
+  eventType String
+  payload   Json
+  processed Boolean  @default(false)
+  error     String?
+  createdAt DateTime @default(now())
+
+  @@index([eventId])
+  @@index([processed])
+}
+
+model Shipment {
+  id             String      @id @default(cuid())
+  orderId        String
+  order          Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  trackingNumber String
+  carrier        String
+  shippedAt      DateTime    @default(now())
+  deliveredAt    DateTime?
+  status         OrderStatus @default(SHIPPED)
+
+  @@index([orderId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation("ActorAuditLogs", fields: [actorId], references: [id], onDelete: SetNull)
+  action     String   // e.g. "MANAGER_CREATE", "PRICE_UPDATE", "STOCK_ADJUST"
+  entityType String   // e.g. "Product", "User", "Order"
+  entityId   String?
+  metadata   Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  @@index([actorId])
+  @@index([action])
+  @@index([entityType])
+  @@index([createdAt])
+}
+
+model StoreSettings {
+  id                String   @id @default("singleton")
+  storeName         String   @default("Solid Glass Commerce")
+  currency          String   @default("INR")
+  currencySymbol    String   @default("₹")
+  supportEmail      String   @default("support@solidglassecommerce.com")
+  taxRatePercent    Float    @default(18.0)
+  shippingFlatRate  Int      @default(5000) // 50.00 INR
+  freeShippingAbove Int      @default(99900) // 999.00 INR
+  chatwootEnabled   Boolean  @default(true)
+  updatedAt         DateTime @updatedAt
+}

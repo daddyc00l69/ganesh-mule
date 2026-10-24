@@ -1,0 +1,74 @@
+[AMBER & GLASS100% PURE RAW HONEY](http://localhost:3001/)
+[Home](http://localhost:3001/)
+[Shop Honey](http://localhost:3001/shop)
+[Purity & NMR Lab](http://localhost:3001/support)
+[Staff Portal](http://localhost:3001/portal)
+100% Cold-Extracted
+Never heated above natural hive temperature
+NMR Lab Certified Pure
+Zero added sugar syrup, zero antibiotics
+Free Express Delivery
+Complimentary for all orders above ₹999
+Ethical Bee Care
+Wild indigenous hives preserved sustainably
+Single-origin raw wild forest honey. Sourced directly from Western Ghats and Sundarbans canopies in heavy solid glass jars.
+
+#### Honey Harvests
+- [Wild Forest Raw Honey (Main)](http://localhost:3001/shop?category=cat-wild-forest)
+- [Himalayan White Acacia Honey](http://localhost:3001/shop?category=cat-monofloral)
+- [Kashmiri Saffron Infused Honey](http://localhost:3001/shop?category=cat-infused)
+- [Virgin Raw Honeycomb Slabs](http://localhost:3001/shop?category=cat-hiveware)
+[Wild Forest Raw Honey (Main)](http://localhost:3001/shop?category=cat-wild-forest)
+[Himalayan White Acacia Honey](http://localhost:3001/shop?category=cat-monofloral)
+[Kashmiri Saffron Infused Honey](http://localhost:3001/shop?category=cat-infused)
+[Virgin Raw Honeycomb Slabs](http://localhost:3001/shop?category=cat-hiveware)
+
+#### Customer Support
+- [NMR Lab Test Reports](http://localhost:3001/support)
+- [Shipping & Zero-Breakage Guarantee](http://localhost:3001/support#shipping)
+- [Instant Return & Replacement](http://localhost:3001/support#returns)
+- [My Orders & Account](http://localhost:3001/account)
+[NMR Lab Test Reports](http://localhost:3001/support)
+[Shipping & Zero-Breakage Guarantee](http://localhost:3001/support#shipping)
+[Instant Return & Replacement](http://localhost:3001/support#returns)
+[My Orders & Account](http://localhost:3001/account)
+
+#### Internal Portals
+- [Staff Portal Login →](http://localhost:3001/portal)
+- [Manager Inventory Desk](http://localhost:3001/manager/inventory)
+- [Manager Dispatch Queue](http://localhost:3001/manager/orders)
+- [Administrator Console](http://localhost:3001/admin)
+[Staff Portal Login →](http://localhost:3001/portal)
+[Manager Inventory Desk](http://localhost:3001/manager/inventory)
+[Manager Dispatch Queue](http://localhost:3001/manager/orders)
+[Administrator Console](http://localhost:3001/admin)
+© 2026 Amber & Glass Raw Honey. All rights reserved.
+100% Pure Raw Honey • Packed in Solid Glass Jars • Razorpay Verified
+
+# All Honey Varieties
+
+100% Raw cold-extracted forest nectars, acacia blossom, saffron infusions, and honeycomb
+[22% OFF100% NMR PureWild Forest Raw Honey4.9(1428)Wild Forest Raw Honey (500g)Our flagship harvest. Unpasteurized, unfiltered, cold-extracted raw honey gathered from wild Apis dorsata cliff bees in pristine deciduous forest canopies. Rich in natural bio-active enzymes, pollen, and propolis with a warm floral body and deep butterscotch finish.₹699.00₹899.00500g Solid Glass JarAdd to Bag](http://localhost:3001/product/wild-forest-raw-honey-500g)
+
+### Wild Forest Raw Honey (500g)
+Our flagship harvest. Unpasteurized, unfiltered, cold-extracted raw honey gathered from wild Apis dorsata cliff bees in pristine deciduous forest canopies. Rich in natural bio-active enzymes, pollen, and propolis with a warm floral body and deep butterscotch finish.
+[18% OFF100% NMR PureSingle-Origin Monofloral4.8(892)Himalayan White Acacia Honey (500g)A rare, water-white monofloral nectar harvested from blooming black locust acacia groves at 2,200m altitude in Himachal Pradesh. Exceptionally mild, delicate vanilla sweetness that stays fluid for years without rapid crystallization. Ideal for fine tea and delicate cheeses.₹1,149.00₹1,399.00500g Solid Glass JarAdd to Bag](http://localhost:3001/product/himalayan-white-acacia-honey)
+
+### Himalayan White Acacia Honey (500g)
+A rare, water-white monofloral nectar harvested from blooming black locust acacia groves at 2,200m altitude in Himachal Pradesh. Exceptionally mild, delicate vanilla sweetness that stays fluid for years without rapid crystallization. Ideal for fine tea and delicate cheeses.
+[16% OFF100% NMR PureBotanical & Spice Infusions4.9(546)Kashmiri Saffron Infused Raw Honey (350g)Small-batch pairing of wild Himalayan raw acacia honey steeped for 60 days with whole Grade-A Mongra saffron stigmas from Pampore, Kashmir. Luminous amber-red tint with a heady floral aroma and velvety lingering warmth.₹1,599.00₹1,899.00350g Solid Glass JarAdd to Bag](http://localhost:3001/product/kashmiri-saffron-infused-raw-honey)
+
+### Kashmiri Saffron Infused Raw Honey (350g)
+Small-batch pairing of wild Himalayan raw acacia honey steeped for 60 days with whole Grade-A Mongra saffron stigmas from Pampore, Kashmir. Luminous amber-red tint with a heady floral aroma and velvety lingering warmth.
+[14% OFF100% NMR PureWild Forest Raw Honey4.7(618)Sundarbans Wild Mangrove Honey (500g)Collected by indigenous traditional honey collectors (Mouls) in the tidal mangrove delta. Rich in minerals and natural antioxidants, this dark amber honey delivers a bold, slightly tangy, smoky flavor profile with medicinal astringency.₹949.00₹1,099.00500g Solid Glass JarAdd to Bag](http://localhost:3001/product/sundarbans-wild-mangrove-honey)
+
+### Sundarbans Wild Mangrove Honey (500g)
+Collected by indigenous traditional honey collectors (Mouls) in the tidal mangrove delta. Rich in minerals and natural antioxidants, this dark amber honey delivers a bold, slightly tangy, smoky flavor profile with medicinal astringency.
+[13% OFFOnly 8 Left100% NMR PureRaw Comb & Hiveware4.9(412)Virgin Artisan Honeycomb Slab (400g)Pure honey exactly as bees intended. Intact, 100% edible natural beeswax cells bursting with fresh, unspun raw wildflower honey. Hand-cut and packaged in protective solid glass tray. Perfect atop warm sourdough, Greek yogurt, or charcuterie boards.₹1,299.00₹1,499.00400g Solid Glass JarAdd to Bag](http://localhost:3001/product/artisan-raw-honeycomb-slab)
+
+### Virgin Artisan Honeycomb Slab (400g)
+Pure honey exactly as bees intended. Intact, 100% edible natural beeswax cells bursting with fresh, unspun raw wildflower honey. Hand-cut and packaged in protective solid glass tray. Perfect atop warm sourdough, Greek yogurt, or charcuterie boards.
+[22% OFF100% NMR PureRaw Comb & Hiveware4.8(385)Handcrafted Olive Wood Honey DipperCarved from a single piece of sustainably pruned Mediterranean olivewood with dense spiral grooves designed for smooth, drip-free honey drizzling.₹349.00₹449.0065g Solid Glass JarAdd to Bag](http://localhost:3001/product/turned-olive-wood-honey-dipper)
+
+### Handcrafted Olive Wood Honey Dipper
+Carved from a single piece of sustainably pruned Mediterranean olivewood with dense spiral grooves designed for smooth, drip-free honey drizzling.
