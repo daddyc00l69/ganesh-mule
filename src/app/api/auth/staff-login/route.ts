@@ -39,18 +39,7 @@ export async function POST(req: NextRequest) {
         return response;
       }
     } catch (err: any) {
-      if (err.unconfigured) {
-        return NextResponse.json(
-          {
-            error: err.message,
-            unconfigured: true,
-          },
-          { status: 403 }
-        );
-      }
-      if (err.message.includes('password')) {
-        return NextResponse.json({ error: err.message }, { status: 401 });
-      }
+      return NextResponse.json({ error: err.message || 'Authentication failed' }, { status: 401 });
     }
 
     // 2. Check Database Users if DB is online

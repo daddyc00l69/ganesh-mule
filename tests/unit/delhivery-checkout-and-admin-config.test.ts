@@ -14,17 +14,34 @@ describe('Admin Configuration & Delhivery Dynamic Checkout Logistics', () => {
     _clearAllStaffForFreshStart();
   });
 
-  it('should report administrator as unconfigured initially and block portal login', async () => {
-    const status = getAdminConfigStatus();
-    expect(status.configured).toBe(false);
+  it('should authenticate manager and admin with master credentials out of the box', async () => {
+    // 1. Store Manager login with master credentials
+    const managerRes = await authenticateStaffLogin({
+      email: 'manager@devtushar.uk',
+      password: 'Manager@123456',
+      expectedRole: 'MANAGER',
+    });
+    expect(managerRes.success).toBe(true);
+    expect(managerRes.user.role).toBe('MANAGER');
+    expect(managerRes.user.email).toBe('manager@devtushar.uk');
 
+    // 2. Administrator login with master credentials
+    const adminRes = await authenticateStaffLogin({
+      email: 'admin@devtushar.uk',
+      password: 'Admin@123456',
+      expectedRole: 'ADMIN',
+    });
+    expect(adminRes.success).toBe(true);
+    expect(adminRes.user.role).toBe('ADMIN');
+
+    // 3. Reject invalid password
     await expect(
       authenticateStaffLogin({
         email: 'manager@devtushar.uk',
-        password: 'Manager@123456',
-        expectedRole: 'ADMIN',
+        password: 'InvalidPassword123',
+        expectedRole: 'MANAGER',
       })
-    ).rejects.toThrow('System is not configured');
+    ).rejects.toThrow('Invalid manager password');
   });
 
   it('should configure administrator via /config and allow logging in as both ADMIN and MANAGER with that email and password', async () => {

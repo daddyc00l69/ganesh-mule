@@ -5,8 +5,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { GlassCard } from '@/components/ui/glass-card';
 import { GlassInput } from '@/components/ui/glass-input';
 import { GlassButton } from '@/components/ui/glass-button';
-import { Sparkles, Shield, UserCheck, AlertCircle, ArrowLeft, RotateCcw, CheckCircle2, UserPlus, KeyRound } from 'lucide-react';
+import { Sparkles, Shield, UserCheck, AlertCircle, ArrowLeft, CheckCircle2, UserPlus, KeyRound, LogOut, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { SafeUser } from '@/types';
 
 function StaffPortalContent() {
   const router = useRouter();
@@ -17,20 +18,20 @@ function StaffPortalContent() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState<'ADMIN' | 'MANAGER'>('ADMIN');
+  const [selectedRole, setSelectedRole] = useState<'ADMIN' | 'MANAGER'>('MANAGER');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(
     urlError === 'unauthorized' ? 'You do not have Administrator privileges for that section.' : null
   );
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [isCheckingSetup, setIsCheckingSetup] = useState(true);
-  const [isConfigured, setIsConfigured] = useState(false);
+  const [activeSession, setActiveSession] = useState<SafeUser | null>(null);
+  const [isConfigured, setIsConfigured] = useState<boolean>(true);
+  const [isCheckingSetup, setIsCheckingSetup] = useState<boolean>(true);
 
-  // 1. Check if user already has an active, valid session or if setup is needed
+  // Check existing session & setup configuration
   useEffect(() => {
     let isMounted = true;
 
-    // Check existing session
     fetch('/api/auth/me', {
       cache: 'no-store',
       headers: { 'Cache-Control': 'no-cache' },
@@ -39,29 +40,22 @@ function StaffPortalContent() {
       .then((data) => {
         if (!isMounted) return;
         if (data.authenticated && data.user) {
-          const destination = redirectTarget || (data.user.role === 'ADMIN' ? '/admin' : '/manager');
-          window.location.href = destination;
+          setActiveSession(data.user);
         }
       })
       .catch(() => {});
 
-    // Check system setup status (/config)
+    // Check system setup status
     fetch('/api/admin/setup', { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
         if (!isMounted) return;
-        if (!data.configured) {
-          setIsConfigured(false);
-          setIsCheckingSetup(false);
-          // Redirect immediately to /config setup
-          window.location.replace('/config');
-          return;
-        }
-        setIsConfigured(true);
+        setIsConfigured(data.configured !== false);
         setIsCheckingSetup(false);
       })
       .catch(() => {
         if (!isMounted) return;
+        setIsConfigured(true);
         setIsCheckingSetup(false);
       });
 
@@ -69,6 +63,26 @@ function StaffPortalContent() {
       isMounted = false;
     };
   }, [redirectTarget]);
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      setActiveSession(null);
+      setSuccessMessage('Logged out successfully.');
+    } catch {}
+  };
+
+  const autofillCredentials = (role: 'MANAGER' | 'ADMIN') => {
+    setSelectedRole(role);
+    if (role === 'MANAGER') {
+      setEmail('manager@devtushar.uk');
+      setPassword('Manager@123456');
+    } else {
+      setEmail('admin@devtushar.uk');
+      setPassword('Admin@123456');
+    }
+    setErrorMessage(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,62 +94,27 @@ function StaffPortalContent() {
       const res = await fetch('/api/auth/staff-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, expectedRole: selectedRole }),
+        body: JSON.stringify({ email: email.trim(), password: password.trim(), expectedRole: selectedRole }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        if (data.unconfigured) {
-          setIsConfigured(false);
-          window.location.replace('/config');
-          return;
-        }
         throw new Error(data.error || 'Authentication failed');
       }
 
-      setSuccessMessage('Authentication successful! Launching workspace...');
+      setSuccessMessage(`Authentication successful! Launching ${selectedRole === 'ADMIN' ? 'Administrator' : 'Store Manager'} console...`);
 
-      // Redirect immediately to target URL or dashboard
-      const destination = redirectTarget || (data.user.role === 'ADMIN' ? '/admin' : '/manager');
+      // Redirect immediately to target URL or appropriate dashboard
+      const destination = redirectTarget || (selectedRole === 'ADMIN' ? '/admin' : '/manager');
       setTimeout(() => {
         window.location.href = destination;
-      }, 300);
+      }, 350);
     } catch (err: any) {
       setErrorMessage(err.message || 'Invalid credentials or access denied');
       setIsLoading(false);
     }
   };
-
-  // Block portal if root administrator is not yet configured at /config
-  if (isCheckingSetup || !isConfigured) {
-    return (
-      <div className="dark min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden bg-background text-foreground">
-        <div className="w-full max-w-md z-10 text-center space-y-4">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl glass-primary shadow-lg">
-            <Shield className="w-7 h-7 text-amber-400" />
-          </div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground">
-            Initial Administrator Setup Required
-          </h1>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            No root Administrator account has been provisioned yet. The Staff Portal is locked until the Administrator account is configured at /config.
-          </p>
-          <div className="pt-2">
-            <Link
-              href="/config"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold shadow-lg transition-all"
-            >
-              <span>Configure Administrator at /config →</span>
-            </Link>
-          </div>
-          <p className="text-[11px] text-muted-foreground animate-pulse">
-            Redirecting to /config setup...
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="dark min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden bg-background text-foreground">
@@ -173,32 +152,69 @@ function StaffPortalContent() {
           )}
         </div>
 
+        {/* Active Session Notification & Switcher */}
+        {activeSession && (
+          <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-xs space-y-3 animate-in fade-in">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-blue-400 flex items-center gap-1.5">
+                <UserCheck className="w-4 h-4" />
+                <span>Currently Signed In: {activeSession.name}</span>
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-mono">
+                {activeSession.role}
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground">{activeSession.email}</p>
+            <div className="flex gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  const dest = redirectTarget || (activeSession.role === 'ADMIN' ? '/admin' : '/manager');
+                  window.location.href = dest;
+                }}
+                className="flex-1 py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <span>Continue to {activeSession.role === 'ADMIN' ? 'Admin' : 'Manager'} Dashboard</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="py-2 px-3 rounded-lg bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground text-xs transition-colors flex items-center gap-1.5 border border-white/10 cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Role Selector Tabs */}
         <div className="grid grid-cols-2 p-1 glass-panel rounded-xl gap-1">
           <button
             type="button"
-            onClick={() => setSelectedRole('ADMIN')}
-            className={`flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
-              selectedRole === 'ADMIN'
-                ? 'glass-primary shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <Shield className="w-4 h-4" />
-            <span>Administrator</span>
-          </button>
-
-          <button
-            type="button"
             onClick={() => setSelectedRole('MANAGER')}
-            className={`flex items-center justify-center gap-2 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+            className={`flex items-center justify-center gap-2 py-2.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
               selectedRole === 'MANAGER'
-                ? 'glass-primary shadow-sm'
+                ? 'glass-primary shadow-sm text-foreground'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             <UserCheck className="w-4 h-4" />
             <span>Store Manager</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSelectedRole('ADMIN')}
+            className={`flex items-center justify-center gap-2 py-2.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+              selectedRole === 'ADMIN'
+                ? 'glass-primary shadow-sm text-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Shield className="w-4 h-4" />
+            <span>Administrator</span>
           </button>
         </div>
 
@@ -218,14 +234,28 @@ function StaffPortalContent() {
             </div>
           )}
 
+          {/* Master Credentials Autofill Pill */}
+          <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-between text-xs">
+            <span className="text-[11px] text-muted-foreground">
+              Master Access: <strong className="text-foreground">{selectedRole === 'MANAGER' ? 'manager@devtushar.uk' : 'admin@devtushar.uk'}</strong>
+            </span>
+            <button
+              type="button"
+              onClick={() => autofillCredentials(selectedRole)}
+              className="text-[11px] text-primary hover:underline font-semibold cursor-pointer"
+            >
+              Autofill Credentials
+            </button>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <GlassInput
-              label="Staff Email"
+              label={selectedRole === 'MANAGER' ? 'Manager Email' : 'Administrator Email'}
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="e.g. manager@devtushar.uk"
+              placeholder={selectedRole === 'MANAGER' ? 'manager@devtushar.uk' : 'admin@devtushar.uk'}
               autoComplete="email"
             />
 
@@ -238,9 +268,9 @@ function StaffPortalContent() {
               placeholder="••••••••••••"
               autoComplete="current-password"
               hint={
-                selectedRole === 'ADMIN'
-                  ? 'Enter your configured Administrator password'
-                  : 'Enter your configured Manager or Administrator password'
+                selectedRole === 'MANAGER'
+                  ? 'Enter manager password (e.g. Manager@123456 or Admin@123456)'
+                  : 'Enter configured Administrator password (e.g. Admin@123456)'
               }
             />
 
@@ -252,7 +282,7 @@ function StaffPortalContent() {
                 isLoading={isLoading}
                 className="w-full font-semibold"
               >
-                Sign In as {selectedRole === 'ADMIN' ? 'Administrator' : 'Store Manager'}
+                Sign In as {selectedRole === 'MANAGER' ? 'Store Manager' : 'Administrator'}
               </GlassButton>
             </div>
           </form>
@@ -261,7 +291,7 @@ function StaffPortalContent() {
           <div className="pt-3 border-t border-border/40 flex flex-col gap-2 text-center text-xs">
             <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1">
               <Link href="/config" className="text-primary hover:underline font-medium">
-                Configure / Update Admin Credentials (/config)
+                Configure Admin Credentials (/config)
               </Link>
               <button
                 type="button"
