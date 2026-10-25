@@ -1030,15 +1030,21 @@ function CheckoutContent() {
                         )}
                       </div>
                       {pinAutoDetected ? (
-                        <div className="text-[10px] text-emerald-700 font-medium flex items-center justify-between">
-                          <span className="truncate">Auto: {pinAutoDetected}</span>
-                          <button
-                            type="button"
-                            onClick={() => fetchPinDetails(postalCode)}
-                            className="text-[9px] text-[#0071e3] hover:underline cursor-pointer shrink-0 ml-1 flex items-center gap-0.5"
-                          >
-                            <RefreshCw className="w-2.5 h-2.5" /> Re-check
-                          </button>
+                        <div className="space-y-1 pt-0.5">
+                          <div className="text-[10px] text-emerald-700 font-medium flex items-center justify-between">
+                            <span className="truncate">Auto: {pinAutoDetected}</span>
+                            <button
+                              type="button"
+                              onClick={() => fetchPinDetails(postalCode)}
+                              className="text-[9px] text-[#0071e3] hover:underline cursor-pointer shrink-0 ml-1 flex items-center gap-0.5"
+                            >
+                              <RefreshCw className="w-2.5 h-2.5" /> Re-check
+                            </button>
+                          </div>
+                          <div className="text-[10px] text-[#0071e3] bg-[#0071e3]/8 border border-[#0071e3]/15 rounded-md px-2 py-0.5 font-medium flex items-center gap-1">
+                            <Truck className="w-3 h-3 text-[#0071e3]" />
+                            <span>Delhivery One Express: Serviceable (2-3 Business Days)</span>
+                          </div>
                         </div>
                       ) : postalCode.length > 0 && postalCode.length < 6 ? (
                         <p className="text-[10px] text-[#86868b]">Enter 6 digits for auto-fill</p>

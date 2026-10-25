@@ -13,13 +13,14 @@ import { GlassCard } from '@/components/ui/glass-card';
 import { MOCK_ORDERS } from '@/lib/mock-data';
 import { OrderRecord, OrderStatus } from '@/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { Truck, CheckCircle2, Clock, Eye, AlertCircle, Package, FileText, RefreshCw } from 'lucide-react';
+import { Truck, CheckCircle2, Clock, Eye, AlertCircle, Package, FileText, RefreshCw, ExternalLink, Tag, Zap } from 'lucide-react';
 
 export default function ManagerOrdersPage() {
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isGeneratingAwb, setIsGeneratingAwb] = useState(false);
 
   // Live order synchronization
   const fetchLiveOrders = async () => {
@@ -196,11 +197,27 @@ export default function ManagerOrdersPage() {
     },
     {
       key: 'trackingNumber',
-      header: 'Shipment Tracking',
+      header: 'Delhivery Shipment Tracking',
       render: (o) => (
-        <span className="font-mono text-xs text-foreground/80">
-          {o.trackingNumber ? `${o.carrier} (${o.trackingNumber})` : 'Unassigned'}
-        </span>
+        <div className="space-y-0.5">
+          {o.trackingNumber ? (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <a
+                href={`https://www.delhivery.com/track/package/${o.trackingNumber}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono text-xs font-semibold text-brand hover:underline inline-flex items-center gap-1"
+                title="Track package live on Delhivery One"
+              >
+                <span>{o.trackingNumber}</span>
+                <ExternalLink className="w-3 h-3 opacity-70" />
+              </a>
+              <span className="text-[10px] text-muted-foreground">({o.carrier || 'Delhivery One'})</span>
+            </div>
+          ) : (
+            <span className="text-xs text-muted-foreground/60 italic">Unassigned</span>
+          )}
+        </div>
       ),
     },
     {
@@ -210,6 +227,18 @@ export default function ManagerOrdersPage() {
       headerClassName: 'text-right',
       render: (o) => (
         <div className="flex items-center justify-end gap-1.5">
+          {o.trackingNumber && (
+            <GlassButton
+              variant="outline"
+              size="sm"
+              onClick={() => window.open(`/api/shipping/delhivery/label?orderNumber=${o.orderNumber}`, '_blank')}
+              className="gap-1 text-emerald-400 hover:text-emerald-300 hover:border-emerald-500/30"
+              title="Print Delhivery One Shipping Label"
+            >
+              <Tag className="w-3.5 h-3.5" />
+              <span>Label</span>
+            </GlassButton>
+          )}
           <GlassButton
             variant="outline"
             size="sm"
@@ -372,10 +401,43 @@ export default function ManagerOrdersPage() {
             {/* Carrier & Tracking if transitioning to SHIPPED or already SHIPPED */}
             {(newStatus === 'SHIPPED' || activeOrder.orderStatus === 'SHIPPED') && (
               <div className="p-4 rounded-xl glass-panel space-y-3">
-                <h4 className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                  <Truck className="w-3.5 h-3.5 text-brand" />
-                  <span>Carrier & Dispatch Information</span>
-                </h4>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <Truck className="w-3.5 h-3.5 text-brand" />
+                    <span>Carrier &amp; Dispatch Information (Delhivery One)</span>
+                  </h4>
+                  <GlassButton
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="text-[11px] h-7 gap-1 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+                    isLoading={isGeneratingAwb}
+                    onClick={async () => {
+                      if (!activeOrder) return;
+                      setIsGeneratingAwb(true);
+                      try {
+                        const res = await fetch('/api/shipping/delhivery/ship', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ orderNumber: activeOrder.orderNumber }),
+                        });
+                        const data = await res.json();
+                        if (data?.shipment) {
+                          setTrackingNumber(data.shipment.waybill);
+                          setCarrier(data.shipment.carrier);
+                        }
+                      } catch (err) {
+                        console.warn('Auto AWB generation error:', err);
+                      } finally {
+                        setIsGeneratingAwb(false);
+                      }
+                    }}
+                  >
+                    <Zap className="w-3 h-3" />
+                    <span>⚡ Auto-Generate Delhivery AWB</span>
+                  </GlassButton>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5 text-left">
                     <label className="block text-xs font-medium text-foreground/85">
@@ -386,7 +448,8 @@ export default function ManagerOrdersPage() {
                       onChange={(e) => setCarrier(e.target.value)}
                       className="glass-input w-full h-10 px-3 text-sm rounded-control text-foreground outline-none bg-card"
                     >
-                      <option value="Delhivery Surface">Delhivery Surface</option>
+                      <option value="Delhivery One (Air Express)">Delhivery One (Air Express)</option>
+                      <option value="Delhivery One (Surface)">Delhivery One (Surface)</option>
                       <option value="Blue Dart Apex">Blue Dart Apex</option>
                       <option value="DTDC Express">DTDC Express</option>
                       <option value="Shadowfax Local">Shadowfax Local</option>
@@ -397,7 +460,7 @@ export default function ManagerOrdersPage() {
                     required={newStatus === 'SHIPPED'}
                     value={trackingNumber}
                     onChange={(e) => setTrackingNumber(e.target.value)}
-                    placeholder="e.g. DELHIVERY-99882211"
+                    placeholder="e.g. 143920192837 or DELHIVERY..."
                   />
                 </div>
               </div>

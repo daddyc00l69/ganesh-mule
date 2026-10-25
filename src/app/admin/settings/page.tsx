@@ -6,7 +6,7 @@ import { GlassCard } from '@/components/ui/glass-card';
 import { GlassButton } from '@/components/ui/glass-button';
 import { GlassInput } from '@/components/ui/glass-input';
 import { GlassBadge } from '@/components/ui/glass-badge';
-import { Check, ShieldCheck, CreditCard, MessageSquare, Save, Store, Truck, Percent, Mail, Clock } from 'lucide-react';
+import { Check, ShieldCheck, CreditCard, MessageSquare, Save, Store, Truck, Percent, Mail, Clock, ExternalLink, Box, Sparkles, Search } from 'lucide-react';
 import { DEFAULT_FEE_SETTINGS, FeeSettings } from '@/lib/config/fee-settings';
 
 export default function AdminSettingsPage() {
@@ -23,6 +23,17 @@ export default function AdminSettingsPage() {
   const [feeMode, setFeeMode] = useState<'FLAT_20' | 'PERCENT_2' | 'BOTH'>('FLAT_20');
   const [chatwootEnabled, setChatwootEnabled] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
+
+  // Delhivery One State (https://one.delhivery.com)
+  const [delhiveryApiKey, setDelhiveryApiKey] = useState('');
+  const [delhiveryClientId, setDelhiveryClientId] = useState('GANESHMULE_ONE');
+  const [delhiveryPickupLocation, setDelhiveryPickupLocation] = useState('Ganesh Mule Apiary Dispatch Center, Pune');
+  const [delhiveryAutoShipping, setDelhiveryAutoShipping] = useState(true);
+  const [delhiveryShippingMode, setDelhiveryShippingMode] = useState<'Express' | 'Surface'>('Express');
+  const [delhiveryEnvironment, setDelhiveryEnvironment] = useState<'production' | 'staging'>('production');
+  const [delhiveryTestPin, setDelhiveryTestPin] = useState('411001');
+  const [delhiveryPinResult, setDelhiveryPinResult] = useState<any>(null);
+  const [delhiveryCheckingPin, setDelhiveryCheckingPin] = useState(false);
 
   useEffect(() => {
     async function fetchFees() {
@@ -45,33 +56,88 @@ export default function AdminSettingsPage() {
         console.warn('Failed to load admin fee settings:', err);
       }
     }
+
+    async function fetchDelhivery() {
+      try {
+        const res = await fetch('/api/shipping/delhivery/settings');
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.settings) {
+            setDelhiveryApiKey(data.settings.apiKeyMasked || '');
+            setDelhiveryClientId(data.settings.clientId || 'GANESHMULE_ONE');
+            setDelhiveryPickupLocation(data.settings.pickupLocation || 'Ganesh Mule Apiary Dispatch Center, Pune');
+            setDelhiveryAutoShipping(data.settings.autoShipping ?? true);
+            setDelhiveryShippingMode(data.settings.shippingMode || 'Express');
+            setDelhiveryEnvironment(data.settings.environment || 'production');
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load Delhivery settings:', err);
+      }
+    }
+
     fetchFees();
+    fetchDelhivery();
   }, []);
+
+  const handleTestDelhiveryPin = async () => {
+    const clean = delhiveryTestPin.replace(/\D/g, '').slice(0, 6);
+    if (clean.length < 6) return;
+    setDelhiveryCheckingPin(true);
+    setDelhiveryPinResult(null);
+    try {
+      const res = await fetch(`/api/shipping/delhivery/serviceability?pincode=${clean}`);
+      const data = await res.json();
+      if (data?.serviceability) {
+        setDelhiveryPinResult(data.serviceability);
+      } else {
+        setDelhiveryPinResult({ error: data?.error || 'Verification failed' });
+      }
+    } catch (e: any) {
+      setDelhiveryPinResult({ error: e.message });
+    } finally {
+      setDelhiveryCheckingPin(false);
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await fetch('/api/settings/fees', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          shippingBaseFee: Math.round(shippingRate * 100),
-          shippingGstRate,
-          freeShippingThreshold: Math.round(freeShippingThreshold * 100),
-          freeShippingEnabled: freeShippingThreshold > 0,
-          platformBaseFee: Math.round(platformFee * 100),
-          platformGstRate,
-          platformFeeEnabled: platformFee > 0,
-          paymentGatewayPercent: pgPercent,
-          paymentGatewayGstRate: 18,
-          feeMode,
-          updatedBy: 'Super Admin',
+      await Promise.all([
+        fetch('/api/settings/fees', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            shippingBaseFee: Math.round(shippingRate * 100),
+            shippingGstRate,
+            freeShippingThreshold: Math.round(freeShippingThreshold * 100),
+            freeShippingEnabled: freeShippingThreshold > 0,
+            platformBaseFee: Math.round(platformFee * 100),
+            platformGstRate,
+            platformFeeEnabled: platformFee > 0,
+            paymentGatewayPercent: pgPercent,
+            paymentGatewayGstRate: 18,
+            feeMode,
+            updatedBy: 'Super Admin',
+          }),
         }),
-      });
+        fetch('/api/shipping/delhivery/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            apiKey: delhiveryApiKey,
+            clientId: delhiveryClientId,
+            pickupLocation: delhiveryPickupLocation,
+            autoShipping: delhiveryAutoShipping,
+            shippingMode: delhiveryShippingMode,
+            environment: delhiveryEnvironment,
+          }),
+        }),
+      ]);
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 3000);
     } catch (err) {
-      console.error('Error updating fee settings from admin:', err);
+      console.error('Error updating settings from admin:', err);
     }
   };
 
@@ -175,6 +241,171 @@ export default function AdminSettingsPage() {
             <span>
               <strong>Effective Cost:</strong> Shipping: ₹{shippingRate} + 18% GST (₹{(shippingRate * 0.18).toFixed(2)}) = ₹{(shippingRate * 1.18).toFixed(2)} | Platform Fee: ₹{platformFee} + 18% GST (₹{(platformFee * 0.18).toFixed(2)}) = ₹{(platformFee * 1.18).toFixed(2)}
             </span>
+          </div>
+        </GlassCard>
+
+        {/* Delhivery One Logistics Integration */}
+        <GlassCard variant="card" className="space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-border/40">
+            <div className="flex items-center gap-2">
+              <Truck className="w-4 h-4 text-emerald-400" />
+              <div>
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <span>Delhivery One Automated Shipping Engine</span>
+                  <a
+                    href="https://one.delhivery.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[11px] text-brand hover:underline font-normal"
+                  >
+                    <span>one.delhivery.com</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </h3>
+              </div>
+            </div>
+            <GlassBadge variant={delhiveryAutoShipping ? 'success' : 'outline'} size="sm">
+              {delhiveryAutoShipping ? '⚡ Auto-Dispatch Active' : 'Manual Dispatch'}
+            </GlassBadge>
+          </div>
+
+          <p className="text-xs text-muted-foreground">
+            Connects to your unified enterprise account on <a href="https://one.delhivery.com" target="_blank" rel="noopener noreferrer" className="text-brand underline">Delhivery One</a> for automated AWB allocation, courier pickup booking, shipping label generation, and real-time tracking for solid glass packaging.
+          </p>
+
+          <div className="p-3.5 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between gap-4">
+            <div>
+              <span className="text-xs font-semibold text-foreground block">Automatic Courier Booking Upon Payment</span>
+              <span className="text-[11px] text-muted-foreground">
+                When enabled, verified Razorpay payments immediately generate a Delhivery waybill and slot courier pickup.
+              </span>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer shrink-0">
+              <input
+                type="checkbox"
+                checked={delhiveryAutoShipping}
+                onChange={(e) => setDelhiveryAutoShipping(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+            </label>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <GlassInput
+              label="Delhivery One API Token"
+              type="password"
+              value={delhiveryApiKey}
+              onChange={(e) => setDelhiveryApiKey(e.target.value)}
+              placeholder="e.g. 7f20••••••••••••34a"
+              hint="Generate from Delhivery One > Settings > API Credentials"
+            />
+            <GlassInput
+              label="Client ID / Account Code"
+              value={delhiveryClientId}
+              onChange={(e) => setDelhiveryClientId(e.target.value)}
+              placeholder="e.g. GANESHMULE_ONE"
+              hint="Your registered Delhivery One corporate handle"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-1.5 sm:col-span-2">
+              <label className="text-xs font-medium text-foreground">Registered Pickup Warehouse Location</label>
+              <GlassInput
+                value={delhiveryPickupLocation}
+                onChange={(e) => setDelhiveryPickupLocation(e.target.value)}
+                placeholder="Ganesh Mule Apiary Dispatch Center, Pune"
+                hint="Must match the warehouse name registered in Delhivery One portal"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-foreground">Default Shipping Priority</label>
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setDelhiveryShippingMode('Express')}
+                  className={`flex-1 py-2 text-xs font-semibold rounded-xl border transition-all cursor-pointer ${
+                    delhiveryShippingMode === 'Express'
+                      ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                      : 'bg-white/5 border-white/10 text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Air Express (2-3d)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDelhiveryShippingMode('Surface')}
+                  className={`flex-1 py-2 text-xs font-semibold rounded-xl border transition-all cursor-pointer ${
+                    delhiveryShippingMode === 'Surface'
+                      ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                      : 'bg-white/5 border-white/10 text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  Surface (4-5d)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Interactive Serviceability Check */}
+          <div className="p-4 rounded-xl bg-black/40 border border-white/10 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <Search className="w-3.5 h-3.5 text-brand" />
+                <span>Test Delhivery One Pincode Serviceability &amp; Delivery Days</span>
+              </span>
+              <span className="text-[10px] text-muted-foreground">All India PIN Coverage</span>
+            </div>
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                maxLength={6}
+                value={delhiveryTestPin}
+                onChange={(e) => setDelhiveryTestPin(e.target.value)}
+                placeholder="Enter 6-digit PIN"
+                className="max-w-[160px] px-3 py-1.5 text-xs rounded-xl bg-white/5 border border-white/10 text-foreground font-mono focus:outline-none focus:border-primary"
+              />
+              <GlassButton
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleTestDelhiveryPin}
+                isLoading={delhiveryCheckingPin}
+              >
+                Verify PIN
+              </GlassButton>
+            </div>
+
+            {delhiveryPinResult && (
+              <div className="p-3 rounded-lg bg-white/5 border border-white/10 text-xs space-y-1 animate-in fade-in">
+                {delhiveryPinResult.error ? (
+                  <p className="text-destructive font-semibold">❌ {delhiveryPinResult.error}</p>
+                ) : (
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <p className="font-semibold text-emerald-400">
+                        ✓ PIN {delhiveryPinResult.pincode}: Serviceable via {delhiveryPinResult.deliverySpeed}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        Estimated Delivery: {delhiveryPinResult.expectedDeliveryDays} Business Days • Prepaid Policy: Active
+                      </p>
+                    </div>
+                    <a
+                      href="https://one.delhivery.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] text-brand hover:underline inline-flex items-center gap-1 shrink-0"
+                    >
+                      <span>Check on Delhivery One</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </GlassCard>
 

@@ -25,6 +25,8 @@ import {
   MapPin,
   Package,
   RefreshCw,
+  ExternalLink,
+  Tag,
 } from 'lucide-react';
 
 export default function AdminOrdersPage() {
@@ -171,6 +173,31 @@ export default function AdminOrdersPage() {
       },
     },
     {
+      key: 'trackingNumber',
+      header: 'Delhivery Tracking',
+      render: (order) => (
+        <div className="space-y-0.5">
+          {order.trackingNumber ? (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <a
+                href={`https://www.delhivery.com/track/package/${order.trackingNumber}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono text-xs font-semibold text-brand hover:underline inline-flex items-center gap-1"
+                title="Track package live on Delhivery One"
+              >
+                <span>{order.trackingNumber}</span>
+                <ExternalLink className="w-3 h-3 opacity-70" />
+              </a>
+              <span className="text-[10px] text-muted-foreground">({order.carrier || 'Delhivery One'})</span>
+            </div>
+          ) : (
+            <span className="text-xs text-muted-foreground/60 italic">Unassigned</span>
+          )}
+        </div>
+      ),
+    },
+    {
       key: 'createdAt',
       header: 'Date & Time',
       render: (order) => (
@@ -186,6 +213,18 @@ export default function AdminOrdersPage() {
       headerClassName: 'text-right',
       render: (order) => (
         <div className="flex items-center justify-end gap-1.5">
+          {order.trackingNumber && (
+            <GlassButton
+              variant="outline"
+              size="sm"
+              onClick={() => window.open(`/api/shipping/delhivery/label?orderNumber=${order.orderNumber}`, '_blank')}
+              className="gap-1 text-emerald-400 hover:text-emerald-300 hover:border-emerald-500/30"
+              title="Print Delhivery One Shipping Label"
+            >
+              <Tag className="w-3.5 h-3.5" />
+              <span>Label</span>
+            </GlassButton>
+          )}
           <GlassButton
             variant="outline"
             size="sm"

@@ -150,6 +150,10 @@ export interface OrderRecord {
   paymentStatus: PaymentStatus;
   trackingNumber?: string | null;
   carrier?: string | null;
+  delhiveryWaybill?: string | null;
+  delhiveryStatus?: string | null;
+  delhiveryLabelUrl?: string | null;
+  delhiveryEstimatedDelivery?: string | null;
   notes?: string | null;
   items: OrderItemRecord[];
   payments?: any[];
@@ -239,6 +243,31 @@ export interface CouponValidationResult {
     discountAmount: number; // in paise
     assignedToManagerName?: string;
   };
+  error?: string;
+}
+
+export interface DelhiverySettings {
+  apiKey: string;
+  clientId: string;
+  pickupLocation: string;
+  autoShipping: boolean;
+  shippingMode: 'Express' | 'Surface';
+  environment: 'production' | 'staging';
+  originPincode: string;
+  originCity: string;
+  originState: string;
+  insuredPackaging: boolean;
+}
+
+export interface DelhiveryShipmentResult {
+  success: boolean;
+  waybill: string;
+  orderNumber: string;
+  trackingUrl: string;
+  labelUrl: string;
+  carrier: string;
+  estimatedDeliveryDays: number;
+  status: string;
   error?: string;
 }
 

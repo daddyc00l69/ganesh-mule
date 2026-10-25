@@ -39,3 +39,6 @@ prisma/*.db-journal
 
 # tools
 gh_bin/
+
+# local runtime data
+.data/

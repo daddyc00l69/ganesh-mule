@@ -7,6 +7,7 @@ import { getLiveOrders, getLiveOrderById, updateLiveOrderStatus } from '@/lib/or
 import { decrementProductStock } from '@/lib/inventory/store';
 import { sendEmail, ADMIN_NOTIFICATION_EMAIL } from '@/lib/email/resend';
 import { getOrderConfirmationEmailHtml, getNewOrderAdminAlertEmailHtml } from '@/lib/email/templates';
+import { getDelhiverySettings, createDelhiveryShipment } from '@/lib/shipping/delhivery';
 
 const VerifySchema = z.object({
   razorpayOrderId: z.string(),
@@ -156,6 +157,17 @@ export async function POST(req: NextRequest) {
           } catch (stkErr) {
             console.warn('[Stock Decrement Error]', stkErr);
           }
+        }
+      }
+
+      // Automatically dispatch courier shipment with Delhivery One (https://one.delhivery.com)
+      const delhiverySettings = getDelhiverySettings();
+      if (delhiverySettings.autoShipping) {
+        try {
+          const shipmentResult = await createDelhiveryShipment(mockOrder);
+          console.log(`[Delhivery Auto-Ship] Booked AWB ${shipmentResult.waybill} for Order #${mockOrder.orderNumber}`);
+        } catch (shipErr) {
+          console.warn('[Delhivery Auto-Ship Exception]', shipErr);
         }
       }
 

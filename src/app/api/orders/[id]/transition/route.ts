@@ -8,6 +8,7 @@ import {
   getOrderDeliveredEmailHtml,
 } from '@/lib/email/templates';
 import { OrderStatus } from '@/types';
+import { createDelhiveryShipment } from '@/lib/shipping/delhivery';
 
 export async function POST(
   req: NextRequest,
@@ -39,12 +40,21 @@ export async function POST(
       );
     }
 
-    // Business Invariant 2: Cannot ship without tracking number
-    if (status === 'SHIPPED' && !trackingNumber?.trim()) {
-      return NextResponse.json(
-        { error: 'Carrier tracking number (AWB) is mandatory when marking an order as SHIPPED.' },
-        { status: 400 }
-      );
+    let activeTrackingNumber = trackingNumber?.trim() || order.trackingNumber || '';
+    let activeCarrier = carrier?.trim() || order.carrier || 'Delhivery One (Air Express)';
+
+    // Business Invariant 2: If shipping without an explicit tracking number, auto-generate via Delhivery One
+    if (status === 'SHIPPED' && !activeTrackingNumber) {
+      try {
+        const shipment = await createDelhiveryShipment(order);
+        activeTrackingNumber = shipment.waybill;
+        activeCarrier = shipment.carrier;
+      } catch (shipErr) {
+        return NextResponse.json(
+          { error: 'Carrier tracking number (AWB) is mandatory when marking an order as SHIPPED.' },
+          { status: 400 }
+        );
+      }
     }
 
     // Business Invariant 3: Strict No Refund Policy on consumable raw honey
@@ -55,8 +65,8 @@ export async function POST(
 
     const previousStatus = order.orderStatus;
     order.orderStatus = status;
-    if (carrier) order.carrier = carrier;
-    if (trackingNumber) order.trackingNumber = trackingNumber;
+    if (activeCarrier) order.carrier = activeCarrier;
+    if (activeTrackingNumber) order.trackingNumber = activeTrackingNumber;
     order.updatedAt = new Date().toISOString();
 
     updateLiveOrderStatus(order.id, {
