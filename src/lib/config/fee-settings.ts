@@ -109,7 +109,8 @@ export interface FeeCalculationResult {
 export function calculateOrderFees(
   subtotalPaise: number,
   discountPaise: number = 0,
-  settings: FeeSettings = activeFeeSettings
+  settings: FeeSettings = activeFeeSettings,
+  customShippingBasePaise?: number
 ): FeeCalculationResult {
   const discountedSubtotal = Math.max(0, subtotalPaise - discountPaise);
 
@@ -119,7 +120,8 @@ export function calculateOrderFees(
     settings.freeShippingThreshold > 0 &&
     discountedSubtotal >= settings.freeShippingThreshold;
 
-  const shippingBase = isFreeShipping || discountedSubtotal === 0 ? 0 : settings.shippingBaseFee;
+  const resolvedBase = customShippingBasePaise !== undefined ? customShippingBasePaise : settings.shippingBaseFee;
+  const shippingBase = isFreeShipping || discountedSubtotal === 0 ? 0 : resolvedBase;
   const shippingGstRate = settings.shippingGstRate || 18;
   const shippingGst = Math.round((shippingBase * shippingGstRate) / 100);
   const shippingTotal = shippingBase + shippingGst;

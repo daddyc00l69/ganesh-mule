@@ -84,6 +84,24 @@ function CheckoutContent() {
   const [availableTowns, setAvailableTowns] = useState<string[]>([]);
   const pincodeAbortRef = useRef<AbortController | null>(null);
 
+  // Delhivery Dynamic Freight & Logistics Calculation States
+  const [delhiveryRate, setDelhiveryRate] = useState<{
+    baseFreightPaise: number;
+    additionalWeightPaise: number;
+    insuredGlassHandlingPaise: number;
+    subtotalPaise: number;
+    gstAmountPaise: number;
+    totalPaise: number;
+    zoneName: string;
+    zoneCode: string;
+    estimatedDays: number;
+    carrier: string;
+    billableWeightGrams: number;
+    serviceable: boolean;
+    rateSource: string;
+  } | null>(null);
+  const [isCalculatingFreight, setIsCalculatingFreight] = useState(false);
+
   // Coupon Code States
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCouponState | null>(null);
@@ -187,10 +205,64 @@ function CheckoutContent() {
     }
   }, [searchParams, subtotal]);
 
+  // Gross package weight based on solid glass packaging (300g -> 600g, 750g -> 1280g, 1050g -> 1800g)
+  const consignmentWeightGrams = items.reduce((acc, item) => {
+    const name = (item.productName || (item as any).name || '').toLowerCase();
+    const id = (item.productId || '').toLowerCase();
+    if (name.includes('1050') || id.includes('1050')) return acc + 1800 * item.quantity;
+    if (name.includes('750') || id.includes('750')) return acc + 1280 * item.quantity;
+    return acc + 600 * item.quantity;
+  }, 0) || 600;
+
+  const fetchDelhiveryFreight = async (pin: string) => {
+    if (!isValidIndianPin(pin)) return;
+    setIsCalculatingFreight(true);
+    try {
+      const res = await fetch(
+        `/api/shipping/delhivery/cost?destinationPin=${pin}&weightGrams=${consignmentWeightGrams}`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.pricing) {
+          setDelhiveryRate({
+            baseFreightPaise: Math.round(data.pricing.baseFreight * 100),
+            additionalWeightPaise: Math.round(data.pricing.additionalWeightCharge * 100),
+            insuredGlassHandlingPaise: Math.round(data.pricing.insuredGlassHandlingFee * 100),
+            subtotalPaise: Math.round(data.pricing.subtotal * 100),
+            gstAmountPaise: Math.round(data.pricing.gstAmount * 100),
+            totalPaise: data.pricing.totalShippingCostPaise,
+            zoneName: data.zone,
+            zoneCode: data.zoneCode,
+            estimatedDays: data.estimatedDays,
+            carrier: data.provider || 'Delhivery One Express',
+            billableWeightGrams: data.billableWeightGrams,
+            serviceable: true,
+            rateSource: data.rateSource,
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('Delhivery freight calculation error:', err);
+    } finally {
+      setIsCalculatingFreight(false);
+    }
+  };
+
+  useEffect(() => {
+    if (postalCode.length === 6 && isValidIndianPin(postalCode)) {
+      fetchDelhiveryFreight(postalCode);
+    }
+  }, [postalCode, consignmentWeightGrams]);
+
   // Dynamic calculations with statutory GST and manager-controlled fees
   const totalQuantity = items.reduce((acc, item) => acc + item.quantity, 0);
   const discountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
-  const feeBreakdown = calculateOrderFees(subtotal, discountAmount, feeSettings);
+  const feeBreakdown = calculateOrderFees(
+    subtotal,
+    discountAmount,
+    feeSettings,
+    delhiveryRate ? delhiveryRate.subtotalPaise : undefined
+  );
   const {
     discountedSubtotal,
     shippingBase,
@@ -337,6 +409,9 @@ function CheckoutContent() {
 
       // 2. Authoritative live resolution (fetches all post offices & exact district)
       fetchPinDetails(clean);
+
+      // 3. Live Delhivery Freight calculation with 18% GST
+      fetchDelhiveryFreight(clean);
     }
   };
 
@@ -456,7 +531,7 @@ function CheckoutContent() {
         currency,
         name: 'Ganesh Mule Pure Honey',
         description: `Order ${orderNumber} - 100% Raw Forest Honey`,
-        image: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&w=200&q=80',
+        image: '/images/products/wild-forest-honey.jpg',
         order_id: razorpayOrderId,
         prefill: {
           name: fullName,
@@ -804,17 +879,25 @@ function CheckoutContent() {
                     </span>
                   </div>
 
-                  {/* 3. Shipping & Freight */}
+                  {/* 3. Shipping & Courier Freight */}
                   <div className="flex justify-between items-start">
                     <div>
                       <div className="flex items-center gap-1 font-medium text-[#1d1d1f]">
-                        <span>3. Shipping &amp; Freight</span>
+                        <span>3. Courier Freight (Delhivery One)</span>
                         <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-100 text-purple-900 font-semibold font-mono">18% GST</span>
                       </div>
                       <p className="text-[10px] text-[#86868b] mt-0.5">
-                        {isFreeShipping || shippingTotal === 0
-                          ? 'Free Courier Delivery'
-                          : `Base: ${formatCurrency(shippingBase)} + 18% GST: ${formatCurrency(shippingGst)}`}
+                        {delhiveryRate ? (
+                          <>
+                            {delhiveryRate.zoneName} ({delhiveryRate.billableWeightGrams}g)
+                            <br />
+                            Base: {formatCurrency(delhiveryRate.subtotalPaise)} + 18% GST: {formatCurrency(delhiveryRate.gstAmountPaise)}
+                          </>
+                        ) : isFreeShipping || shippingTotal === 0 ? (
+                          'Free Courier Delivery'
+                        ) : (
+                          `Base: ${formatCurrency(shippingBase)} + 18% GST: ${formatCurrency(shippingGst)}`
+                        )}
                       </p>
                     </div>
                     <span className="font-semibold text-[#1d1d1f]">
@@ -1041,9 +1124,16 @@ function CheckoutContent() {
                               <RefreshCw className="w-2.5 h-2.5" /> Re-check
                             </button>
                           </div>
-                          <div className="text-[10px] text-[#0071e3] bg-[#0071e3]/8 border border-[#0071e3]/15 rounded-md px-2 py-0.5 font-medium flex items-center gap-1">
-                            <Truck className="w-3 h-3 text-[#0071e3]" />
-                            <span>Delhivery One Express: Serviceable (2-3 Business Days)</span>
+                          <div className="text-[10px] text-[#0071e3] bg-[#0071e3]/8 border border-[#0071e3]/15 rounded-md px-2.5 py-1.5 font-medium flex items-center justify-between">
+                            <div className="flex items-center gap-1.5">
+                              <Truck className="w-3.5 h-3.5 text-[#0071e3] shrink-0" />
+                              <span>Delhivery One Express: Serviceable ({delhiveryRate?.estimatedDays || 2}-3 Business Days)</span>
+                            </div>
+                            {delhiveryRate && (
+                              <span className="font-semibold font-mono text-[#1d1d1f] shrink-0 ml-1">
+                                {formatCurrency(delhiveryRate.totalPaise)} (incl. 18% GST)
+                              </span>
+                            )}
                           </div>
                         </div>
                       ) : postalCode.length > 0 && postalCode.length < 6 ? (
@@ -1130,7 +1220,7 @@ function CheckoutContent() {
                   </div>
 
                   {/* Live Shipping Label Preview Card */}
-                  <div className="p-3.5 rounded-[16px] bg-[#f5f5f7]/70 border border-[#d2d2d7]/60 text-xs space-y-1">
+                  <div className="p-3.5 rounded-[16px] bg-[#f5f5f7]/70 border border-[#d2d2d7]/60 text-xs space-y-1.5">
                     <div className="flex items-center justify-between text-[10px] uppercase font-semibold text-[#86868b] tracking-wider">
                       <span className="flex items-center gap-1">
                         <Truck className="w-3 h-3 text-[#0071e3]" />
@@ -1147,6 +1237,12 @@ function CheckoutContent() {
                       <br />
                       {city || 'Town/City'}, {state || 'State'} - <span className="font-mono">{postalCode || '400000'}</span>, {country}
                     </p>
+                    {delhiveryRate && (
+                      <div className="pt-1.5 border-t border-[#d2d2d7]/50 flex items-center justify-between text-[10px] text-[#6e6e73]">
+                        <span>Carrier: <strong className="text-[#1d1d1f]">{delhiveryRate.carrier}</strong> ({delhiveryRate.zoneName})</span>
+                        <span className="font-mono font-medium text-[#1d1d1f]">{delhiveryRate.billableWeightGrams}g Billable</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1354,13 +1450,21 @@ function CheckoutContent() {
                   <div className="flex justify-between items-start">
                     <div>
                       <div className="flex items-center gap-1.5 font-medium text-[#1d1d1f]">
-                        <span>3. Shipping &amp; Courier Freight</span>
+                        <span>3. Shipping &amp; Courier Freight (Delhivery One)</span>
                         <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-100 text-purple-900 font-semibold font-mono">18% GST</span>
                       </div>
                       <p className="text-[10px] text-[#86868b] mt-0.5">
-                        {isFreeShipping || shippingTotal === 0
-                          ? 'Free Express Courier Delivery Applied'
-                          : `Base: ${formatCurrency(shippingBase)} + 18% GST: ${formatCurrency(shippingGst)}`}
+                        {delhiveryRate ? (
+                          <>
+                            {delhiveryRate.zoneName} ({delhiveryRate.billableWeightGrams}g billable)
+                            <br />
+                            Base Freight: {formatCurrency(delhiveryRate.subtotalPaise)} + 18% GST: {formatCurrency(delhiveryRate.gstAmountPaise)}
+                          </>
+                        ) : isFreeShipping || shippingTotal === 0 ? (
+                          'Free Express Courier Delivery Applied'
+                        ) : (
+                          `Base: ${formatCurrency(shippingBase)} + 18% GST: ${formatCurrency(shippingGst)}`
+                        )}
                       </p>
                     </div>
                     <span className="font-semibold text-[#1d1d1f]">

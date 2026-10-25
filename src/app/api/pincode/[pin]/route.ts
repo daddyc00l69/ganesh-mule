@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isValidIndianPin, guessCityStateFromPin, INDIAN_STATES } from '@/lib/constants/india';
+import { checkDelhiveryServiceability } from '@/lib/shipping/delhivery';
 
 // In-memory cache for ultra-fast response
 const pincodeCache = new Map<string, any>();
@@ -151,6 +152,8 @@ export async function GET(
         return 0;
       });
 
+      const delhivery = await checkDelhiveryServiceability(pin);
+
       const payload = {
         success: true,
         postalCode: pin,
@@ -160,6 +163,14 @@ export async function GET(
         defaultTown: primaryTown,
         postOffices: allOffices,
         source: 'INDIA_POST_LIVE',
+        delhivery: {
+          serviceable: delhivery.serviceable,
+          prepaidAvailable: delhivery.prepaidAvailable,
+          expectedDeliveryDays: delhivery.expectedDeliveryDays,
+          deliverySpeed: delhivery.deliverySpeed,
+          carrier: delhivery.carrier,
+          providerUrl: delhivery.providerUrl,
+        },
       };
 
       pincodeCache.set(pin, payload);
@@ -169,6 +180,7 @@ export async function GET(
     // 4. Fallback to comprehensive local dictionary
     if (localGuess && localGuess.state) {
       const city = localGuess.city || 'District City';
+      const delhivery = await checkDelhiveryServiceability(pin);
       const payload = {
         success: true,
         postalCode: pin,
@@ -178,6 +190,14 @@ export async function GET(
         defaultTown: city,
         postOffices: [city],
         source: 'LOCAL_REGISTRY',
+        delhivery: {
+          serviceable: delhivery.serviceable,
+          prepaidAvailable: delhivery.prepaidAvailable,
+          expectedDeliveryDays: delhivery.expectedDeliveryDays,
+          deliverySpeed: delhivery.deliverySpeed,
+          carrier: delhivery.carrier,
+          providerUrl: delhivery.providerUrl,
+        },
       };
       pincodeCache.set(pin, payload);
       return NextResponse.json(payload);

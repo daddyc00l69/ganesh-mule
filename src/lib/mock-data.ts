@@ -112,14 +112,14 @@ export const MOCK_PRODUCTS: ProductItem[] = [
     images: [
       {
         id: 'img-wf300-1',
-        url: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&w=1200&q=80',
+        url: '/images/products/wild-forest-honey.jpg',
         altText: 'Wild Forest Raw Honey 300g in Heavy Solid Glass Jar',
         position: 0,
       },
       {
         id: 'img-wf300-2',
-        url: 'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=80',
-        altText: 'Cold-extracted golden raw honey drizzle',
+        url: '/images/products/artisan-honeycomb-slab.jpg',
+        altText: 'Cold-extracted golden raw honey drizzle and comb',
         position: 1,
       },
     ],
@@ -213,13 +213,13 @@ export const MOCK_PRODUCTS: ProductItem[] = [
     images: [
       {
         id: 'img-wf750-1',
-        url: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&w=1200&q=80',
+        url: '/images/products/himalayan-acacia-honey.jpg',
         altText: 'Wild Forest Raw Honey 750g Solid Glass Jar',
         position: 0,
       },
       {
         id: 'img-wf750-2',
-        url: 'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=80',
+        url: '/images/products/wild-forest-honey.jpg',
         altText: 'Cold-extracted golden raw honey drizzle',
         position: 1,
       },
@@ -304,13 +304,13 @@ export const MOCK_PRODUCTS: ProductItem[] = [
     images: [
       {
         id: 'img-wf1050-1',
-        url: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&w=1200&q=80',
+        url: '/images/products/sundarbans-mangrove-honey.jpg',
         altText: 'Wild Forest Raw Honey 1050g Grand Reserve in Heavy Solid Glass',
         position: 0,
       },
       {
         id: 'img-wf1050-2',
-        url: 'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=80',
+        url: '/images/products/kashmiri-saffron-honey.jpg',
         altText: 'Pure golden raw honey with amber hue',
         position: 1,
       },

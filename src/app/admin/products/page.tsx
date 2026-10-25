@@ -61,7 +61,7 @@ export default function AdminProductsPage() {
     setCategoryId(MOCK_CATEGORIES[0].id);
     setStockQuantity(20);
     setLowStockThreshold(5);
-    setImageUrl('https://images.unsplash.com/photo-1595225476474-87563907a212?auto=format&fit=crop&w=1200&q=80');
+    setImageUrl('/images/products/wild-forest-honey.jpg');
     setIsPublished(true);
     setBadge('Best Seller');
     setBadgeColor('amber');
@@ -478,7 +478,7 @@ export default function AdminProductsPage() {
             type="url"
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
-            placeholder="https://images.unsplash.com/..."
+            placeholder="/images/products/wild-forest-honey.jpg"
             hint="S3 or public image link"
           />
 

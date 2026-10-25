@@ -7,6 +7,10 @@ import { MOCK_PRODUCTS, MOCK_COUPONS, MOCK_ORDERS } from '@/lib/mock-data';
 import { addLiveOrder } from '@/lib/orders/store';
 import { getGstStateCode } from '@/lib/constants/india';
 import { calculateOrderFees } from '@/lib/config/fee-settings';
+import {
+  calculateDelhiveryShippingCost,
+  calculateConsignmentWeightGrams,
+} from '@/lib/shipping/delhivery';
 
 const CheckoutSchema = z.object({
   items: z.array(
@@ -153,8 +157,16 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Dynamic Delhivery Freight calculation based on destination PIN and gross glass jar consignment weight
+    const totalConsignmentWeightGrams = calculateConsignmentWeightGrams(verifiedLineItems as any);
+    const delhiveryPricing = await calculateDelhiveryShippingCost({
+      destinationPincode: address.postalCode,
+      weightGrams: totalConsignmentWeightGrams,
+    });
+    const delhiveryShippingBasePaise = Math.round(delhiveryPricing.pricing.subtotal * 100);
+
     // Server-side calculation of shipping, platform fees, and statutory GST
-    const feeBreakdown = calculateOrderFees(subtotal, discountAmount);
+    const feeBreakdown = calculateOrderFees(subtotal, discountAmount, undefined, delhiveryShippingBasePaise);
     const shippingCost = feeBreakdown.shippingTotal; // base + 18% GST (or 0 if free)
     const platformFee = feeBreakdown.platformTotal; // base + 18% GST
     const taxAmount = feeBreakdown.totalTax; // products 5% + shipping 18% + platform 18%
@@ -247,6 +259,9 @@ export async function POST(req: NextRequest) {
       subtotal,
       shippingCost: feeBreakdown.shippingBase,
       shippingGst: feeBreakdown.shippingGst,
+      carrier: `Delhivery One (${delhiveryPricing.shippingMode || 'Express'} Air)`,
+      shippingZone: delhiveryPricing.zone,
+      delhiveryStatus: 'Payment Pending',
       platformFee: feeBreakdown.platformBase,
       platformFeeGst: feeBreakdown.platformGst,
       taxAmount: feeBreakdown.totalTax,

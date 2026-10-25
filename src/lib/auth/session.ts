@@ -39,24 +39,32 @@ export function generateToken(): string {
  * Sets the secure session cookie on the response.
  */
 export async function setSessionCookie(rawToken: string): Promise<void> {
-  const cookieStore = await cookies();
-  const signed = signSessionToken(rawToken);
-  
-  cookieStore.set(SESSION_COOKIE_NAME, signed, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: SESSION_MAX_AGE,
-  });
+  try {
+    const cookieStore = await cookies();
+    const signed = signSessionToken(rawToken);
+    
+    cookieStore.set(SESSION_COOKIE_NAME, signed, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: SESSION_MAX_AGE,
+    });
+  } catch {
+    // Non-request context (e.g. unit tests or background scripts)
+  }
 }
 
 /**
  * Clears the session cookie.
  */
 export async function clearSessionCookie(): Promise<void> {
-  const cookieStore = await cookies();
-  cookieStore.delete(SESSION_COOKIE_NAME);
+  try {
+    const cookieStore = await cookies();
+    cookieStore.delete(SESSION_COOKIE_NAME);
+  } catch {
+    // Non-request context
+  }
 }
 
 /**

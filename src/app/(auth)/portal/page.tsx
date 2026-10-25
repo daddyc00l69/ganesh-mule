@@ -22,9 +22,7 @@ export default function StaffPortalPage() {
     fetch('/api/admin/setup')
       .then((res) => res.json())
       .then((data) => {
-        if (!data.configured) {
-          setIsUnconfigured(true);
-        }
+        setIsUnconfigured(data.configured === false);
       })
       .catch(() => {});
   }, []);
