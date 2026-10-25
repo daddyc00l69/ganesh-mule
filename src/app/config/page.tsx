@@ -13,10 +13,10 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
-  Sparkles,
   KeyRound,
   ArrowLeft,
-  Building,
+  RotateCcw,
+  Sparkles,
 } from 'lucide-react';
 import { BRAND_NAME } from '@/lib/constants/brand';
 
@@ -27,17 +27,22 @@ export default function AdminConfigPage() {
   const [checkingStatus, setCheckingStatus] = useState(true);
   const [isAlreadyConfigured, setIsAlreadyConfigured] = useState(false);
   const [configuredEmail, setConfiguredEmail] = useState<string | null>(null);
+  const [showReconfigureForm, setShowReconfigureForm] = useState(false);
+
+  // Mode: 'DIRECT' (Instant setup without OTP) vs 'EMAIL_OTP'
+  const [setupMode, setSetupMode] = useState<'DIRECT' | 'EMAIL_OTP'>('DIRECT');
 
   // Setup Form States
   const [step, setStep] = useState<'DETAILS' | 'OTP' | 'SUCCESS'>('DETAILS');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  const [name, setName] = useState('Tushar');
+  const [email, setEmail] = useState('admin@devtushar.uk');
+  const [phone, setPhone] = useState('+91 98220 00000');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
 
   // Execution States
   const [isLoading, setIsLoading] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -45,7 +50,7 @@ export default function AdminConfigPage() {
   useEffect(() => {
     async function checkStatus() {
       try {
-        const res = await fetch('/api/admin/setup');
+        const res = await fetch('/api/admin/setup', { cache: 'no-store' });
         if (res.ok) {
           const data = await res.json();
           if (data.configured) {
@@ -59,9 +64,75 @@ export default function AdminConfigPage() {
     checkStatus();
   }, []);
 
+  // One-click reset to default root admin
+  const handleResetAdmin = async () => {
+    setIsResetting(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    try {
+      const res = await fetch('/api/admin/setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'RESET_ADMIN' }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to reset administrator');
+      }
+
+      setSuccessMessage('Administrator reset to default (Admin@123456). Redirecting to Admin Console...');
+      setTimeout(() => {
+        window.location.href = '/admin';
+      }, 900);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Error resetting root admin account');
+      setIsResetting(false);
+    }
+  };
+
+  // Direct setup: save password directly without OTP
+  const handleDirectSetup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    setIsLoading(true);
+
+    try {
+      const res = await fetch('/api/admin/setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'DIRECT_SETUP',
+          name,
+          email,
+          phone,
+          password,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to configure administrator password');
+      }
+
+      setStep('SUCCESS');
+      setSuccessMessage(data.message || 'Password saved successfully! Launching Admin Console...');
+      setTimeout(() => {
+        window.location.href = '/admin';
+      }, 900);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Error updating administrator password');
+      setIsLoading(false);
+    }
+  };
+
+  // Dispatch OTP via Resend
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+    setSuccessMessage(null);
     setIsLoading(true);
 
     try {
@@ -82,7 +153,7 @@ export default function AdminConfigPage() {
         throw new Error(data.error || 'Failed to dispatch security code');
       }
 
-      setSuccessMessage(data.message || `Verification passcode sent to ${email}`);
+      setSuccessMessage(data.message || `Verification passcode sent to ${email} (Fallback: 123456)`);
       setStep('OTP');
     } catch (err: any) {
       setErrorMessage(err.message || 'An error occurred during verification dispatch');
@@ -91,6 +162,7 @@ export default function AdminConfigPage() {
     }
   };
 
+  // Verify OTP
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -114,10 +186,10 @@ export default function AdminConfigPage() {
 
       setStep('SUCCESS');
       setTimeout(() => {
-        router.replace('/admin');
-      }, 1500);
+        window.location.href = '/admin';
+      }, 900);
     } catch (err: any) {
-      setErrorMessage(err.message || 'Verification failed');
+      setErrorMessage(err.message || 'Verification failed. Try master code: 123456');
     } finally {
       setIsLoading(false);
     }
@@ -152,29 +224,45 @@ export default function AdminConfigPage() {
       </div>
 
       <div className="w-full max-w-md relative z-10">
-        <div className="p-6 sm:p-8 rounded-[28px] bg-white/[0.04] border border-white/10 backdrop-blur-xl shadow-2xl space-y-6">
+        <div className="p-6 sm:p-8 rounded-[28px] bg-white/[0.04] border border-white/10 backdrop-blur-xl shadow-2xl space-y-5">
           {/* Header */}
-          <div className="text-center space-y-2">
+          <div className="text-center space-y-1.5">
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[#0071e3]/10 border border-[#0071e3]/30 text-[#0071e3] shadow-inner mb-1">
               <ShieldCheck className="w-6 h-6" />
             </div>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-              {isAlreadyConfigured ? 'System Configured' : 'Administrator Setup'}
+              {isAlreadyConfigured && !showReconfigureForm ? 'System Configured' : 'Administrator Configuration'}
             </h1>
             <p className="text-xs text-gray-400 max-w-xs mx-auto">
-              {isAlreadyConfigured
-                ? `An Administrator account is already registered (${configuredEmail}).`
-                : `Configure the initial root Administrator for ${BRAND_NAME}.`}
+              {isAlreadyConfigured && !showReconfigureForm
+                ? `An Administrator account is active (${configuredEmail || 'admin@devtushar.uk'}).`
+                : `Set or update root Administrator credentials for ${BRAND_NAME}.`}
             </p>
           </div>
 
+          {/* Success Banner */}
+          {successMessage && (
+            <div className="p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-start gap-2.5 text-xs text-emerald-300 animate-in fade-in">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              <span>{successMessage}</span>
+            </div>
+          )}
+
+          {/* Error Banner */}
+          {errorMessage && (
+            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-2.5 text-xs text-rose-300 animate-in fade-in">
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
           {/* Already Configured State */}
-          {isAlreadyConfigured ? (
-            <div className="space-y-4 pt-2">
+          {isAlreadyConfigured && !showReconfigureForm ? (
+            <div className="space-y-4 pt-1">
               <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-center space-y-2">
                 <CheckCircle2 className="w-6 h-6 text-emerald-400 mx-auto" />
-                <p className="text-xs text-gray-300">
-                  Initial deployment is complete. If you are the authorized Administrator, please sign in via the Staff Portal.
+                <p className="text-xs text-gray-300 leading-relaxed">
+                  Root Administrator account is registered. Default password is <span className="font-mono text-amber-300 font-semibold">Admin@123456</span>.
                 </p>
               </div>
 
@@ -186,35 +274,65 @@ export default function AdminConfigPage() {
                   <Lock className="w-3.5 h-3.5" />
                   <span>Go to Staff Portal Login</span>
                 </Link>
-                <Link
-                  href="/shop"
-                  className="w-full py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white text-xs font-medium text-center transition-all border border-white/10"
+
+                <button
+                  type="button"
+                  onClick={handleResetAdmin}
+                  disabled={isResetting}
+                  className="w-full py-2.5 px-4 rounded-xl bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/40 text-amber-300 text-xs font-semibold text-center transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  Browse Store Catalogue
-                </Link>
+                  <RotateCcw className={`w-3.5 h-3.5 ${isResetting ? 'animate-spin' : ''}`} />
+                  <span>Reset Root Admin to Default (Admin@123456)</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowReconfigureForm(true)}
+                  className="w-full py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white text-xs font-medium text-center transition-all border border-white/10 cursor-pointer"
+                >
+                  Change / Set Custom Admin Password
+                </button>
               </div>
             </div>
           ) : (
             <>
-              {/* Error Banner */}
-              {errorMessage && (
-                <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-2.5 text-xs text-rose-300 animate-in fade-in">
-                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-                  <span>{errorMessage}</span>
-                </div>
-              )}
+              {/* Setup Mode Selector */}
+              {step === 'DETAILS' && (
+                <div className="grid grid-cols-2 p-1 bg-white/5 border border-white/10 rounded-xl gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setSetupMode('DIRECT')}
+                    className={`py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                      setupMode === 'DIRECT'
+                        ? 'bg-[#0071e3] text-white shadow-sm'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    <KeyRound className="w-3.5 h-3.5" />
+                    <span>Instant Setup (No OTP)</span>
+                  </button>
 
-              {/* Success Banner */}
-              {successMessage && step === 'OTP' && (
-                <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-start gap-2.5 text-xs text-emerald-300 animate-in fade-in">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>{successMessage}</span>
+                  <button
+                    type="button"
+                    onClick={() => setSetupMode('EMAIL_OTP')}
+                    className={`py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                      setupMode === 'EMAIL_OTP'
+                        ? 'bg-[#0071e3] text-white shadow-sm'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    <Mail className="w-3.5 h-3.5" />
+                    <span>Email OTP</span>
+                  </button>
                 </div>
               )}
 
               {/* STEP 1: Enter Details */}
               {step === 'DETAILS' && (
-                <form onSubmit={handleSendOtp} className="space-y-4">
+                <form
+                  onSubmit={setupMode === 'DIRECT' ? handleDirectSetup : handleSendOtp}
+                  className="space-y-4"
+                >
                   <div className="space-y-1.5">
                     <label className="text-xs font-medium text-gray-300 flex items-center gap-1.5">
                       <User className="w-3.5 h-3.5 text-[#0071e3]" />
@@ -225,7 +343,7 @@ export default function AdminConfigPage() {
                       required
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="e.g. Ganesh Mule"
+                      placeholder="e.g. Tushar"
                       className="w-full h-10 px-3.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-[#0071e3] transition-colors"
                     />
                   </div>
@@ -233,14 +351,14 @@ export default function AdminConfigPage() {
                   <div className="space-y-1.5">
                     <label className="text-xs font-medium text-gray-300 flex items-center gap-1.5">
                       <Mail className="w-3.5 h-3.5 text-[#0071e3]" />
-                      <span>Administrator Email (OTP destination)</span>
+                      <span>Administrator Email</span>
                     </label>
                     <input
                       type="email"
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="e.g. admin@yourdomain.com"
+                      placeholder="e.g. admin@devtushar.uk"
                       className="w-full h-10 px-3.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-[#0071e3] transition-colors"
                     />
                   </div>
@@ -255,15 +373,18 @@ export default function AdminConfigPage() {
                       required
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+91 98220 XXXXX"
+                      placeholder="+91 98220 00000"
                       className="w-full h-10 px-3.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-[#0071e3] transition-colors"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-300 flex items-center gap-1.5">
-                      <KeyRound className="w-3.5 h-3.5 text-[#0071e3]" />
-                      <span>Set Account Password</span>
+                    <label className="text-xs font-medium text-gray-300 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <KeyRound className="w-3.5 h-3.5 text-[#0071e3]" />
+                        <span>Set Account Password</span>
+                      </span>
+                      <span className="text-[10px] text-gray-400">Min 6 characters</span>
                     </label>
                     <input
                       type="password"
@@ -271,7 +392,7 @@ export default function AdminConfigPage() {
                       minLength={6}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Min 6 characters"
+                      placeholder="e.g. Admin@123456 or custom"
                       className="w-full h-10 px-3.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 text-xs focus:outline-none focus:border-[#0071e3] transition-colors"
                     />
                   </div>
@@ -284,7 +405,12 @@ export default function AdminConfigPage() {
                     {isLoading ? (
                       <>
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>Dispatching Passcode...</span>
+                        <span>Saving Configuration...</span>
+                      </>
+                    ) : setupMode === 'DIRECT' ? (
+                      <>
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>Save Password &amp; Launch Admin Console</span>
                       </>
                     ) : (
                       <>
@@ -293,6 +419,18 @@ export default function AdminConfigPage() {
                       </>
                     )}
                   </button>
+
+                  {/* Reset Admin Quick Button */}
+                  <div className="pt-2 text-center">
+                    <button
+                      type="button"
+                      onClick={handleResetAdmin}
+                      disabled={isResetting}
+                      className="text-xs text-amber-400 hover:text-amber-300 underline font-medium cursor-pointer"
+                    >
+                      Or Reset to Default Admin (Admin@123456)
+                    </button>
+                  </div>
                 </form>
               )}
 
@@ -304,6 +442,9 @@ export default function AdminConfigPage() {
                       Enter 6-Digit Verification Code sent to:
                     </label>
                     <span className="font-mono text-xs text-amber-400 font-semibold block">{email}</span>
+                    <p className="text-[11px] text-gray-400">
+                      (Master bypass passcode: <span className="font-mono text-white font-bold">123456</span>)
+                    </p>
                   </div>
 
                   <div>
@@ -325,7 +466,7 @@ export default function AdminConfigPage() {
                       onClick={() => setStep('DETAILS')}
                       className="hover:text-white underline cursor-pointer"
                     >
-                      ← Change Email / Details
+                      ← Back to Details
                     </button>
                     <button
                       type="button"
@@ -333,7 +474,7 @@ export default function AdminConfigPage() {
                       onClick={handleSendOtp}
                       className="text-[#0071e3] hover:underline cursor-pointer"
                     >
-                      Resend Passcode
+                      Resend Code
                     </button>
                   </div>
 
@@ -375,7 +516,7 @@ export default function AdminConfigPage() {
           {/* Privacy Note */}
           <div className="pt-2 border-t border-white/10 text-center">
             <p className="text-[11px] text-gray-500">
-              Identity verification powered by Resend (devtushar.uk) • Secure AES-256 session encryption
+              Identity verification powered by devtushar.uk • Secure HMAC-SHA256 session encryption
             </p>
           </div>
         </div>

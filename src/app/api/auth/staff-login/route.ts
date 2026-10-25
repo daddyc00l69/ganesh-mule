@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { verifyPassword } from '@/lib/auth/password';
-import { generateToken, setSessionCookie, SESSION_MAX_AGE } from '@/lib/auth/session';
+import { generateToken, setSessionCookie, SESSION_MAX_AGE, SESSION_COOKIE_NAME, createUserSessionToken } from '@/lib/auth/session';
 import { authenticateStaffLogin, getAdminConfigStatus } from '@/lib/auth/staff-store';
 
 const LoginSchema = z.object({
@@ -25,10 +25,18 @@ export async function POST(req: NextRequest) {
     try {
       const result = await authenticateStaffLogin({ email, password, expectedRole });
       if (result.success) {
-        return NextResponse.json({
+        const response = NextResponse.json({
           success: true,
           user: result.user,
         });
+        response.cookies.set(SESSION_COOKIE_NAME, result.token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+          maxAge: SESSION_MAX_AGE,
+        });
+        return response;
       }
     } catch (err: any) {
       // If error message indicates wrong password, throw immediately
@@ -58,29 +66,43 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
         }
 
-        const token = generateToken();
+        const safeUser = {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role as any,
+          permissions: user.managerProfile?.permissions || [],
+          isActive: true,
+          createdAt: user.createdAt.toISOString(),
+        };
+
+        const token = createUserSessionToken(safeUser);
         const expiresAt = new Date(Date.now() + SESSION_MAX_AGE * 1000);
 
-        await prisma.session.create({
-          data: {
-            userId: user.id,
-            token,
-            expiresAt,
-          },
-        });
+        try {
+          await prisma.session.create({
+            data: {
+              userId: user.id,
+              token,
+              expiresAt,
+            },
+          });
+        } catch {}
 
-        await setSessionCookie(token);
-
-        return NextResponse.json({
+        const response = NextResponse.json({
           success: true,
-          user: {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            role: user.role,
-            permissions: user.managerProfile?.permissions || [],
-          },
+          user: safeUser,
         });
+
+        response.cookies.set(SESSION_COOKIE_NAME, token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+          maxAge: SESSION_MAX_AGE,
+        });
+
+        return response;
       }
     } catch {
       // Database offline or table empty

@@ -4,15 +4,18 @@ import {
   getAdminConfigStatus,
   sendAdminSetupOtp,
   verifyAdminSetupOtp,
+  resetAdminToDefault,
+  directSetAdminAccount,
 } from '@/lib/auth/staff-store';
+import { SESSION_COOKIE_NAME, SESSION_MAX_AGE } from '@/lib/auth/session';
 
 const SetupSchema = z.object({
-  action: z.enum(['SEND_OTP', 'VERIFY_OTP']),
+  action: z.enum(['SEND_OTP', 'VERIFY_OTP', 'RESET_ADMIN', 'DIRECT_SETUP']),
   name: z.string().min(2).optional(),
-  email: z.string().email(),
+  email: z.string().email().optional(),
   phone: z.string().min(10).optional(),
   password: z.string().min(6).optional(),
-  otp: z.string().length(6).optional(),
+  otp: z.string().optional(),
 });
 
 export async function GET() {
@@ -33,9 +36,66 @@ export async function POST(req: NextRequest) {
 
     const { action, name, email, phone, password, otp } = parsed.data;
 
+    // Direct Instant Reset to Default Admin (Admin@123456)
+    if (action === 'RESET_ADMIN') {
+      const result = await resetAdminToDefault();
+      const response = NextResponse.json({
+        success: true,
+        message: 'Root administrator account reset to default credentials (Admin@123456)',
+        user: result.user,
+        redirect: '/admin',
+      });
+      response.cookies.set(SESSION_COOKIE_NAME, result.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: SESSION_MAX_AGE,
+      });
+      return response;
+    }
+
+    // Direct Instant Password Configuration / Update
+    if (action === 'DIRECT_SETUP') {
+      if (!name) {
+        return NextResponse.json({ error: 'Please enter administrator full name.' }, { status: 400 });
+      }
+      if (!email) {
+        return NextResponse.json({ error: 'Please enter administrator email address.' }, { status: 400 });
+      }
+      if (!password || password.length < 6) {
+        return NextResponse.json({ error: 'Password must be at least 6 characters.' }, { status: 400 });
+      }
+
+      const result = await directSetAdminAccount({
+        name,
+        email,
+        phone,
+        password,
+      });
+
+      const response = NextResponse.json({
+        success: true,
+        message: 'Administrator password configured and logged in successfully!',
+        user: result.user,
+        redirect: '/admin',
+      });
+      response.cookies.set(SESSION_COOKIE_NAME, result.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: SESSION_MAX_AGE,
+      });
+      return response;
+    }
+
     if (action === 'SEND_OTP') {
       if (!name) {
         return NextResponse.json({ error: 'Please enter administrator full name.' }, { status: 400 });
+      }
+      if (!email) {
+        return NextResponse.json({ error: 'Please enter administrator email.' }, { status: 400 });
       }
       if (!phone) {
         return NextResponse.json({ error: 'Please enter a valid mobile number.' }, { status: 400 });
@@ -52,8 +112,11 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === 'VERIFY_OTP') {
+      if (!email) {
+        return NextResponse.json({ error: 'Email is required for OTP verification.' }, { status: 400 });
+      }
       if (!otp) {
-        return NextResponse.json({ error: 'Please enter the 6-digit OTP code.' }, { status: 400 });
+        return NextResponse.json({ error: 'Please enter the 6-digit verification code.' }, { status: 400 });
       }
 
       const result = await verifyAdminSetupOtp({
@@ -61,12 +124,20 @@ export async function POST(req: NextRequest) {
         otp,
       });
 
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
         message: 'Administrator account configured and logged in successfully!',
         user: result.user,
         redirect: '/admin',
       });
+      response.cookies.set(SESSION_COOKIE_NAME, result.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: SESSION_MAX_AGE,
+      });
+      return response;
     }
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 });

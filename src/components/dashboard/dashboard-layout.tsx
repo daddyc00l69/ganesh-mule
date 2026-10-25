@@ -31,7 +31,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
     async function verifyAuth() {
       try {
-        const res = await fetch('/api/auth/me');
+        const res = await fetch('/api/auth/me', {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' },
+        });
         if (!res.ok) {
           throw new Error('Not authenticated');
         }
@@ -43,7 +46,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         const user: SafeUser = data.user;
         // Verify role access (ADMIN can access all, MANAGER can access MANAGER)
         if (role === 'ADMIN' && user.role !== 'ADMIN') {
-          router.replace('/portal?error=unauthorized');
+          window.location.href = '/portal?error=unauthorized';
           return;
         }
 
@@ -53,8 +56,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         }
       } catch (err) {
         if (isMounted) {
-          const redirectPath = encodeURIComponent(pathname || '/manager');
-          router.replace(`/portal?redirect=${redirectPath}`);
+          const redirectPath = encodeURIComponent(pathname || (role === 'ADMIN' ? '/admin' : '/manager'));
+          window.location.href = `/portal?redirect=${redirectPath}`;
         }
       }
     }

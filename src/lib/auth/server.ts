@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSessionTokenFromCookies } from './session';
+import { getSessionTokenFromCookies, getRawSessionCookie, decodeUserSessionFromToken } from './session';
 import { findStaffBySessionToken } from './staff-store';
 import { prisma, isDatabaseOnline } from '@/lib/db';
 import { SafeUser } from '@/types';
@@ -10,10 +10,21 @@ import { hasPermission, PermissionKey } from '@/lib/permissions';
  */
 export async function getCurrentUser(): Promise<SafeUser | null> {
   try {
+    const rawCookie = await getRawSessionCookie();
+    if (rawCookie) {
+      // 1. Check stateless signed user payload (bulletproof across Vercel serverless lambdas)
+      const statelessUser = decodeUserSessionFromToken(rawCookie);
+      if (statelessUser) return statelessUser;
+    }
+
     const token = await getSessionTokenFromCookies();
     if (!token) return null;
 
-    // Check in-memory / persisted staff store sessions first
+    // 1b. Check if token itself is a stateless signed user payload
+    const statelessFromToken = decodeUserSessionFromToken(token);
+    if (statelessFromToken) return statelessFromToken;
+
+    // 2. Check in-memory / persisted staff store sessions
     const staffUser = findStaffBySessionToken(token);
     if (staffUser) return staffUser;
 
