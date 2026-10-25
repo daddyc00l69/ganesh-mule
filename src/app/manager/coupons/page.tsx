@@ -48,7 +48,9 @@ export default function ManagerCouponsPage() {
   };
 
   const handleCopyLink = (code: string) => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001';
+    const origin = typeof window !== 'undefined' && !window.location.origin.includes('localhost')
+      ? window.location.origin
+      : 'https://ganesh-mule.vercel.app';
     const link = `${origin}/checkout?coupon=${code}`;
     navigator.clipboard.writeText(link);
     setCopiedLink(code);
@@ -56,11 +58,14 @@ export default function ManagerCouponsPage() {
   };
 
   const handleCopySnippet = (coupon: DiscountCoupon) => {
+    const origin = typeof window !== 'undefined' && !window.location.origin.includes('localhost')
+      ? window.location.origin
+      : 'https://ganesh-mule.vercel.app';
     const offer =
       coupon.discountType === 'PERCENTAGE'
         ? `${coupon.value}% off`
         : `${formatCurrency(coupon.value)} off`;
-    const snippet = `Hello! As a courtesy for your order inquiry, here is an exclusive promotional code: ${coupon.code} for ${offer}. You can apply it at checkout or via this link: http://localhost:3001/checkout?coupon=${coupon.code}`;
+    const snippet = `Hello! As a courtesy for your order inquiry, here is an exclusive promotional code: ${coupon.code} for ${offer}. You can apply it at checkout or via this link: ${origin}/checkout?coupon=${coupon.code}`;
     navigator.clipboard.writeText(snippet);
     setCopiedSnippet(coupon.code);
     setTimeout(() => setCopiedSnippet(null), 2500);
@@ -133,9 +138,14 @@ export default function ManagerCouponsPage() {
                   <span className="font-mono text-sm font-semibold text-foreground tracking-wide bg-secondary/80 border border-border/40 px-2.5 py-0.5 rounded-lg">
                     {coupon.code}
                   </span>
-                  <GlassBadge variant={coupon.isActive ? 'success' : 'outline'}>
-                    {coupon.isActive ? 'Active' : 'Paused'}
-                  </GlassBadge>
+                  <div className="flex items-center gap-1.5">
+                    <GlassBadge variant={coupon.isPublic ? 'success' : 'outline'}>
+                      {coupon.isPublic ? '🌐 Public' : '🔒 Direct Code'}
+                    </GlassBadge>
+                    <GlassBadge variant={coupon.isActive ? 'success' : 'outline'}>
+                      {coupon.isActive ? 'Active' : 'Paused'}
+                    </GlassBadge>
+                  </div>
                 </div>
 
                 <div>

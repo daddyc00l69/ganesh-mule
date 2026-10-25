@@ -91,6 +91,32 @@ function CheckoutContent() {
   const [couponError, setCouponError] = useState<string | null>(null);
   const [couponSuccessMsg, setCouponSuccessMsg] = useState<string | null>(null);
 
+  // Public Offers & Refresh Button States
+  const [showPublicOffers, setShowPublicOffers] = useState(false);
+  const [publicOffers, setPublicOffers] = useState<Array<{
+    code: string;
+    description: string;
+    discountType: 'PERCENTAGE' | 'FIXED_AMOUNT';
+    value: number;
+    minOrderAmount: number;
+  }>>([]);
+  const [isLoadingOffers, setIsLoadingOffers] = useState(false);
+
+  const fetchPublicOffers = async () => {
+    setIsLoadingOffers(true);
+    try {
+      const res = await fetch('/api/coupons?publicOnly=true');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.coupons && Array.isArray(data.coupons)) {
+          setPublicOffers(data.coupons);
+          setShowPublicOffers(true);
+        }
+      }
+    } catch {}
+    setIsLoadingOffers(false);
+  };
+
   // Mobile Order Summary Toggle
   const [isOrderSummaryOpen, setIsOrderSummaryOpen] = useState(false);
 
@@ -1203,22 +1229,62 @@ function CheckoutContent() {
                         </button>
                       </div>
 
-                      {/* Quick Coupon Chips */}
-                      <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                        <span className="text-[10px] text-[#86868b]">Try:</span>
-                        {['VIKRAM15', 'ROYAL20', 'AMBER10'].map((code) => (
-                          <button
-                            key={code}
-                            type="button"
-                            onClick={() => {
-                              setCouponInput(code);
-                              validateAndApplyCoupon(code);
-                            }}
-                            className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#f5f5f7] hover:bg-[#e8e8ed] text-[#1d1d1f] border border-[#d2d2d7]/60 cursor-pointer transition-colors"
-                          >
-                            {code}
-                          </button>
-                        ))}
+                      {/* Refresh / View Available Offers Button */}
+                      <div className="pt-1">
+                        <button
+                          type="button"
+                          onClick={fetchPublicOffers}
+                          disabled={isLoadingOffers}
+                          className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#0071e3] hover:text-[#0077ed] transition-colors cursor-pointer py-0.5"
+                        >
+                          <RefreshCw className={`w-3 h-3 ${isLoadingOffers ? 'animate-spin' : ''}`} />
+                          <span>
+                            {showPublicOffers ? 'Refresh Available Offers' : 'View Available Offers'}
+                          </span>
+                        </button>
+
+                        {showPublicOffers && (
+                          <div className="mt-2 space-y-1.5 animate-in fade-in">
+                            {publicOffers.length === 0 ? (
+                              <p className="text-[11px] text-[#86868b] italic">
+                                No public offers active right now. Enter your promo code above.
+                              </p>
+                            ) : (
+                              publicOffers.map((offer) => (
+                                <div
+                                  key={offer.code}
+                                  className="p-2.5 rounded-xl bg-[#f5f5f7] border border-[#d2d2d7]/80 flex items-center justify-between text-xs transition-all hover:border-[#0071e3]/40"
+                                >
+                                  <div className="space-y-0.5 pr-2">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="font-mono font-bold text-[#1d1d1f] tracking-wider text-xs">
+                                        {offer.code}
+                                      </span>
+                                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 font-medium">
+                                        {offer.discountType === 'PERCENTAGE'
+                                          ? `${offer.value}% OFF`
+                                          : `₹${offer.value / 100} OFF`}
+                                      </span>
+                                    </div>
+                                    <p className="text-[10px] text-[#6e6e73] leading-snug">
+                                      {offer.description}
+                                    </p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setCouponInput(offer.code);
+                                      validateAndApplyCoupon(offer.code);
+                                    }}
+                                    className="px-2.5 py-1 text-[11px] font-medium rounded-full bg-white hover:bg-[#1d1d1f] hover:text-white border border-[#d2d2d7] text-[#1d1d1f] transition-all cursor-pointer shrink-0 shadow-2xs"
+                                  >
+                                    Apply
+                                  </button>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1386,16 +1452,6 @@ function CheckoutContent() {
                         : `Pay ${formatCurrency(totalAmount)} with Razorpay`}
                     </span>
                   </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleInitiatePayment(undefined, true)}
-                    disabled={isProcessing}
-                    className="w-full py-2.5 px-4 rounded-full bg-amber-50 hover:bg-amber-100/80 active:bg-amber-200/60 border border-amber-300/80 text-amber-900 font-medium text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer disabled:opacity-60"
-                  >
-                    <Zap className="w-3.5 h-3.5 text-amber-600 fill-amber-600 shrink-0" />
-                    <span>⚡ 1-Click Fast Express Pay (Instant 0.2s Test Order)</span>
-                  </button>
                 </div>
 
                 <div className="flex items-center justify-center gap-1.5 text-[11px] text-[#86868b] pt-1 text-center">
@@ -1422,23 +1478,12 @@ function CheckoutContent() {
                 <div className="flex items-center gap-2 flex-1 justify-end">
                   <button
                     type="button"
-                    onClick={() => handleInitiatePayment(undefined, true)}
-                    disabled={isProcessing}
-                    className="py-2.5 px-3 rounded-full bg-amber-100 hover:bg-amber-200 border border-amber-300 text-amber-900 font-semibold text-xs flex items-center gap-1 cursor-pointer disabled:opacity-60 shrink-0"
-                    title="1-Click Instant Order"
-                  >
-                    <Zap className="w-3 h-3 text-amber-700 fill-amber-700" />
-                    <span>⚡ Fast Test</span>
-                  </button>
-
-                  <button
-                    type="button"
                     onClick={(e) => handleInitiatePayment(e, false)}
                     disabled={isProcessing}
-                    className="flex-1 max-w-[200px] py-2.5 px-3 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4] text-white font-medium text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer disabled:opacity-60"
+                    className="w-full max-w-[260px] py-3 px-5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4] text-white font-medium text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer disabled:opacity-60"
                   >
                     <Lock className="w-3.5 h-3.5 shrink-0" />
-                    <span className="truncate">{isProcessing ? processingStep || 'Processing...' : 'Razorpay'}</span>
+                    <span>{isProcessing ? processingStep || 'Processing...' : `Pay ${formatCurrency(totalAmount)}`}</span>
                   </button>
                 </div>
               </div>

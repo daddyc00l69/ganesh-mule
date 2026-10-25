@@ -47,44 +47,23 @@ export default function ProductDetailPage() {
   const [showStickyBar, setShowStickyBar] = useState(false);
 
   // Variant volume selection and dynamic pricing
-  const defaultVariant = product.weightGrams ? `${product.weightGrams}g` : '500g';
+  // Variant volume selection matching the 3 flagship weights (300g, 750g, 1050g)
+  const defaultVariant = product.weightGrams ? `${product.weightGrams}g` : '750g';
   const [selectedVariant, setSelectedVariant] = useState(defaultVariant);
 
-  // Determine variant options based on product type
-  const isDipper = product.id === 'prod-olivewood-dipper';
-  const isComb = product.id === 'prod-artisan-comb-slab';
-  const isSaffron = product.id === 'prod-kashmiri-saffron-infused';
-
-  const variantOptions = isDipper
-    ? [
-        { label: 'Single Dipper (16cm)', weight: '16cm', priceMult: 1, compareMult: 1 },
-        { label: 'Artisan Duo (2 Pack)', weight: '2 Pack', priceMult: 1.72, compareMult: 1.72 },
-      ]
-    : isComb
-    ? [
-        { label: '250g Comb Slab', weight: '250g', priceMult: 0.62, compareMult: 0.62 },
-        { label: '400g Slab (Standard)', weight: '400g', priceMult: 1, compareMult: 1 },
-        { label: '800g Family Slab', weight: '800g', priceMult: 1.85, compareMult: 1.85 },
-      ]
-    : isSaffron
-    ? [
-        { label: '180g Trial Jar', weight: '180g', priceMult: 0.58, compareMult: 0.58 },
-        { label: '350g Reserve (Standard)', weight: '350g', priceMult: 1, compareMult: 1 },
-        { label: '700g Royal Jar', weight: '700g', priceMult: 1.85, compareMult: 1.85 },
-      ]
-    : [
-        { label: '250g Jar', weight: '250g', priceMult: 0.57, compareMult: 0.56 },
-        { label: '500g Jar (Standard)', weight: '500g', priceMult: 1, compareMult: 1 },
-        { label: '1kg Family Pack', weight: '1000g', priceMult: 1.86, compareMult: 1.89 },
-      ];
+  const variantOptions = [
+    { label: '300g Solid Glass Jar', weight: '300g', slug: 'wild-forest-raw-honey-300g', price: 44900, compareAtPrice: 59900 },
+    { label: '750g Solid Glass Jar', weight: '750g', slug: 'wild-forest-raw-honey-750g', price: 89900, compareAtPrice: 119900 },
+    { label: '1050g Grand Reserve Jar', weight: '1050g', slug: 'wild-forest-raw-honey-1050g', price: 119900, compareAtPrice: 159900 },
+  ];
 
   const currentVariantObj =
-    variantOptions.find((v) => v.weight === selectedVariant) || variantOptions[1] || variantOptions[0];
+    variantOptions.find((v) => v.weight === selectedVariant) ||
+    variantOptions.find((v) => v.weight === defaultVariant) ||
+    variantOptions[1];
 
-  const activePrice = Math.round(product.price * currentVariantObj.priceMult);
-  const activeCompareAtPrice = product.compareAtPrice
-    ? Math.round(product.compareAtPrice * currentVariantObj.compareMult)
-    : null;
+  const activePrice = currentVariantObj.price;
+  const activeCompareAtPrice = currentVariantObj.compareAtPrice;
 
   const discountPercent = activeCompareAtPrice
     ? Math.round(((activeCompareAtPrice - activePrice) / activeCompareAtPrice) * 100)
@@ -351,7 +330,7 @@ export default function ProductDetailPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                   {variantOptions.map((opt) => {
                     const isSelected = selectedVariant === opt.weight;
-                    const optPrice = Math.round(product.price * opt.priceMult);
+                    const optPrice = opt.price;
                     return (
                       <button
                         key={opt.weight}

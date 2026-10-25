@@ -1,12 +1,19 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { MessageSquare, X, ChevronRight, Droplets } from 'lucide-react';
 
 export const ChatwootWidget: React.FC = () => {
+  const pathname = usePathname();
   const [isOpenFallback, setIsOpenFallback] = useState(false);
   const baseUrl = process.env.NEXT_PUBLIC_CHATWOOT_BASE_URL || 'https://app.chatwoot.com';
   const websiteToken = process.env.NEXT_PUBLIC_CHATWOOT_WEBSITE_TOKEN;
+
+  // Do not display on checkout to avoid overlapping sticky mobile action bar
+  if (pathname === '/checkout') {
+    return null;
+  }
 
   useEffect(() => {
     if (websiteToken && !websiteToken.includes('placeholder')) {

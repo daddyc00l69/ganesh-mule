@@ -56,6 +56,7 @@ export default function AdminCouponsPage() {
   const [formExpiresAt, setFormExpiresAt] = useState('2027-12-31');
   const [formUsageLimit, setFormUsageLimit] = useState<number | ''>(500);
   const [formAssignedManagerIds, setFormAssignedManagerIds] = useState<string[]>(['usr-mgr-1']);
+  const [formIsPublic, setFormIsPublic] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -76,6 +77,22 @@ export default function AdminCouponsPage() {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
+  const handleTogglePublic = async (coupon: DiscountCoupon) => {
+    const nextVal = !coupon.isPublic;
+    try {
+      const res = await fetch('/api/coupons', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: coupon.id, isPublic: nextVal }),
+      });
+      if (res.ok) {
+        setCoupons((prev) =>
+          prev.map((c) => (c.id === coupon.id ? { ...c, isPublic: nextVal } : c))
+        );
+      }
+    } catch {}
+  };
+
   const handleOpenCreate = () => {
     setFormCode(`HONEY${Math.floor(10 + Math.random() * 90)}`);
     setFormDescription('Exclusive Courtesy Discount');
@@ -86,6 +103,7 @@ export default function AdminCouponsPage() {
     setFormExpiresAt('2027-12-31');
     setFormUsageLimit(500);
     setFormAssignedManagerIds(['usr-mgr-1']);
+    setFormIsPublic(false);
     setErrorMsg(null);
     setIsCreateOpen(true);
   };
@@ -101,6 +119,7 @@ export default function AdminCouponsPage() {
     setFormExpiresAt(c.expiresAt ? c.expiresAt.split('T')[0] : '');
     setFormUsageLimit(c.usageLimit || '');
     setFormAssignedManagerIds(c.assignedManagerIds || []);
+    setFormIsPublic(!!c.isPublic);
     setErrorMsg(null);
   };
 
@@ -125,6 +144,7 @@ export default function AdminCouponsPage() {
         formType === 'PERCENTAGE' && formMaxDiscountRupees ? Number(formMaxDiscountRupees) * 100 : null,
       expiresAt: formExpiresAt ? new Date(formExpiresAt).toISOString() : null,
       usageLimit: formUsageLimit ? Number(formUsageLimit) : null,
+      isPublic: formIsPublic,
       assignedManagerIds: formAssignedManagerIds,
     };
 
@@ -304,6 +324,22 @@ export default function AdminCouponsPage() {
         <GlassBadge variant={coupon.isActive ? 'success' : 'outline'}>
           {coupon.isActive ? 'Active' : 'Paused'}
         </GlassBadge>
+      ),
+    },
+    {
+      key: 'visibility',
+      header: 'Storefront Visibility',
+      render: (coupon) => (
+        <button
+          type="button"
+          onClick={() => handleTogglePublic(coupon)}
+          className="inline-flex items-center gap-1.5 cursor-pointer group"
+          title={coupon.isPublic ? 'Click to hide from checkout offers' : 'Click to make public in checkout offers'}
+        >
+          <GlassBadge variant={coupon.isPublic ? 'success' : 'outline'}>
+            {coupon.isPublic ? '🌐 Public Offer' : '🔒 Hidden (Direct)'}
+          </GlassBadge>
+        </button>
       ),
     },
     {
@@ -584,6 +620,26 @@ export default function AdminCouponsPage() {
                   value={formExpiresAt}
                   onChange={(e) => setFormExpiresAt(e.target.value)}
                 />
+              </div>
+
+              <div className="sm:col-span-2 p-3 rounded-xl bg-white/5 border border-white/10 flex items-center justify-between">
+                <div>
+                  <label className="font-medium text-foreground block text-xs">Public Storefront Offer</label>
+                  <p className="text-[11px] text-muted-foreground">
+                    When enabled, shoppers can discover and apply this coupon by clicking &ldquo;View Available Offers&rdquo; in checkout.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFormIsPublic(!formIsPublic)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
+                    formIsPublic
+                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                      : 'bg-white/5 text-muted-foreground border-white/10'
+                  }`}
+                >
+                  {formIsPublic ? '🌐 Public Offer' : '🔒 Hidden / Direct Code'}
+                </button>
               </div>
             </div>
 

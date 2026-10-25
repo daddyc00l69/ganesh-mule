@@ -6,6 +6,7 @@ import {
   BRAND_TAGLINE,
   SUPPORT_EMAIL,
   COMPANY_LEGAL_NAME,
+  STORE_URL,
 } from '@/lib/constants/brand';
 
 const PRIMARY_COLOR = '#d97706'; // warm amber gold
@@ -15,7 +16,7 @@ const TEXT_MUTED = '#86868b';
 /**
  * Shared email shell wrapping content in high-end Apple/Amber & Glass aesthetics
  */
-function wrapEmailShell(title: string, bodyContent: string, appUrl = 'http://localhost:3001'): string {
+function wrapEmailShell(title: string, bodyContent: string, appUrl = STORE_URL): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -252,7 +253,7 @@ function wrapEmailShell(title: string, bodyContent: string, appUrl = 'http://loc
 /**
  * 1. Customer Order Confirmation & Payment Success Email
  */
-export function getOrderConfirmationEmailHtml(order: OrderRecord, appUrl = 'http://localhost:3001'): string {
+export function getOrderConfirmationEmailHtml(order: OrderRecord, appUrl = STORE_URL): string {
   const invoiceUrl = `${appUrl}/invoice/${order.orderNumber}`;
   const accountUrl = `${appUrl}/account`;
 
@@ -397,7 +398,7 @@ export function getOrderConfirmationEmailHtml(order: OrderRecord, appUrl = 'http
 export function getPaymentFailedEmailHtml(
   order: Partial<OrderRecord>,
   errorReason = 'Transaction interrupted or declined by issuing bank',
-  appUrl = 'http://localhost:3001'
+  appUrl = STORE_URL
 ): string {
   const retryUrl = `${appUrl}/checkout`;
 
@@ -446,7 +447,7 @@ export function getPaymentFailedEmailHtml(
 /**
  * 3. Customer Order Processing & Warehouse Queued Email
  */
-export function getOrderConfirmedEmailHtml(order: OrderRecord, appUrl = 'http://localhost:3001'): string {
+export function getOrderConfirmedEmailHtml(order: OrderRecord, appUrl = STORE_URL): string {
   const bodyContent = `
     <div style="text-align: right; margin-bottom: 12px;">
       <span class="badge badge-amber">WAREHOUSE QUEUED</span>
@@ -482,7 +483,7 @@ export function getOrderConfirmedEmailHtml(order: OrderRecord, appUrl = 'http://
 /**
  * 4. Customer Order Dispatched / In Transit Email
  */
-export function getOrderShippedEmailHtml(order: OrderRecord, appUrl = 'http://localhost:3001'): string {
+export function getOrderShippedEmailHtml(order: OrderRecord, appUrl = STORE_URL): string {
   const trackingNumber = order.trackingNumber || 'DELHIVERY-HNY-LIVE';
   const carrier = order.carrier || 'Delhivery Insured Air';
   const trackingUrl = `https://www.delhivery.com/track/package/${trackingNumber}`;
@@ -536,7 +537,7 @@ export function getOrderShippedEmailHtml(order: OrderRecord, appUrl = 'http://lo
 /**
  * 5. Customer Order Delivered Email & Tasting Notes
  */
-export function getOrderDeliveredEmailHtml(order: OrderRecord, appUrl = 'http://localhost:3001'): string {
+export function getOrderDeliveredEmailHtml(order: OrderRecord, appUrl = STORE_URL): string {
   const bodyContent = `
     <div style="text-align: right; margin-bottom: 12px;">
       <span class="badge badge-green">DELIVERED</span>
@@ -575,7 +576,7 @@ export function getOrderDeliveredEmailHtml(order: OrderRecord, appUrl = 'http://
 /**
  * 6. Admin & Manager High-Priority New Order Alert Email
  */
-export function getNewOrderAdminAlertEmailHtml(order: OrderRecord, appUrl = 'http://localhost:3001'): string {
+export function getNewOrderAdminAlertEmailHtml(order: OrderRecord, appUrl = STORE_URL): string {
   const itemsSummary = order.items.map((i) => `${i.productName} (x${i.quantity})`).join(', ');
 
   const bodyContent = `
@@ -635,7 +636,7 @@ export function getDailyManagerReportEmailHtml(
       supportTickets: number;
     }[];
   },
-  appUrl = 'http://localhost:3001'
+  appUrl = STORE_URL
 ): string {
   const managerRows = reportData.managers
     .map(
@@ -728,7 +729,7 @@ export function getWarehouseBatchEmailHtml(
     totalUnits: number;
     skuSummary: { sku: string; name: string; quantity: number }[];
   },
-  appUrl = 'http://localhost:3001'
+  appUrl = STORE_URL
 ): string {
   const skuListHtml = batchData.skuSummary
     .map(
@@ -787,7 +788,7 @@ export function getCustomerOtpEmailHtml({
   email,
   otp,
   expiresMinutes = 10,
-  appUrl = 'http://localhost:3001',
+  appUrl = STORE_URL,
 }: {
   email: string;
   otp: string;
@@ -831,4 +832,174 @@ export function getCustomerOtpEmailHtml({
 
   return wrapEmailShell(`Your ${BRAND_SHORT} Verification Passcode: ${otp}`, bodyContent, appUrl);
 }
+
+/**
+ * 10. Initial Admin Setup 6-Digit Email OTP Verification Template
+ */
+export function getAdminSetupOtpEmailHtml({
+  email,
+  name,
+  otp,
+  expiresMinutes = 10,
+  appUrl = STORE_URL,
+}: {
+  email: string;
+  name: string;
+  otp: string;
+  expiresMinutes?: number;
+  appUrl?: string;
+}): string {
+  const bodyContent = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <span class="badge badge-amber">ROOT ADMINISTRATOR ONBOARDING</span>
+      <h2 class="title" style="margin-top: 12px;">Verify Administrator Account Setup</h2>
+      <p class="description">
+        Hello <strong>${name}</strong>, you are configuring the primary Administrator credentials for ${BRAND_NAME}. Verify your email identity using the one-time passcode below.
+      </p>
+    </div>
+
+    <div style="background: #f9f9fb; border: 2px dashed #0071e3; border-radius: 16px; padding: 28px 20px; text-align: center; margin: 24px 0;">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #86868b; margin-bottom: 8px;">
+        Admin Security Code
+      </div>
+      <div style="font-size: 38px; font-weight: 800; letter-spacing: 10px; font-family: monospace; color: #0071e3; padding: 6px 0;">
+        ${otp}
+      </div>
+      <div style="font-size: 11px; color: #86868b; margin-top: 8px;">
+        Expires in <strong>${expiresMinutes} minutes</strong>. Valid only for setup request from <strong>${email}</strong>.
+      </div>
+    </div>
+
+    <div class="instruction-box" style="border-left-color: #0071e3;">
+      <div class="instruction-title" style="color: #0071e3;">Administrative Privilege Warning</div>
+      <p style="margin: 0 0 6px 0;">• This account will possess complete governance over catalogue, order dispatch, refund processing, and manager credentials.</p>
+      <p style="margin: 0;">• Once configured, additional managers must be invited directly from your Administrator Console.</p>
+    </div>
+
+    <div style="text-align: center; margin-top: 20px;">
+      <a href="${appUrl}/config" class="btn" style="background: #0071e3;">
+        Complete Admin Setup →
+      </a>
+    </div>
+  `;
+
+  return wrapEmailShell(`[Action Required] Admin Setup Passcode: ${otp}`, bodyContent, appUrl);
+}
+
+/**
+ * 11. Manager Joining Invitation Email Template
+ */
+export function getManagerInvitationEmailHtml({
+  name,
+  email,
+  department,
+  joinUrl,
+  expiresDays = 7,
+  appUrl = STORE_URL,
+}: {
+  name: string;
+  email: string;
+  department: string;
+  joinUrl: string;
+  expiresDays?: number;
+  appUrl?: string;
+}): string {
+  const bodyContent = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <span class="badge badge-amber">STAFF INVITATION</span>
+      <h2 class="title" style="margin-top: 12px;">Invitation to Join as Manager</h2>
+      <p class="description">
+        Hello <strong>${name}</strong>, you have been invited by the Administrator to join <strong>${BRAND_NAME}</strong> management team.
+      </p>
+    </div>
+
+    <div class="card" style="border: 2px solid #e5e5ea; background: #ffffff;">
+      <div class="card-title">Role & Department Assignment</div>
+      <table style="width: 100%; font-size: 13px; line-height: 1.8;">
+        <tr>
+          <td style="color: #86868b; width: 35%;">Invited Name:</td>
+          <td style="font-weight: 600; color: #1d1d1f;">${name}</td>
+        </tr>
+        <tr>
+          <td style="color: #86868b;">Authorized Email:</td>
+          <td style="font-weight: 600; color: #1d1d1f; font-family: monospace;">${email}</td>
+        </tr>
+        <tr>
+          <td style="color: #86868b;">Department:</td>
+          <td style="font-weight: 600; color: #d97706;">${department}</td>
+        </tr>
+        <tr>
+          <td style="color: #86868b;">Invitation Validity:</td>
+          <td style="color: #6e6e73;">${expiresDays} Days</td>
+        </tr>
+      </table>
+
+      <div style="text-align: center; margin-top: 20px;">
+        <a href="${joinUrl}" class="btn" style="background: #1d1d1f; color: #ffffff;">
+          Accept Invitation & Verify Identity →
+        </a>
+      </div>
+    </div>
+
+    <div class="instruction-box">
+      <div class="instruction-title">How Onboarding Works</div>
+      <p style="margin: 0 0 6px 0;">1. Click the button above or open your joining link.</p>
+      <p style="margin: 0 0 6px 0;">2. Confirm your authorized email address: <strong>${email}</strong>.</p>
+      <p style="margin: 0;">3. Receive a 6-digit confirmation code on this email to instantly activate your Manager Desk.</p>
+    </div>
+
+    <p style="font-size: 11px; color: #86868b; text-align: center; margin-top: 16px;">
+      Direct joining link: <a href="${joinUrl}" style="color: #0071e3; word-break: break-all;">${joinUrl}</a>
+    </p>
+  `;
+
+  return wrapEmailShell(`Invitation to Join as Manager - ${BRAND_SHORT}`, bodyContent, appUrl);
+}
+
+/**
+ * 12. Manager Verification & Activation 6-Digit OTP Email Template
+ */
+export function getManagerJoinOtpEmailHtml({
+  name,
+  email,
+  otp,
+  expiresMinutes = 10,
+  appUrl = STORE_URL,
+}: {
+  name: string;
+  email: string;
+  otp: string;
+  expiresMinutes?: number;
+  appUrl?: string;
+}): string {
+  const bodyContent = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <span class="badge badge-amber">MANAGER ACTIVATION CODE</span>
+      <h2 class="title" style="margin-top: 12px;">Your Manager Activation Code</h2>
+      <p class="description">
+        Hello <strong>${name}</strong>, use the 6-digit verification code below to verify your authorized email and activate your Manager Console for ${BRAND_NAME}.
+      </p>
+    </div>
+
+    <div style="background: #f9f9fb; border: 2px dashed #059669; border-radius: 16px; padding: 28px 20px; text-align: center; margin: 24px 0;">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #86868b; margin-bottom: 8px;">
+        Manager Activation Passcode
+      </div>
+      <div style="font-size: 38px; font-weight: 800; letter-spacing: 10px; font-family: monospace; color: #059669; padding: 6px 0;">
+        ${otp}
+      </div>
+      <div style="font-size: 11px; color: #86868b; margin-top: 8px;">
+        Code expires in <strong>${expiresMinutes} minutes</strong>. Valid only for <strong>${email}</strong>.
+      </div>
+    </div>
+
+    <div class="instruction-box" style="border-left-color: #059669;">
+      <div class="instruction-title" style="color: #059669;">Authorization Verified</div>
+      <p style="margin: 0;">This email was authorized by the store Administrator. Once activated, you can manage order fulfillment, track warehouse schedules, and distribute promo codes.</p>
+    </div>
+  `;
+
+  return wrapEmailShell(`Your Manager Activation Passcode: ${otp}`, bodyContent, appUrl);
+}
+
 

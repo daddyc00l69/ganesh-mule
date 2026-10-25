@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState<OrderRecord[]>(MOCK_ORDERS);
+  const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -38,6 +38,10 @@ export default function AdminOrdersPage() {
     setIsRefreshing(true);
     try {
       const res = await fetch('/api/orders');
+      if (res.status === 401) {
+        window.location.href = '/portal?redirect=/admin/orders';
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         if (data.orders && Array.isArray(data.orders)) {

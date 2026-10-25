@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionTokenFromCookies } from './session';
+import { findStaffBySessionToken } from './staff-store';
 import { prisma, isDatabaseOnline } from '@/lib/db';
 import { SafeUser } from '@/types';
 import { hasPermission, PermissionKey } from '@/lib/permissions';
@@ -11,6 +12,10 @@ export async function getCurrentUser(): Promise<SafeUser | null> {
   try {
     const token = await getSessionTokenFromCookies();
     if (!token) return null;
+
+    // Check in-memory / persisted staff store sessions first
+    const staffUser = findStaffBySessionToken(token);
+    if (staffUser) return staffUser;
 
     // Fallback dev session token format for testing / dev mode: dev_ROLE_email
     if (token.startsWith('dev_')) {

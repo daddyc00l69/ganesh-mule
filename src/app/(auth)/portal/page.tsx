@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { GlassCard } from '@/components/ui/glass-card';
 import { GlassInput } from '@/components/ui/glass-input';
 import { GlassButton } from '@/components/ui/glass-button';
 import { GlassBadge } from '@/components/ui/glass-badge';
-import { Sparkles, Shield, UserCheck, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Sparkles, Shield, UserCheck, AlertCircle, ArrowLeft, KeyRound, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 
 export default function StaffPortalPage() {
@@ -16,6 +16,18 @@ export default function StaffPortalPage() {
   const [selectedRole, setSelectedRole] = useState<'ADMIN' | 'MANAGER'>('ADMIN');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isUnconfigured, setIsUnconfigured] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/admin/setup')
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.configured) {
+          setIsUnconfigured(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +44,9 @@ export default function StaffPortalPage() {
       const data = await res.json();
 
       if (!res.ok) {
+        if (data.unconfigured) {
+          setIsUnconfigured(true);
+        }
         throw new Error(data.error || 'Authentication failed');
       }
 
@@ -57,7 +72,7 @@ export default function StaffPortalPage() {
       {/* Return to Storefront */}
       <div className="absolute top-6 left-6 z-10">
         <Link
-          href="/"
+          href="/shop"
           className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground glass-control px-3 py-1.5 rounded-control transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
@@ -72,12 +87,31 @@ export default function StaffPortalPage() {
             <Sparkles className="w-6 h-6 text-primary-foreground" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Staff & Operations Portal
+            Staff &amp; Operations Portal
           </h1>
           <p className="text-xs text-muted-foreground">
-            Ganesh Mule Enterprise Management Console (admin.ganeshmule.com)
+            Ganesh Mule Enterprise Management Console
           </p>
         </div>
+
+        {/* First-Time Setup Alert */}
+        {isUnconfigured && (
+          <div className="p-4 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-200 text-xs space-y-2 animate-in fade-in">
+            <div className="flex items-center gap-2 font-semibold text-amber-300">
+              <Shield className="w-4 h-4 text-amber-400" />
+              <span>Initial System Setup Required</span>
+            </div>
+            <p className="text-[11px] text-amber-300/80 leading-relaxed">
+              No root Administrator account has been provisioned yet. Set up your Admin identity with verified email OTP.
+            </p>
+            <Link
+              href="/config"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-400 hover:text-amber-300 underline pt-1"
+            >
+              <span>Go to /config Setup Page →</span>
+            </Link>
+          </div>
+        )}
 
         {/* Role Selector Tabs */}
         <div className="grid grid-cols-2 p-1 glass-panel rounded-xl gap-1">
@@ -124,7 +158,7 @@ export default function StaffPortalPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder={selectedRole === 'ADMIN' ? 'admin@company.com' : 'manager@company.com'}
+              placeholder={selectedRole === 'ADMIN' ? 'admin@yourdomain.com' : 'manager@yourdomain.com'}
               autoComplete="email"
             />
 
@@ -151,11 +185,21 @@ export default function StaffPortalPage() {
             </div>
           </form>
 
+          {/* Manager Invitation Link */}
+          <div className="pt-3 border-t border-border/40 text-center">
+            <Link
+              href="/portal/join"
+              className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-medium"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>Invited by an Administrator? Join as Manager here</span>
+            </Link>
+          </div>
         </GlassCard>
 
         {/* Security Notice */}
         <p className="text-center text-[11px] text-muted-foreground">
-          Protected by server-side role validation, rate limiting & audit logs.
+          Protected by server-side role validation, rate limiting &amp; audit logs.
         </p>
       </div>
     </div>

@@ -16,7 +16,7 @@ import { formatCurrency, formatDate } from '@/lib/utils';
 import { Truck, CheckCircle2, Clock, Eye, AlertCircle, Package, FileText, RefreshCw } from 'lucide-react';
 
 export default function ManagerOrdersPage() {
-  const [orders, setOrders] = useState<OrderRecord[]>(MOCK_ORDERS);
+  const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -26,6 +26,10 @@ export default function ManagerOrdersPage() {
     setIsRefreshing(true);
     try {
       const res = await fetch('/api/orders');
+      if (res.status === 401) {
+        window.location.href = '/portal?redirect=/manager/orders';
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         if (data.orders && Array.isArray(data.orders)) {

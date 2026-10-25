@@ -17,7 +17,11 @@ export const COMPANY_LEGAL_NAME = 'Ganesh Mule Artisanal Apiaries Private Limite
 export const COMPANY_TRADE_NAME = 'Ganesh Mule Pure Honey';
 export const COMPANY_GSTIN = '27AAECG1234M1Z5';
 
-export const STORE_URL = process.env.APP_URL || 'http://localhost:3001';
+const envUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL;
+export const STORE_URL =
+  envUrl && !envUrl.includes('localhost')
+    ? envUrl
+    : 'https://ganesh-mule.vercel.app';
 export const ADMIN_HOST = 'admin.devtushar.uk';
 export const SUPPORT_PHONE = '+91 98220 54321';
 export const APIARY_LOCATION = 'Western Ghats Bio-Reserve, Maharashtra, India';

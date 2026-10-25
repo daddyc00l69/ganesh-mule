@@ -221,6 +221,7 @@ export interface DiscountCoupon {
   usageLimit?: number | null;
   usageCount: number;
   isActive: boolean;
+  isPublic?: boolean; // Whether shoppers can discover and refresh this coupon in checkout
   assignedManagerIds?: string[]; // Manager User IDs
   assignedManagerNames?: string[];
   createdById?: string;

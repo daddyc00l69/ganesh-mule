@@ -5,10 +5,23 @@ import { getCurrentUser } from '@/lib/auth/server';
 
 export async function GET(req: NextRequest) {
   try {
+    const user = await getCurrentUser();
     const { searchParams } = new URL(req.url);
+    const email = searchParams.get('email')?.toLowerCase().trim();
+
+    // Strict Security Guard: Only authenticated ADMIN/MANAGER or verified customer for their own email
+    const isStaff = user && (user.role === 'ADMIN' || user.role === 'MANAGER');
+    const isOwnerCustomer = user && email && user.email.toLowerCase() === email;
+
+    if (!isStaff && !isOwnerCustomer) {
+      return NextResponse.json(
+        { error: 'Unauthorized: Staff credentials required to view orders' },
+        { status: 401 }
+      );
+    }
+
     const status = searchParams.get('status');
     const search = searchParams.get('search')?.toLowerCase().trim();
-    const email = searchParams.get('email')?.toLowerCase().trim();
     const manager = searchParams.get('manager')?.toLowerCase().trim();
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!, 10) : undefined;
 

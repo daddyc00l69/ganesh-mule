@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth, getCurrentUser } from '@/lib/auth/server';
 import { MOCK_COUPONS, MOCK_MANAGERS } from '@/lib/mock-data';
-import { prisma } from '@/lib/db';
 import { DiscountCoupon } from '@/types';
 
 // In-memory store for active session mutations when DB is offline
@@ -21,13 +20,36 @@ const CreateCouponSchema = z.object({
   maxDiscountAmount: z.number().int().positive().nullable().optional(),
   expiresAt: z.string().nullable().optional(),
   usageLimit: z.number().int().positive().nullable().optional(),
+  isPublic: z.boolean().default(false),
   assignedManagerIds: z.array(z.string()).default([]),
 });
 
-export async function GET(req: NextRequest) {
-  const user = await getCurrentUser();
+const ToggleCouponSchema = z.object({
+  id: z.string(),
+  isPublic: z.boolean().optional(),
+  isActive: z.boolean().optional(),
+});
 
-  // If testing or unauthenticated in dev, allow reading default coupons
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+
+  // 1. Public Offers Endpoint (for shoppers refreshing offers on checkout)
+  if (searchParams.get('publicOnly') === 'true') {
+    const publicCoupons = IN_MEMORY_COUPONS
+      .filter((c) => c.isActive && c.isPublic)
+      .map((c) => ({
+        code: c.code,
+        description: c.description,
+        discountType: c.discountType,
+        value: c.value,
+        minOrderAmount: c.minOrderAmount,
+        maxDiscountAmount: c.maxDiscountAmount,
+      }));
+    return NextResponse.json({ success: true, coupons: publicCoupons });
+  }
+
+  // 2. Staff Management Endpoint
+  const user = await getCurrentUser();
   const isDev = process.env.NODE_ENV !== 'production';
 
   if (!user && !isDev) {
@@ -65,7 +87,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  // Only Admin can manage & create discount coupons
+  // Only Admin or Manager with coupons.create can create discount coupons
   const auth = await requireAuth('ADMIN');
   if ('error' in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
@@ -89,6 +111,7 @@ export async function POST(req: NextRequest) {
       maxDiscountAmount,
       expiresAt,
       usageLimit,
+      isPublic,
       assignedManagerIds,
     } = parsed.data;
 
@@ -117,6 +140,7 @@ export async function POST(req: NextRequest) {
       usageLimit: usageLimit || null,
       usageCount: 0,
       isActive: true,
+      isPublic: !!isPublic,
       assignedManagerIds,
       assignedManagerNames,
       createdById: actor.id,
@@ -129,5 +153,34 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, coupon: newCoupon });
   } catch (err: any) {
     return NextResponse.json({ error: 'Failed to create discount coupon', details: err.message }, { status: 500 });
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  const auth = await requireAuth('ADMIN');
+  if ('error' in auth) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
+  try {
+    const body = await req.json();
+    const parsed = ToggleCouponSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid coupon toggle payload' }, { status: 400 });
+    }
+
+    const { id, isPublic, isActive } = parsed.data;
+    const coupon = IN_MEMORY_COUPONS.find((c) => c.id === id);
+    if (!coupon) {
+      return NextResponse.json({ error: 'Coupon not found' }, { status: 404 });
+    }
+
+    if (isPublic !== undefined) coupon.isPublic = isPublic;
+    if (isActive !== undefined) coupon.isActive = isActive;
+    coupon.updatedAt = new Date().toISOString();
+
+    return NextResponse.json({ success: true, coupon });
+  } catch (err: any) {
+    return NextResponse.json({ error: 'Failed to update coupon', details: err.message }, { status: 500 });
   }
 }

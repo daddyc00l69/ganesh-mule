@@ -3,10 +3,11 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { verifyPassword } from '@/lib/auth/password';
 import { generateToken, setSessionCookie, SESSION_MAX_AGE } from '@/lib/auth/session';
+import { authenticateStaffLogin, getAdminConfigStatus } from '@/lib/auth/staff-store';
 
 const LoginSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
+  password: z.string().min(1),
   expectedRole: z.enum(['ADMIN', 'MANAGER']),
 });
 
@@ -20,7 +21,23 @@ export async function POST(req: NextRequest) {
 
     const { email, password, expectedRole } = parsed.data;
 
-    // Check DB first
+    // 1. Check Staff Store (configured Admin and verified Managers)
+    try {
+      const result = await authenticateStaffLogin({ email, password, expectedRole });
+      if (result.success) {
+        return NextResponse.json({
+          success: true,
+          user: result.user,
+        });
+      }
+    } catch (err: any) {
+      // If error message indicates wrong password, throw immediately
+      if (err.message.includes('password')) {
+        return NextResponse.json({ error: err.message }, { status: 401 });
+      }
+    }
+
+    // 2. Check Database Users if DB is online
     try {
       const user = await prisma.user.findUnique({
         where: { email },
@@ -66,38 +83,31 @@ export async function POST(req: NextRequest) {
         });
       }
     } catch {
-      // Database offline/unreachable fallback for initial review
+      // Database offline or table empty
     }
 
-    // Default credentials for Admin and Operations Manager
-    const isAdminMatch =
-      expectedRole === 'ADMIN' &&
-      (email === 'admin@ganeshmule.com' || email === 'admin@solidglass.com' || email === 'admin@platform.com') &&
-      password === 'Admin@123456';
-
-    const isManagerMatch =
-      expectedRole === 'MANAGER' &&
-      (email === 'manager@ganeshmule.com' || email === 'operations@ganeshmule.com' || email === 'operations@solidglass.com') &&
-      password === 'Manager@123456';
-
-    if (isAdminMatch || isManagerMatch) {
-      const devToken = `dev_${expectedRole}_${email}`;
-      await setSessionCookie(devToken);
-
-      return NextResponse.json({
-        success: true,
-        user: {
-          id: `usr-${expectedRole.toLowerCase()}`,
-          email,
-          name: expectedRole === 'ADMIN' ? 'Ganesh Mule (Super Admin)' : 'Vikram Mehta (Store Manager)',
-          role: expectedRole,
-          permissions: expectedRole === 'ADMIN' ? [] : ['orders.read', 'orders.update', 'inventory.read', 'inventory.update'],
+    // Check if system is unconfigured
+    const adminStatus = getAdminConfigStatus();
+    if (!adminStatus.configured) {
+      return NextResponse.json(
+        {
+          error: 'No administrator configured yet. Please visit /config to set up the root Administrator account.',
+          unconfigured: true,
         },
-      });
+        { status: 401 }
+      );
     }
 
-    return NextResponse.json({ error: 'Invalid credentials or user does not exist' }, { status: 401 });
+    return NextResponse.json(
+      {
+        error:
+          expectedRole === 'MANAGER'
+            ? 'Manager account not found or invitation unverified. Please check your joining link in email.'
+            : 'Invalid administrator email or password.',
+      },
+      { status: 401 }
+    );
   } catch (err: any) {
-    return NextResponse.json({ error: 'Server authentication error' }, { status: 500 });
+    return NextResponse.json({ error: 'Server authentication error', details: err.message }, { status: 500 });
   }
 }
