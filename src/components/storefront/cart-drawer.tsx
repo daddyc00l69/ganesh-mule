@@ -207,11 +207,11 @@ export const CartDrawer: React.FC = () => {
             <div className="p-5 sm:p-6 border-t border-[#d2d2d7]/50 bg-[#f5f5f7] space-y-3.5">
               <div className="space-y-2 text-xs">
                 <div className="flex justify-between text-[#6e6e73]">
-                  <span>Subtotal</span>
+                  <span>Items Subtotal (incl. 5% GST)</span>
                   <span className="font-medium text-[#1d1d1f]">{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-[#6e6e73]">
-                  <span>Shipping</span>
+                  <span>Courier Shipping (incl. 18% GST)</span>
                   <span className="font-medium">
                     {shippingCost === 0 ? (
                       <span className="text-emerald-700 font-semibold">FREE</span>
@@ -220,14 +220,25 @@ export const CartDrawer: React.FC = () => {
                     )}
                   </span>
                 </div>
-                <div className="flex justify-between text-[#6e6e73]">
-                  <span>Estimated Tax (5% GST)</span>
-                  <span className="font-medium text-[#1d1d1f]">{formatCurrency(estimatedTax)}</span>
-                </div>
+                {fees.platformTotal > 0 && (
+                  <div className="flex justify-between text-[#6e6e73]">
+                    <span>Platform Fee (incl. 18% GST)</span>
+                    <span className="font-medium text-[#1d1d1f]">{formatCurrency(fees.platformTotal)}</span>
+                  </div>
+                )}
+                {fees.pgTotal > 0 && (
+                  <div className="flex justify-between text-[#6e6e73]">
+                    <span>Payment Gateway (incl. 18% GST)</span>
+                    <span className="font-medium text-[#1d1d1f]">{formatCurrency(fees.pgTotal)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-base font-semibold text-[#1d1d1f] pt-2.5 border-t border-[#d2d2d7]/60">
                   <span>Total</span>
                   <span>{formatCurrency(total)}</span>
                 </div>
+                <p className="text-[10px] text-[#86868b] text-right">
+                  Transparent statutory GST breakdown on checkout
+                </p>
               </div>
 
               <Link

@@ -240,7 +240,7 @@ export default function CustomerAccountPage() {
                       required
                       value={inlineEmail}
                       onChange={(e) => setInlineEmail(e.target.value)}
-                      placeholder="e.g. tushar0p.verify@gmail.com"
+                      placeholder="name@example.com"
                       className="w-full px-4 py-2.5 rounded-xl border border-[#d2d2d7] bg-[#fbfbfd] text-sm focus:outline-none focus:border-[#0071e3] transition-colors"
                     />
                   </div>

@@ -48,17 +48,6 @@ export default function StaffPortalPage() {
     }
   };
 
-  const fillQuickCredentials = (role: 'ADMIN' | 'MANAGER') => {
-    setSelectedRole(role);
-    if (role === 'ADMIN') {
-      setEmail('admin@ganeshmule.com');
-      setPassword('Admin@123456');
-    } else {
-      setEmail('manager@ganeshmule.com');
-      setPassword('Manager@123456');
-    }
-  };
-
   return (
     <div className="dark min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden bg-background text-foreground">
       {/* Background Lighting Elements */}
@@ -162,26 +151,6 @@ export default function StaffPortalPage() {
             </div>
           </form>
 
-          {/* Quick Demo Pre-fill for reviewer verification */}
-          <div className="pt-4 border-t border-border/40 text-center space-y-2">
-            <p className="text-[11px] text-muted-foreground">Quick test login for review:</p>
-            <div className="flex items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => fillQuickCredentials('ADMIN')}
-                className="text-[11px] font-mono glass-control px-2.5 py-1 rounded-md text-foreground hover:bg-white/10"
-              >
-                Admin (demo)
-              </button>
-              <button
-                type="button"
-                onClick={() => fillQuickCredentials('MANAGER')}
-                className="text-[11px] font-mono glass-control px-2.5 py-1 rounded-md text-foreground hover:bg-white/10"
-              >
-                Manager (demo)
-              </button>
-            </div>
-          </div>
         </GlassCard>
 
         {/* Security Notice */}

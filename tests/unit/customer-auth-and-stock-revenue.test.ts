@@ -4,7 +4,7 @@ import { decrementProductStock, getLiveProducts, getLiveInventoryMovements } fro
 import { getLiveOrders, addLiveOrder, updateLiveOrderStatus } from '@/lib/orders/store';
 import { DEFAULT_EMAIL_FROM, ORDERS_EMAIL_FROM, SUPPORT_EMAIL_FROM, AUTH_EMAIL_FROM } from '@/lib/email/resend';
 
-describe('Customer Auth, drtushar.uk Domain & Stock/Revenue Live Sync', () => {
+describe('Customer Auth, devtushar.uk Domain & Stock/Revenue Live Sync', () => {
   it('should format customer display name for tushar0p.verify@gmail.com cleanly as "Tushar"', () => {
     expect(formatCustomerDisplayName('tushar0p.verify@gmail.com')).toBe('Tushar');
     expect(formatCustomerDisplayName('tushar0p.verify@gmail.com', 'Tushar0p Verify')).toBe('Tushar');
@@ -13,11 +13,11 @@ describe('Customer Auth, drtushar.uk Domain & Stock/Revenue Live Sync', () => {
     expect(formatCustomerDisplayName('random.customer@gmail.com')).toBe('Random Customer');
   });
 
-  it('should verify sender emails are configured with verified tushar.uk domain', () => {
-    expect(DEFAULT_EMAIL_FROM).toMatch(/tushar\.uk/);
-    expect(ORDERS_EMAIL_FROM).toMatch(/tushar\.uk/);
-    expect(SUPPORT_EMAIL_FROM).toMatch(/tushar\.uk/);
-    expect(AUTH_EMAIL_FROM).toMatch(/tushar\.uk/);
+  it('should verify sender emails are configured with verified devtushar.uk domain', () => {
+    expect(DEFAULT_EMAIL_FROM).toMatch(/devtushar\.uk/);
+    expect(ORDERS_EMAIL_FROM).toMatch(/devtushar\.uk/);
+    expect(SUPPORT_EMAIL_FROM).toMatch(/devtushar\.uk/);
+    expect(AUTH_EMAIL_FROM).toMatch(/devtushar\.uk/);
   });
 
   it('should decrement product stock and record inventory movement when payment is confirmed', () => {
@@ -44,9 +44,10 @@ describe('Customer Auth, drtushar.uk Domain & Stock/Revenue Live Sync', () => {
       customerName: 'Tushar',
       customerEmail: 'tushar0p.verify@gmail.com',
       customerPhone: '9820112345',
+      userId: 'usr-rev-1',
       orderStatus: 'PROCESSING' as const,
       paymentStatus: 'PAID' as const,
-      subtotalAmount: 180000,
+      subtotal: 180000,
       discountAmount: 0,
       taxAmount: 9000,
       shippingCost: 8260,
@@ -67,9 +68,10 @@ describe('Customer Auth, drtushar.uk Domain & Stock/Revenue Live Sync', () => {
           orderId: 'ord-rev-test-1',
           productId: 'prod-wild-forest-500g',
           productName: 'Raw Forest Honey (500g)',
+          sku: 'HNY-WLD-500',
           quantity: 2,
-          unitPrice: 90000,
-          totalPrice: 180000,
+          price: 90000,
+          total: 180000,
         },
       ],
       createdAt: new Date().toISOString(),

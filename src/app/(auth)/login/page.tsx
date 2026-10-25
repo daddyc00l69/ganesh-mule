@@ -151,7 +151,7 @@ export default function CustomerLoginPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="e.g. rohan@gmail.com"
+                    placeholder="name@example.com"
                     autoComplete="email"
                     autoFocus
                     className="w-full h-11 px-3.5 pl-10 text-xs rounded-[12px] border border-[#d2d2d7] bg-[#f5f5f7]/60 text-[#1d1d1f] focus:outline-none focus:bg-white focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all"

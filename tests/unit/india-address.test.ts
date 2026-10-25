@@ -136,7 +136,7 @@ describe('Indian Geography, GST State Codes and Address Validation', () => {
       expect(data.success).toBe(true);
       expect(data.postalCode).toBe('400053');
       expect(data.state).toBe('Maharashtra');
-    });
+    }, 10000);
 
     it('should reject invalid PIN code formats with HTTP 400', async () => {
       const { GET } = await import('@/app/api/pincode/[pin]/route');

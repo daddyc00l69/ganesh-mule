@@ -63,21 +63,22 @@ function CheckoutContent() {
 
   // Dynamic fee configuration manageable by operations managers
   const [feeSettings, setFeeSettings] = useState<FeeSettings>(DEFAULT_FEE_SETTINGS);
+  const [showGstBreakdown, setShowGstBreakdown] = useState(false);
 
-  // Customer & Contact Details
-  const [fullName, setFullName] = useState('Tushar');
-  const [email, setEmail] = useState('tushar0p.verify@gmail.com');
-  const [phone, setPhone] = useState('9820112345'); // 10-digit Indian Mobile
+  // Customer & Contact Details (clean inputs, zero prefill)
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState(''); // 10-digit Indian Mobile
 
   // Indian Structured Delivery Address (Country default: India)
   const [country, setCountry] = useState('India');
-  const [flatBuilding, setFlatBuilding] = useState('Flat 402, Oberoi Sky Heights');
-  const [areaStreet, setAreaStreet] = useState('Lokhandwala Complex, Andheri West');
-  const [landmark, setLandmark] = useState('Near High Point Restaurant');
-  const [postalCode, setPostalCode] = useState('400053');
-  const [city, setCity] = useState('Mumbai');
-  const [state, setState] = useState('Maharashtra');
-  const [pinAutoDetected, setPinAutoDetected] = useState<string | null>('Mumbai, Maharashtra');
+  const [flatBuilding, setFlatBuilding] = useState('');
+  const [areaStreet, setAreaStreet] = useState('');
+  const [landmark, setLandmark] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [pinAutoDetected, setPinAutoDetected] = useState<string | null>(null);
   const [pinLoading, setPinLoading] = useState(false);
   const [pinError, setPinError] = useState<string | null>(null);
   const [availableTowns, setAvailableTowns] = useState<string[]>([]);
@@ -168,12 +169,22 @@ function CheckoutContent() {
     discountedSubtotal,
     shippingBase,
     shippingGst,
+    shippingGstRate,
     shippingTotal,
     isFreeShipping,
     platformBase,
     platformGst,
+    platformGstRate,
     platformTotal,
+    pgBase,
+    pgGst,
+    pgGstRate,
+    pgTotal,
+    paymentGatewayPercent,
+    prePgTotal,
+    productTaxable,
     productGst,
+    productGstRate,
     totalTax,
     grandTotal: totalAmount,
   } = feeBreakdown;
@@ -309,49 +320,6 @@ function CheckoutContent() {
     const clean = digits.length > 10 && digits.startsWith('91') ? digits.slice(2) : digits;
     setPhone(clean.slice(0, 10));
   };
-
-  // Fast Address Preset Fill
-  const handlePresetFill = (preset: 'mumbai' | 'bengaluru' | 'delhi') => {
-    if (preset === 'mumbai') {
-      setFullName('Aarav Deshmukh');
-      setEmail('aarav.d@gmail.com');
-      setPhone('9820112345');
-      setCountry('India');
-      setFlatBuilding('Flat 402, Oberoi Sky Heights');
-      setAreaStreet('Lokhandwala Complex, Andheri West');
-      setLandmark('Near High Point Restaurant');
-      setPostalCode('400053');
-      setCity('Mumbai');
-      setState('Maharashtra');
-      setPinAutoDetected('Mumbai, Maharashtra');
-    } else if (preset === 'bengaluru') {
-      setFullName('Sneha Rao');
-      setEmail('sneha.rao@outlook.com');
-      setPhone('9448055667');
-      setCountry('India');
-      setFlatBuilding('Villa 14, Palm Meadows');
-      setAreaStreet('Airport Whitefield Road, Varthur');
-      setLandmark('Opposite Forum Mall');
-      setPostalCode('560038');
-      setCity('Bengaluru');
-      setState('Karnataka');
-      setPinAutoDetected('Bengaluru, Karnataka');
-    } else if (preset === 'delhi') {
-      setFullName('Rohan Verma');
-      setEmail('rohan.v@techmail.com');
-      setPhone('9711288990');
-      setCountry('India');
-      setFlatBuilding('Penthouse 1204, Tower B');
-      setAreaStreet('Cyber City Residences, DLF Phase 2');
-      setLandmark('Behind Cyber Hub');
-      setPostalCode('110001');
-      setCity('New Delhi');
-      setState('Delhi');
-      setPinAutoDetected('New Delhi, Delhi');
-    }
-  };
-
-  const handleFastFill = () => handlePresetFill('mumbai');
 
   const handleInitiatePayment = async (e?: React.FormEvent, isDirectTest = false) => {
     if (e) e.preventDefault();
@@ -680,16 +648,6 @@ function CheckoutContent() {
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Continue Shopping</span>
             </Link>
-
-            <button
-              type="button"
-              onClick={handleFastFill}
-              className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-full text-xs font-medium bg-white text-[#1d1d1f] border border-[#d2d2d7] hover:bg-[#e8e8ed] transition-all cursor-pointer shadow-2xs active:scale-95"
-              title="Fast autofill address with realistic test data"
-            >
-              <Zap className="w-3.5 h-3.5 text-[#0071e3]" />
-              <span>Fast Demo Fill</span>
-            </button>
           </div>
 
           {/* Heading */}
@@ -780,44 +738,90 @@ function CheckoutContent() {
                   ))}
                 </div>
 
-                <div className="pt-2.5 border-t border-[#d2d2d7]/40 space-y-1.5 text-xs text-[#6e6e73]">
-                  <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span className="font-medium text-[#1d1d1f]">{formatCurrency(subtotal)}</span>
+                <div className="pt-2.5 border-t border-[#d2d2d7]/40 space-y-2.5 text-xs text-[#6e6e73]">
+                  {/* 1. Item Subtotal */}
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="flex items-center gap-1 font-medium text-[#1d1d1f]">
+                        <span>1. Items Total</span>
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 font-semibold font-mono">5% GST</span>
+                      </div>
+                      <p className="text-[10px] text-[#86868b] mt-0.5">
+                        Base: {formatCurrency(productTaxable)} + 5% GST: {formatCurrency(productGst)}
+                      </p>
+                    </div>
+                    <span className="font-semibold text-[#1d1d1f]">{formatCurrency(subtotal)}</span>
                   </div>
+
                   {appliedCoupon && (
-                    <div className="flex justify-between text-emerald-700 font-medium">
-                      <span>Discount ({appliedCoupon.code})</span>
+                    <div className="flex justify-between text-emerald-700 font-medium pl-2 border-l-2 border-emerald-500 text-[11px]">
+                      <span>Coupon Discount ({appliedCoupon.code})</span>
                       <span>-{formatCurrency(discountAmount)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between">
-                    <span className="flex items-center gap-1">
-                      <span>Shipping &amp; Courier</span>
-                      {shippingBase > 0 && (
-                        <span className="text-[10px] text-[#86868b]">(₹{shippingBase / 100} + 18% GST)</span>
-                      )}
+
+                  {/* 2. Payment Gateway (PG) */}
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="flex items-center gap-1 font-medium text-[#1d1d1f]">
+                        <span>2. Payment Gateway (PG)</span>
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-100 text-blue-900 font-semibold font-mono">18% GST</span>
+                      </div>
+                      <p className="text-[10px] text-[#86868b] mt-0.5">
+                        {pgTotal > 0
+                          ? `Base (${paymentGatewayPercent}% on Total ${formatCurrency(prePgTotal)}): ${formatCurrency(pgBase)} + 18% GST: ${formatCurrency(pgGst)}`
+                          : '0% Surcharge • 18% GST: ₹0.00 (Absorbed)'}
+                      </p>
+                    </div>
+                    <span className="font-semibold text-[#1d1d1f]">
+                      {pgTotal > 0 ? formatCurrency(pgTotal) : <span className="text-emerald-700 font-medium">FREE</span>}
                     </span>
-                    <span>
+                  </div>
+
+                  {/* 3. Shipping & Freight */}
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="flex items-center gap-1 font-medium text-[#1d1d1f]">
+                        <span>3. Shipping &amp; Freight</span>
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-100 text-purple-900 font-semibold font-mono">18% GST</span>
+                      </div>
+                      <p className="text-[10px] text-[#86868b] mt-0.5">
+                        {isFreeShipping || shippingTotal === 0
+                          ? 'Free Courier Delivery'
+                          : `Base: ${formatCurrency(shippingBase)} + 18% GST: ${formatCurrency(shippingGst)}`}
+                      </p>
+                    </div>
+                    <span className="font-semibold text-[#1d1d1f]">
                       {isFreeShipping || shippingTotal === 0 ? (
-                        <span className="text-emerald-700 font-semibold">FREE</span>
+                        <span className="text-emerald-700 font-medium">FREE</span>
                       ) : (
                         formatCurrency(shippingTotal)
                       )}
                     </span>
                   </div>
-                  {platformTotal > 0 && (
-                    <div className="flex justify-between">
-                      <span className="flex items-center gap-1">
-                        <span>Platform &amp; Gateway Fee</span>
-                        <span className="text-[10px] text-[#86868b]">(₹{platformBase / 100} + 18% GST)</span>
-                      </span>
-                      <span className="font-medium text-[#1d1d1f]">{formatCurrency(platformTotal)}</span>
+
+                  {/* 4. Platform Convenience Fee */}
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="flex items-center gap-1 font-medium text-[#1d1d1f]">
+                        <span>4. Platform Fee</span>
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-stone-100 text-stone-800 font-semibold font-mono">18% GST</span>
+                      </div>
+                      <p className="text-[10px] text-[#86868b] mt-0.5">
+                        {platformTotal > 0
+                          ? `Base: ${formatCurrency(platformBase)} + 18% GST: ${formatCurrency(platformGst)}`
+                          : 'Zero platform fee'}
+                      </p>
                     </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span>GST (Honey 5% + Services 18%)</span>
-                    <span className="font-medium text-[#1d1d1f]">{formatCurrency(totalTax)}</span>
+                    <span className="font-semibold text-[#1d1d1f]">
+                      {platformTotal > 0 ? formatCurrency(platformTotal) : <span className="text-[#86868b]">₹0.00</span>}
+                    </span>
+                  </div>
+
+                  {/* Combined GST */}
+                  <div className="flex justify-between items-center pt-1.5 border-t border-[#d2d2d7]/50 text-[11px]">
+                    <span className="font-medium text-[#1d1d1f]">Combined Statutory GST (CGST + SGST)</span>
+                    <span className="font-semibold text-emerald-800">{formatCurrency(totalTax)}</span>
                   </div>
                 </div>
               </div>
@@ -898,38 +902,12 @@ function CheckoutContent() {
 
               {/* Delivery Destination */}
               <div className="bg-white rounded-[20px] border border-[#d2d2d7]/50 p-6 sm:p-7 space-y-4 shadow-sm">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#d2d2d7]/30 pb-3 gap-2">
-                  <div>
-                    <h2 className="text-xs font-semibold text-[#1d1d1f] uppercase tracking-wider flex items-center gap-1.5">
-                      <MapPin className="w-3.5 h-3.5 text-[#0071e3]" />
-                      <span>2. Delivery Destination</span>
-                    </h2>
-                    <span className="text-[11px] text-[#86868b]">Insured Shock-Proof Solid Glass Packaging</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[11px]">
-                    <span className="text-[#86868b]">Presets:</span>
-                    <button
-                      type="button"
-                      onClick={() => handlePresetFill('mumbai')}
-                      className="px-2 py-0.5 rounded-md bg-[#f5f5f7] hover:bg-[#e8e8ed] text-[#1d1d1f] font-medium transition-colors cursor-pointer"
-                    >
-                      Mumbai
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handlePresetFill('bengaluru')}
-                      className="px-2 py-0.5 rounded-md bg-[#f5f5f7] hover:bg-[#e8e8ed] text-[#1d1d1f] font-medium transition-colors cursor-pointer"
-                    >
-                      Bengaluru
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handlePresetFill('delhi')}
-                      className="px-2 py-0.5 rounded-md bg-[#f5f5f7] hover:bg-[#e8e8ed] text-[#1d1d1f] font-medium transition-colors cursor-pointer"
-                    >
-                      Delhi NCR
-                    </button>
-                  </div>
+                <div className="flex items-center justify-between border-b border-[#d2d2d7]/30 pb-3">
+                  <h2 className="text-xs font-semibold text-[#1d1d1f] uppercase tracking-wider flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-[#0071e3]" />
+                    <span>2. Delivery Destination</span>
+                  </h2>
+                  <span className="text-[11px] text-[#86868b]">All India Doorstep Delivery</span>
                 </div>
 
                 <div className="space-y-4">
@@ -1259,61 +1237,137 @@ function CheckoutContent() {
                   )}
                 </div>
 
-                {/* Calculation Details */}
-                <div className="pt-2 border-t border-[#d2d2d7]/30 space-y-2 text-xs text-[#6e6e73]">
-                  <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span className="font-medium text-[#1d1d1f]">{formatCurrency(subtotal)}</span>
+                {/* Calculation Details & Transparent Statutory Breakdown */}
+                <div className="pt-2 border-t border-[#d2d2d7]/30 space-y-2.5 text-xs text-[#6e6e73]">
+                  {/* 1. Items Subtotal */}
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="flex items-center gap-1.5 font-medium text-[#1d1d1f]">
+                        <span>1. Items Total</span>
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 font-semibold font-mono">5% GST</span>
+                      </div>
+                      <p className="text-[10px] text-[#86868b] mt-0.5">
+                        Base: {formatCurrency(productTaxable)} + 5% GST: {formatCurrency(productGst)}
+                      </p>
+                    </div>
+                    <span className="font-semibold text-[#1d1d1f]">{formatCurrency(subtotal)}</span>
                   </div>
+
                   {appliedCoupon && (
-                    <div className="flex justify-between text-emerald-700 font-semibold">
+                    <div className="flex justify-between text-emerald-700 font-semibold pl-2 border-l-2 border-emerald-500 text-[11px]">
                       <span>Coupon Discount ({appliedCoupon.code})</span>
                       <span>-{formatCurrency(discountAmount)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between items-baseline">
+
+                  {/* 2. Payment Gateway (PG) Charges */}
+                  <div className="flex justify-between items-start">
                     <div>
-                      <span>Shipping &amp; Courier Freight</span>
-                      {shippingBase > 0 && (
-                        <p className="text-[10px] text-[#86868b]">
-                          Base {formatCurrency(shippingBase)} + 18% GST ({formatCurrency(shippingGst)})
-                        </p>
-                      )}
+                      <div className="flex items-center gap-1.5 font-medium text-[#1d1d1f]">
+                        <span>2. Payment Gateway (PG)</span>
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-100 text-blue-900 font-semibold font-mono">18% GST</span>
+                      </div>
+                      <p className="text-[10px] text-[#86868b] mt-0.5">
+                        {pgTotal > 0
+                          ? `Base (${paymentGatewayPercent}% on Total ${formatCurrency(prePgTotal)}): ${formatCurrency(pgBase)} + 18% GST: ${formatCurrency(pgGst)}`
+                          : 'Standard Razorpay Processing • 0% Surcharge • 18% GST: ₹0.00'}
+                      </p>
                     </div>
-                    <span>
+                    <span className="font-semibold text-[#1d1d1f]">
+                      {pgTotal > 0 ? formatCurrency(pgTotal) : <span className="text-emerald-700 font-medium">FREE</span>}
+                    </span>
+                  </div>
+
+                  {/* 3. Shipping & Courier Freight */}
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="flex items-center gap-1.5 font-medium text-[#1d1d1f]">
+                        <span>3. Shipping &amp; Courier Freight</span>
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-100 text-purple-900 font-semibold font-mono">18% GST</span>
+                      </div>
+                      <p className="text-[10px] text-[#86868b] mt-0.5">
+                        {isFreeShipping || shippingTotal === 0
+                          ? 'Free Express Courier Delivery Applied'
+                          : `Base: ${formatCurrency(shippingBase)} + 18% GST: ${formatCurrency(shippingGst)}`}
+                      </p>
+                    </div>
+                    <span className="font-semibold text-[#1d1d1f]">
                       {isFreeShipping || shippingTotal === 0 ? (
-                        <span className="text-emerald-700 font-semibold">FREE</span>
+                        <span className="text-emerald-700 font-medium">FREE</span>
                       ) : (
-                        <span className="font-medium text-[#1d1d1f]">{formatCurrency(shippingTotal)}</span>
+                        formatCurrency(shippingTotal)
                       )}
                     </span>
                   </div>
 
-                  {platformTotal > 0 && (
-                    <div className="flex justify-between items-baseline">
-                      <div>
-                        <span>Platform &amp; Payment Fee</span>
-                        <p className="text-[10px] text-[#86868b]">
-                          Base {formatCurrency(platformBase)} + 18% GST ({formatCurrency(platformGst)})
-                        </p>
-                      </div>
-                      <span className="font-medium text-[#1d1d1f]">{formatCurrency(platformTotal)}</span>
-                    </div>
-                  )}
-
-                  <div className="flex justify-between items-baseline">
+                  {/* 4. Platform Convenience Fee */}
+                  <div className="flex justify-between items-start">
                     <div>
-                      <span>Statutory GST Collected</span>
-                      <p className="text-[10px] text-[#86868b]">
-                        Raw Honey (5%) + Courier &amp; Platform (18%)
+                      <div className="flex items-center gap-1.5 font-medium text-[#1d1d1f]">
+                        <span>4. Platform Convenience Fee</span>
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-stone-100 text-stone-800 font-semibold font-mono">18% GST</span>
+                      </div>
+                      <p className="text-[10px] text-[#86868b] mt-0.5">
+                        {platformTotal > 0
+                          ? `Base: ${formatCurrency(platformBase)} + 18% GST: ${formatCurrency(platformGst)}`
+                          : 'Zero platform fee'}
                       </p>
                     </div>
-                    <span className="font-medium text-[#1d1d1f]">{formatCurrency(totalTax)}</span>
+                    <span className="font-semibold text-[#1d1d1f]">
+                      {platformTotal > 0 ? formatCurrency(platformTotal) : <span className="text-[#86868b]">₹0.00</span>}
+                    </span>
+                  </div>
+
+                  {/* Statutory Tax Summary (Expandable Breakdown) */}
+                  <div className="pt-2 border-t border-[#d2d2d7]/30">
+                    <button
+                      type="button"
+                      onClick={() => setShowGstBreakdown(!showGstBreakdown)}
+                      className="w-full flex items-center justify-between text-left text-[11px] font-medium text-[#0071e3] hover:underline cursor-pointer py-0.5"
+                    >
+                      <span className="flex items-center gap-1">
+                        <FileText className="w-3.5 h-3.5" />
+                        <span>Statutory GST Breakdown ({formatCurrency(totalTax)} total)</span>
+                      </span>
+                      {showGstBreakdown ? (
+                        <ChevronUp className="w-3.5 h-3.5" />
+                      ) : (
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+
+                    {showGstBreakdown && (
+                      <div className="mt-2 p-2.5 rounded-xl bg-[#f5f5f7] border border-[#d2d2d7]/60 text-[10px] space-y-1.5 animate-in fade-in">
+                        <div className="flex justify-between text-[#6e6e73]">
+                          <span>Raw Honey GST (5% on {formatCurrency(productTaxable)}):</span>
+                          <span className="font-mono font-medium text-[#1d1d1f]">{formatCurrency(productGst)}</span>
+                        </div>
+                        <div className="flex justify-between text-[#6e6e73]">
+                          <span>PG Gateway GST (18% on {formatCurrency(pgBase)}):</span>
+                          <span className="font-mono font-medium text-[#1d1d1f]">{formatCurrency(pgGst)}</span>
+                        </div>
+                        <div className="flex justify-between text-[#6e6e73]">
+                          <span>Courier Shipping GST (18% on {formatCurrency(shippingBase)}):</span>
+                          <span className="font-mono font-medium text-[#1d1d1f]">{formatCurrency(shippingGst)}</span>
+                        </div>
+                        <div className="flex justify-between text-[#6e6e73]">
+                          <span>Platform Service GST (18% on {formatCurrency(platformBase)}):</span>
+                          <span className="font-mono font-medium text-[#1d1d1f]">{formatCurrency(platformGst)}</span>
+                        </div>
+                        <div className="flex justify-between font-semibold text-[#1d1d1f] pt-1 border-t border-[#d2d2d7]">
+                          <span>Total Combined GST (CGST + SGST):</span>
+                          <span className="font-mono text-emerald-800">{formatCurrency(totalTax)}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex justify-between text-base font-semibold text-[#1d1d1f] pt-3 border-t border-[#d2d2d7]/50">
-                    <span>Total Amount</span>
-                    <span>{formatCurrency(totalAmount)}</span>
+                    <div>
+                      <span>Total Amount</span>
+                      <p className="text-[10px] font-normal text-[#86868b]">All taxes, shipping &amp; fees included</p>
+                    </div>
+                    <span className="text-lg font-bold text-[#1d1d1f]">{formatCurrency(totalAmount)}</span>
                   </div>
                 </div>
 
