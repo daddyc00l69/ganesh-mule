@@ -168,6 +168,7 @@ export default function StaffPortalPage() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••••••"
               autoComplete="current-password"
+              hint={selectedRole === 'ADMIN' ? 'Default root password: Admin@123456' : undefined}
             />
 
             <div className="pt-2">

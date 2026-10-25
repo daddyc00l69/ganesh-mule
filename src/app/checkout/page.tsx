@@ -150,6 +150,19 @@ function CheckoutContent() {
     couponCode?: string;
   } | null>(null);
 
+  // Automatically purge cart on completed order
+  useEffect(() => {
+    if (completedOrder) {
+      clearCart();
+      try {
+        localStorage.removeItem('sg_cart');
+        localStorage.setItem('sg_cart', '[]');
+        window.dispatchEvent(new Event('storage'));
+        window.dispatchEvent(new CustomEvent('cart-cleared'));
+      } catch {}
+    }
+  }, [completedOrder, clearCart]);
+
   // Pre-load Razorpay checkout SDK instantaneously in background on page mount
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -261,7 +274,11 @@ function CheckoutContent() {
     subtotal,
     discountAmount,
     feeSettings,
-    delhiveryRate ? delhiveryRate.subtotalPaise : undefined
+    delhiveryRate
+      ? delhiveryRate.subtotalPaise
+      : postalCode.length === 6 && isValidIndianPin(postalCode)
+      ? undefined
+      : 0
   );
   const {
     discountedSubtotal,
@@ -694,12 +711,6 @@ function CheckoutContent() {
                   12:30 AM Reconciled • 1:00 PM Express Courier Pickup
                 </span>
               </div>
-              <div className="flex justify-between items-center pb-3 border-b border-[#d2d2d7]/40 text-xs">
-                <span className="text-[#6e6e73]">Email Confirmation:</span>
-                <span className="font-medium text-[#0071e3] flex items-center gap-1">
-                  <span>Dispatched via Resend</span>
-                </span>
-              </div>
               <div className="flex justify-between items-center text-xs pt-1">
                 <span className="text-[#6e6e73]">Total Paid:</span>
                 <span className="font-semibold text-[#1d1d1f] text-base">
@@ -893,18 +904,30 @@ function CheckoutContent() {
                             <br />
                             Base: {formatCurrency(delhiveryRate.subtotalPaise)} + 18% GST: {formatCurrency(delhiveryRate.gstAmountPaise)}
                           </>
-                        ) : isFreeShipping || shippingTotal === 0 ? (
-                          'Free Courier Delivery'
-                        ) : (
+                        ) : isCalculatingFreight ? (
+                          'Calculating live Delhivery One courier freight...'
+                        ) : postalCode.length === 6 && isValidIndianPin(postalCode) ? (
                           `Base: ${formatCurrency(shippingBase)} + 18% GST: ${formatCurrency(shippingGst)}`
+                        ) : isFreeShipping ? (
+                          'Free Express Courier Delivery Applied'
+                        ) : (
+                          'Calculated dynamically by Delhivery One based on PIN Code & weight'
                         )}
                       </p>
                     </div>
                     <span className="font-semibold text-[#1d1d1f]">
-                      {isFreeShipping || shippingTotal === 0 ? (
+                      {isFreeShipping ? (
                         <span className="text-emerald-700 font-medium">FREE</span>
-                      ) : (
+                      ) : delhiveryRate ? (
+                        formatCurrency(delhiveryRate.totalPaise)
+                      ) : isCalculatingFreight ? (
+                        <span className="text-xs text-[#0071e3] font-medium flex items-center gap-1">
+                          <Loader2 className="w-3 h-3 animate-spin" /> Calculating...
+                        </span>
+                      ) : postalCode.length === 6 && isValidIndianPin(postalCode) && shippingTotal > 0 ? (
                         formatCurrency(shippingTotal)
+                      ) : (
+                        <span className="text-xs text-[#86868b] font-normal">Enter PIN</span>
                       )}
                     </span>
                   </div>
@@ -1113,28 +1136,15 @@ function CheckoutContent() {
                         )}
                       </div>
                       {pinAutoDetected ? (
-                        <div className="space-y-1 pt-0.5">
-                          <div className="text-[10px] text-emerald-700 font-medium flex items-center justify-between">
-                            <span className="truncate">Auto: {pinAutoDetected}</span>
-                            <button
-                              type="button"
-                              onClick={() => fetchPinDetails(postalCode)}
-                              className="text-[9px] text-[#0071e3] hover:underline cursor-pointer shrink-0 ml-1 flex items-center gap-0.5"
-                            >
-                              <RefreshCw className="w-2.5 h-2.5" /> Re-check
-                            </button>
-                          </div>
-                          <div className="text-[10px] text-[#0071e3] bg-[#0071e3]/8 border border-[#0071e3]/15 rounded-md px-2.5 py-1.5 font-medium flex items-center justify-between">
-                            <div className="flex items-center gap-1.5">
-                              <Truck className="w-3.5 h-3.5 text-[#0071e3] shrink-0" />
-                              <span>Delhivery One Express: Serviceable ({delhiveryRate?.estimatedDays || 2}-3 Business Days)</span>
-                            </div>
-                            {delhiveryRate && (
-                              <span className="font-semibold font-mono text-[#1d1d1f] shrink-0 ml-1">
-                                {formatCurrency(delhiveryRate.totalPaise)} (incl. 18% GST)
-                              </span>
-                            )}
-                          </div>
+                        <div className="text-[10px] text-emerald-700 font-medium flex items-center justify-between pt-0.5">
+                          <span className="truncate">Auto: {pinAutoDetected}</span>
+                          <button
+                            type="button"
+                            onClick={() => fetchPinDetails(postalCode)}
+                            className="text-[9px] text-[#0071e3] hover:underline cursor-pointer shrink-0 ml-1 flex items-center gap-0.5"
+                          >
+                            <RefreshCw className="w-2.5 h-2.5" /> Re-check
+                          </button>
                         </div>
                       ) : postalCode.length > 0 && postalCode.length < 6 ? (
                         <p className="text-[10px] text-[#86868b]">Enter 6 digits for auto-fill</p>
@@ -1218,6 +1228,50 @@ function CheckoutContent() {
                       </select>
                     </div>
                   </div>
+
+                  {/* Delhivery Dynamic Logistics Status Banner (Full Width) */}
+                  {postalCode.length === 6 && isValidIndianPin(postalCode) && (
+                    <div className="rounded-[16px] bg-[#0071e3]/8 border border-[#0071e3]/20 p-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 animate-in fade-in">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-[#0071e3]/12 text-[#0071e3] flex items-center justify-center shrink-0">
+                          <Truck className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-[#1d1d1f]">Delhivery One Express</span>
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold tracking-wide">
+                              Serviceable
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-[#6e6e73] mt-0.5">
+                            {delhiveryRate
+                              ? `${delhiveryRate.zoneName} • Doorstep courier delivery in ${delhiveryRate.estimatedDays || 2}-3 business days`
+                              : isCalculatingFreight
+                              ? 'Calculating live freight with Delhivery One API...'
+                              : 'All-India insured express delivery serviceable'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-left sm:text-right shrink-0">
+                        {delhiveryRate ? (
+                          <>
+                            <div className="text-sm font-bold text-[#1d1d1f]">
+                              {formatCurrency(delhiveryRate.totalPaise)}{' '}
+                              <span className="text-[10px] font-normal text-[#86868b]">(incl. 18% GST)</span>
+                            </div>
+                            <span className="text-[10px] text-[#6e6e73]">
+                              Base: {formatCurrency(delhiveryRate.subtotalPaise)} + 18% GST: {formatCurrency(delhiveryRate.gstAmountPaise)}
+                            </span>
+                          </>
+                        ) : isCalculatingFreight ? (
+                          <div className="flex items-center gap-1.5 text-xs text-[#0071e3] font-medium">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Calculating Freight...</span>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Live Shipping Label Preview Card */}
                   <div className="p-3.5 rounded-[16px] bg-[#f5f5f7]/70 border border-[#d2d2d7]/60 text-xs space-y-1.5">
@@ -1460,18 +1514,30 @@ function CheckoutContent() {
                             <br />
                             Base Freight: {formatCurrency(delhiveryRate.subtotalPaise)} + 18% GST: {formatCurrency(delhiveryRate.gstAmountPaise)}
                           </>
-                        ) : isFreeShipping || shippingTotal === 0 ? (
+                        ) : isCalculatingFreight ? (
+                          'Calculating live Delhivery One courier freight...'
+                        ) : postalCode.length === 6 && isValidIndianPin(postalCode) ? (
+                          `Base: ${formatCurrency(shippingBase)} + 18% GST: ${formatCurrency(shippingGst)}`
+                        ) : isFreeShipping ? (
                           'Free Express Courier Delivery Applied'
                         ) : (
-                          `Base: ${formatCurrency(shippingBase)} + 18% GST: ${formatCurrency(shippingGst)}`
+                          'Calculated dynamically by Delhivery One based on PIN Code & weight'
                         )}
                       </p>
                     </div>
                     <span className="font-semibold text-[#1d1d1f]">
-                      {isFreeShipping || shippingTotal === 0 ? (
+                      {isFreeShipping ? (
                         <span className="text-emerald-700 font-medium">FREE</span>
-                      ) : (
+                      ) : delhiveryRate ? (
+                        formatCurrency(delhiveryRate.totalPaise)
+                      ) : isCalculatingFreight ? (
+                        <span className="text-xs text-[#0071e3] font-medium flex items-center gap-1">
+                          <Loader2 className="w-3 h-3 animate-spin" /> Calculating...
+                        </span>
+                      ) : postalCode.length === 6 && isValidIndianPin(postalCode) && shippingTotal > 0 ? (
                         formatCurrency(shippingTotal)
+                      ) : (
+                        <span className="text-xs text-[#86868b] font-normal">Enter PIN</span>
                       )}
                     </span>
                   </div>

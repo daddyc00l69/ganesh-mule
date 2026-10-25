@@ -138,6 +138,21 @@ describe('Indian Geography, GST State Codes and Address Validation', () => {
       expect(data.state).toBe('Maharashtra');
     }, 10000);
 
+    it('should resolve PIN 413304 to Pandharpur, Maharashtra', async () => {
+      const match = guessCityStateFromPin('413304');
+      expect(match?.city).toBe('Pandharpur');
+      expect(match?.state).toBe('Maharashtra');
+
+      const { GET } = await import('@/app/api/pincode/[pin]/route');
+      const req = new Request('http://localhost:3000/api/pincode/413304');
+      const res = await GET(req as any, { params: Promise.resolve({ pin: '413304' }) });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.success).toBe(true);
+      expect(data.city).toBe('Pandharpur');
+      expect(data.state).toBe('Maharashtra');
+    }, 10000);
+
     it('should reject invalid PIN code formats with HTTP 400', async () => {
       const { GET } = await import('@/app/api/pincode/[pin]/route');
       const req = new Request('http://localhost:3000/api/pincode/123');

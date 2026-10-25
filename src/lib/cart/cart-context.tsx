@@ -30,6 +30,28 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch {}
     setIsLoaded(true);
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'sg_cart') {
+        try {
+          if (!e.newValue || e.newValue === '[]') {
+            setItems([]);
+          } else {
+            setItems(JSON.parse(e.newValue));
+          }
+        } catch {}
+      }
+    };
+    const handleCartCleared = () => {
+      setItems([]);
+    };
+
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('cart-cleared', handleCartCleared);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('cart-cleared', handleCartCleared);
+    };
   }, []);
 
   useEffect(() => {
@@ -86,6 +108,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const clearCart = () => {
     setItems([]);
+    try {
+      localStorage.removeItem('sg_cart');
+      localStorage.setItem('sg_cart', '[]');
+      window.dispatchEvent(new Event('storage'));
+      window.dispatchEvent(new CustomEvent('cart-cleared'));
+    } catch {}
   };
 
   const totalItems = items.reduce((acc, i) => acc + i.quantity, 0);

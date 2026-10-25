@@ -88,30 +88,60 @@ export async function GET(
       if (/aurangabad/i.test(rawDistrict)) rawDistrict = 'Chhatrapati Sambhajinagar';
       if (/central delhi|new delhi/i.test(rawDistrict)) rawDistrict = 'New Delhi';
 
-      // Sort offices: Head Post Office (1) > Sub Post Office (2) > Branch Post Office (3)
-      const rank = (type: string) => {
-        if (/head/i.test(type)) return 1;
-        if (/sub/i.test(type)) return 2;
-        return 3;
+      // Sort offices: True Head Post Office (1) > Taluka/Block Match (2) > Sub Post Office (3) > Branch Offices (4)
+      const rank = (office: any) => {
+        const t = (office.BranchType || '').trim().toLowerCase();
+        const n = cleanPostOfficeName(office.Name).toLowerCase();
+        const b = (office.Block || office.Taluk || '').trim().toLowerCase();
+        const d = (office.District || '').trim().toLowerCase();
+
+        // 1. True Head Post Office (never match "directly a/w Head Office")
+        if (t === 'head post office' || (t.includes('head') && !t.includes('branch'))) return 1;
+        // 2. Name matches Taluka / Block name (e.g. "Pandharpur" for 413304)
+        if (b && n === b) return 2;
+        // 3. Name matches District name
+        if (d && n === d) return 3;
+        // 4. True Sub Post Office
+        if (t.includes('sub') && !t.includes('branch')) return 4;
+        // 5. Branch Office (including "Branch Office directly a/w Head Office")
+        return 5;
       };
 
-      const sortedOffices = [...fetchedData].sort((a, b) => rank(a.BranchType || '') - rank(b.BranchType || ''));
+      const sortedOffices = [...fetchedData].sort((a, b) => rank(a) - rank(b));
 
       // Determine best primary Town/City name
       let primaryTown = '';
 
-      // Rule A: Check if any post office matches the local guess (e.g. "Lonavala" for 410401)
+      // Rule A: Check if any post office matches the local guess (e.g. "Pandharpur" or "Lonavala")
       if (localGuess?.city) {
         const target = localGuess.city.toLowerCase().trim();
         const match = sortedOffices.find(
           (o) =>
             cleanPostOfficeName(o.Name).toLowerCase() === target ||
-            cleanPostOfficeName(o.Name).toLowerCase().includes(target)
+            cleanPostOfficeName(o.Name).toLowerCase().includes(target) ||
+            (o.Block && o.Block.toLowerCase().trim() === target)
         );
-        if (match) primaryTown = cleanPostOfficeName(match.Name);
+        if (match) primaryTown = localGuess.city.includes('/') ? cleanPostOfficeName(match.Name) : localGuess.city;
       }
 
-      // Rule B: Check if any office name matches the district (e.g. "Solapur" or "Kolhapur")
+      // Rule B: Match Taluka / Block name
+      if (!primaryTown && rawBlock) {
+        const blockMatch = sortedOffices.find(
+          (o) => cleanPostOfficeName(o.Name).toLowerCase() === rawBlock.toLowerCase()
+        );
+        if (blockMatch) primaryTown = cleanPostOfficeName(blockMatch.Name);
+      }
+
+      // Rule C: Exact Head Post Office
+      if (!primaryTown) {
+        const ho = sortedOffices.find((o) => {
+          const t = (o.BranchType || '').toLowerCase();
+          return t === 'head post office' || (t.includes('head') && !t.includes('branch'));
+        });
+        if (ho) primaryTown = cleanPostOfficeName(ho.Name);
+      }
+
+      // Rule D: District match
       if (!primaryTown) {
         const distMatch = sortedOffices.find(
           (o) => cleanPostOfficeName(o.Name).toLowerCase() === rawDistrict.toLowerCase()
@@ -119,21 +149,18 @@ export async function GET(
         if (distMatch) primaryTown = cleanPostOfficeName(distMatch.Name);
       }
 
-      // Rule C: Head Post Office
+      // Rule E: Sub Post Office
       if (!primaryTown) {
-        const ho = sortedOffices.find((o) => /head/i.test(o.BranchType || ''));
-        if (ho) primaryTown = cleanPostOfficeName(ho.Name);
-      }
-
-      // Rule D: Sub Post Office
-      if (!primaryTown) {
-        const so = sortedOffices.find((o) => /sub/i.test(o.BranchType || ''));
+        const so = sortedOffices.find((o) => {
+          const t = (o.BranchType || '').toLowerCase();
+          return t.includes('sub') && !t.includes('branch');
+        });
         if (so) primaryTown = cleanPostOfficeName(so.Name);
       }
 
-      // Rule E: Fallback
+      // Rule F: Fallback
       if (!primaryTown) {
-        primaryTown = localGuess?.city || rawDistrict || rawBlock;
+        primaryTown = rawBlock || rawDistrict || cleanPostOfficeName(sortedOffices[0]?.Name || '');
       }
 
       // Final City display

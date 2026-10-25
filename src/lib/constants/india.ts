@@ -125,8 +125,8 @@ export function guessCityStateFromPin(pin: string): { city?: string; state?: str
   if (prefix === '403') return { city: 'Goa', state: 'Goa' };
   if (prefix === '410') return { city: 'Lonavala', state: 'Maharashtra' };
   if (prefix === '411') return { city: 'Pune', state: 'Maharashtra' };
-  if (prefix === '412') return { city: 'Pune', state: 'Maharashtra' };
-  if (prefix === '413') return { city: 'Solapur', state: 'Maharashtra' };
+  if (clean === '413304') return { city: 'Pandharpur', state: 'Maharashtra' };
+  if (prefix === '413') return { city: 'Pandharpur / Solapur', state: 'Maharashtra' };
   if (prefix === '414') return { city: 'Ahmednagar', state: 'Maharashtra' };
   if (prefix === '415') return { city: 'Satara', state: 'Maharashtra' };
   if (prefix === '416') return { city: 'Kolhapur', state: 'Maharashtra' };

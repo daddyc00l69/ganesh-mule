@@ -40,12 +40,10 @@ export const CartDrawer: React.FC = () => {
 
   if (!isCartOpen) return null;
 
-  const fees = calculateOrderFees(subtotal);
+  const fees = calculateOrderFees(subtotal, 0, undefined, 0);
   const freeShippingThreshold = 99900; // ₹999.00
   const freeShippingNeeded = Math.max(0, freeShippingThreshold - subtotal);
-  const shippingCost = fees.shippingTotal; // ₹70 + 18% GST (₹82.60) or 0 if free
-  const estimatedTax = fees.productGst; // 5% GST on honey products
-  const total = fees.grandTotal;
+  const total = subtotal;
 
   return (
     <div className="fixed inset-0 z-50 overflow-hidden overscroll-contain">
@@ -211,33 +209,17 @@ export const CartDrawer: React.FC = () => {
                   <span className="font-medium text-[#1d1d1f]">{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-[#6e6e73]">
-                  <span>Courier Shipping (incl. 18% GST)</span>
-                  <span className="font-medium">
-                    {shippingCost === 0 ? (
-                      <span className="text-emerald-700 font-semibold">FREE</span>
-                    ) : (
-                      formatCurrency(shippingCost)
-                    )}
+                  <span>Courier Shipping (Delhivery One)</span>
+                  <span className="font-normal text-[#86868b] text-[11px]">
+                    Calculated at Checkout
                   </span>
                 </div>
-                {fees.platformTotal > 0 && (
-                  <div className="flex justify-between text-[#6e6e73]">
-                    <span>Platform Fee (incl. 18% GST)</span>
-                    <span className="font-medium text-[#1d1d1f]">{formatCurrency(fees.platformTotal)}</span>
-                  </div>
-                )}
-                {fees.pgTotal > 0 && (
-                  <div className="flex justify-between text-[#6e6e73]">
-                    <span>Payment Gateway (incl. 18% GST)</span>
-                    <span className="font-medium text-[#1d1d1f]">{formatCurrency(fees.pgTotal)}</span>
-                  </div>
-                )}
                 <div className="flex justify-between text-base font-semibold text-[#1d1d1f] pt-2.5 border-t border-[#d2d2d7]/60">
-                  <span>Total</span>
+                  <span>Bag Subtotal</span>
                   <span>{formatCurrency(total)}</span>
                 </div>
                 <p className="text-[10px] text-[#86868b] text-right">
-                  Transparent statutory GST breakdown on checkout
+                  Delhivery dynamic shipping &amp; statutory GST added at checkout
                 </p>
               </div>
 
