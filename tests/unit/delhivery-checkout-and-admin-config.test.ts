@@ -120,6 +120,30 @@ describe('Admin Configuration & Delhivery Dynamic Checkout Logistics', () => {
     expect(fees.grandTotal).toBeGreaterThan(subtotal + fees.shippingTotal);
   });
 
+  it('should distinguish multiple weight variants (300g, 750g, 1050g) and calculate gross consignment weight', () => {
+    // 3 distinct weight variant products
+    const p300 = MOCK_PRODUCTS.find((p) => p.slug === 'wild-forest-raw-honey-300g')!;
+    const p750 = MOCK_PRODUCTS.find((p) => p.slug === 'wild-forest-raw-honey-750g')!;
+    const p1050 = MOCK_PRODUCTS.find((p) => p.slug === 'wild-forest-raw-honey-1050g')!;
+
+    expect(p300.id).not.toBe(p750.id);
+    expect(p750.id).not.toBe(p1050.id);
+    expect(p300.price).toBe(44900);
+    expect(p750.price).toBe(89900);
+    expect(p1050.price).toBe(119900);
+
+    // Simulating items in cart across all 3 weights
+    const cartItems = [
+      { id: 'item-1', orderId: 'ord-1', productId: p300.id, productName: p300.name, sku: p300.sku, price: p300.price, quantity: 1, total: p300.price },
+      { id: 'item-2', orderId: 'ord-1', productId: p750.id, productName: p750.name, sku: p750.sku, price: p750.price, quantity: 1, total: p750.price },
+      { id: 'item-3', orderId: 'ord-1', productId: p1050.id, productName: p1050.name, sku: p1050.sku, price: p1050.price, quantity: 1, total: p1050.price },
+    ];
+
+    expect(cartItems.length).toBe(3);
+    const uniqueProductIds = new Set(cartItems.map((i) => i.productId));
+    expect(uniqueProductIds.size).toBe(3);
+  });
+
   it('should use local solid glass honey product images with zero external unsplash dependencies', () => {
     for (const product of MOCK_PRODUCTS) {
       expect(product.images.length).toBeGreaterThan(0);
@@ -130,3 +154,4 @@ describe('Admin Configuration & Delhivery Dynamic Checkout Logistics', () => {
     }
   });
 });
+

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma, isDatabaseOnline } from '@/lib/db';
 import { MOCK_ORDERS } from '@/lib/mock-data';
+import { getLiveOrders, getLiveOrderById } from '@/lib/orders/store';
 import { buildTaxInvoiceData } from '@/lib/invoice';
 
 export async function GET(
@@ -8,41 +9,68 @@ export async function GET(
   { params }: { params: Promise<{ orderNumber: string }> }
 ) {
   try {
-    const { orderNumber } = await params;
-    if (!orderNumber) {
+    const { orderNumber: rawOrderNumber } = await params;
+    if (!rawOrderNumber) {
       return NextResponse.json({ error: 'Order number is required' }, { status: 400 });
     }
 
-    let order: any = null;
-    const dbOnline = await isDatabaseOnline();
+    const orderNumber = decodeURIComponent(rawOrderNumber).trim();
+    const cleanNumber = orderNumber.replace(/^#/, '').trim();
 
-    // 1. Try fetching from Prisma DB if online
-    if (dbOnline) {
-      try {
-        order = await prisma.order.findUnique({
-          where: { orderNumber },
-          include: {
-            items: true,
-            payments: true,
-          },
-        });
-      } catch {
-        // Prisma offline / mock fallback
+    let order: any = null;
+
+    // 1. Check live in-memory store (covers newly placed checkout orders & transitions)
+    order =
+      getLiveOrderById(cleanNumber) ||
+      getLiveOrderById(orderNumber) ||
+      getLiveOrders().find(
+        (o) =>
+          o.orderNumber.toLowerCase() === cleanNumber.toLowerCase() ||
+          o.orderNumber.toLowerCase() === orderNumber.toLowerCase() ||
+          o.id.toLowerCase() === cleanNumber.toLowerCase() ||
+          o.id.toLowerCase() === orderNumber.toLowerCase()
+      );
+
+    // 2. Try fetching from Prisma DB if online
+    if (!order) {
+      const dbOnline = await isDatabaseOnline();
+      if (dbOnline) {
+        try {
+          order = await prisma.order.findFirst({
+            where: {
+              OR: [
+                { orderNumber: cleanNumber },
+                { orderNumber: orderNumber },
+                { id: cleanNumber },
+                { id: orderNumber },
+              ],
+            },
+            include: {
+              items: true,
+              payments: true,
+            },
+          });
+        } catch {
+          // Prisma offline
+        }
       }
     }
 
-    // 2. Fallback to in-memory order registry
+    // 3. Fallback to MOCK_ORDERS array
     if (!order) {
       order = MOCK_ORDERS.find(
         (o) =>
+          o.orderNumber.toLowerCase() === cleanNumber.toLowerCase() ||
           o.orderNumber.toLowerCase() === orderNumber.toLowerCase() ||
-          o.id.toLowerCase() === orderNumber.toLowerCase()
+          o.id.toLowerCase() === cleanNumber.toLowerCase() ||
+          o.id.toLowerCase() === orderNumber.toLowerCase() ||
+          o.orderNumber.toLowerCase().includes(cleanNumber.toLowerCase())
       );
     }
 
     if (!order) {
       return NextResponse.json(
-        { error: `Order "${orderNumber}" not found` },
+        { error: `Order "${orderNumber}" not found. Please verify the order number.` },
         { status: 404 }
       );
     }
@@ -52,6 +80,7 @@ export async function GET(
     return NextResponse.json({
       success: true,
       invoice: invoiceData,
+      order,
     });
   } catch (err: any) {
     return NextResponse.json(

@@ -52,9 +52,33 @@ export default function ProductDetailPage() {
   const [selectedVariant, setSelectedVariant] = useState(defaultVariant);
 
   const variantOptions = [
-    { label: '300g Solid Glass Jar', weight: '300g', slug: 'wild-forest-raw-honey-300g', price: 44900, compareAtPrice: 59900 },
-    { label: '750g Solid Glass Jar', weight: '750g', slug: 'wild-forest-raw-honey-750g', price: 89900, compareAtPrice: 119900 },
-    { label: '1050g Grand Reserve Jar', weight: '1050g', slug: 'wild-forest-raw-honey-1050g', price: 119900, compareAtPrice: 159900 },
+    {
+      label: '300g Solid Glass Jar',
+      weight: '300g',
+      weightGrams: 300,
+      slug: 'wild-forest-raw-honey-300g',
+      id: 'prod-wild-forest-300g',
+      price: 44900,
+      compareAtPrice: 59900,
+    },
+    {
+      label: '750g Solid Glass Jar',
+      weight: '750g',
+      weightGrams: 750,
+      slug: 'wild-forest-raw-honey-750g',
+      id: 'prod-wild-forest-750g',
+      price: 89900,
+      compareAtPrice: 119900,
+    },
+    {
+      label: '1050g Grand Reserve Jar',
+      weight: '1050g',
+      weightGrams: 1050,
+      slug: 'wild-forest-raw-honey-1050g',
+      id: 'prod-wild-forest-1050g',
+      price: 119900,
+      compareAtPrice: 159900,
+    },
   ];
 
   const currentVariantObj =
@@ -91,12 +115,27 @@ export default function ProductDetailPage() {
   }, []);
 
   const handleAddToCart = () => {
-    const customizedItem = {
-      ...product,
-      name: `${product.name.replace(/\(\d+g\)/, '').trim()} (${currentVariantObj.label})`,
-      price: activePrice,
-      compareAtPrice: activeCompareAtPrice,
-    };
+    // Resolve dedicated product or build unique variant item so every weight shows as its own distinct item in cart
+    const matched =
+      MOCK_PRODUCTS.find((p) => p.slug === currentVariantObj.slug) ||
+      MOCK_PRODUCTS.find((p) => p.id === currentVariantObj.id);
+
+    const customizedItem: any = matched
+      ? {
+          ...matched,
+          price: activePrice,
+          compareAtPrice: activeCompareAtPrice,
+        }
+      : {
+          ...product,
+          id: currentVariantObj.id || `${product.id}-${currentVariantObj.weight}`,
+          sku: `${product.sku}-${currentVariantObj.weight.toUpperCase()}`,
+          name: `${product.name.replace(/\(\d+g\)/, '').trim()} (${currentVariantObj.label})`,
+          price: activePrice,
+          compareAtPrice: activeCompareAtPrice,
+          weightGrams: currentVariantObj.weightGrams || product.weightGrams,
+        };
+
     addToCart(customizedItem, quantity);
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2000);

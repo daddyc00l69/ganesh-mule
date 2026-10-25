@@ -82,6 +82,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           quantity: Math.min(product.stockQuantity, quantity),
           imageUrl: product.images[0]?.url,
           stockAvailable: product.stockQuantity,
+          weight: product.weightGrams ? `${product.weightGrams}g` : undefined,
+          weightGrams: product.weightGrams,
         },
       ];
     });

@@ -909,7 +909,7 @@ function CheckoutContent() {
                       {delhiveryRate ? (
                         <div className="mt-0.5 space-y-0.5">
                           <p className="text-[10px] text-[#0071e3] font-medium leading-tight">
-                            Delhivery One Express • {delhiveryRate.zoneName || 'Zone B (Intra-State / Regional Maharashtra)'} • Doorstep courier delivery in {delhiveryRate.estimatedDays || 2}-3 business days
+                            Doorstep courier delivery in {delhiveryRate.estimatedDays || 2}-3 business days
                           </p>
                           <p className="text-[10px] text-[#86868b]">
                             Base: {formatCurrency(delhiveryRate.subtotalPaise)} + 18% GST: {formatCurrency(delhiveryRate.gstAmountPaise)}
@@ -1499,7 +1499,7 @@ function CheckoutContent() {
                       {delhiveryRate ? (
                         <div className="mt-0.5 space-y-0.5">
                           <p className="text-[10px] text-[#0071e3] font-medium leading-tight">
-                            Delhivery One Express • {delhiveryRate.zoneName || 'Zone B (Intra-State / Regional Maharashtra)'} • Doorstep courier delivery in {delhiveryRate.estimatedDays || 2}-3 business days
+                            Doorstep courier delivery in {delhiveryRate.estimatedDays || 2}-3 business days
                           </p>
                           <p className="text-[10px] text-[#86868b]">
                             Base: {formatCurrency(delhiveryRate.subtotalPaise)} + 18% GST: {formatCurrency(delhiveryRate.gstAmountPaise)}

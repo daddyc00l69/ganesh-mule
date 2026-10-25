@@ -170,6 +170,8 @@ export interface CartItem {
   quantity: number;
   imageUrl?: string;
   stockAvailable: number;
+  weight?: string;
+  weightGrams?: number;
 }
 
 export interface InventoryMovementRecord {
