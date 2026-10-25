@@ -6,7 +6,7 @@ import { GlassCard } from '@/components/ui/glass-card';
 import { GlassButton } from '@/components/ui/glass-button';
 import { GlassInput } from '@/components/ui/glass-input';
 import { GlassBadge } from '@/components/ui/glass-badge';
-import { Check, ShieldCheck, CreditCard, MessageSquare, Save, Store, Truck, Percent, Mail, Clock, ExternalLink, Box, Sparkles, Search } from 'lucide-react';
+import { Check, ShieldCheck, CreditCard, MessageSquare, Save, Store, Truck, Percent, Mail, Clock, ExternalLink, Box, Sparkles, Search, Calculator, MapPin, Zap } from 'lucide-react';
 import { DEFAULT_FEE_SETTINGS, FeeSettings } from '@/lib/config/fee-settings';
 
 export default function AdminSettingsPage() {
@@ -34,6 +34,14 @@ export default function AdminSettingsPage() {
   const [delhiveryTestPin, setDelhiveryTestPin] = useState('411001');
   const [delhiveryPinResult, setDelhiveryPinResult] = useState<any>(null);
   const [delhiveryCheckingPin, setDelhiveryCheckingPin] = useState(false);
+
+  // Delhivery Cost Calculator Tester State
+  const [calcDestPin, setCalcDestPin] = useState('411001'); // Local Pune by default
+  const [calcWeight, setCalcWeight] = useState(600); // 300g jar (600g gross)
+  const [calcMode, setCalcMode] = useState<'Express' | 'Surface'>('Express');
+  const [calcOriginPin, setCalcOriginPin] = useState('411004'); // Pune Apiary
+  const [calcResult, setCalcResult] = useState<any>(null);
+  const [calcLoading, setCalcLoading] = useState(false);
 
   useEffect(() => {
     async function fetchFees() {
@@ -97,6 +105,24 @@ export default function AdminSettingsPage() {
       setDelhiveryPinResult({ error: e.message });
     } finally {
       setDelhiveryCheckingPin(false);
+    }
+  };
+
+  const handleCalculateShippingCost = async () => {
+    const cleanPin = calcDestPin.replace(/\D/g, '').slice(0, 6);
+    if (cleanPin.length < 6) return;
+    setCalcLoading(true);
+    setCalcResult(null);
+    try {
+      const res = await fetch(
+        `/api/shipping/delhivery/cost?destinationPin=${cleanPin}&weight=${calcWeight}&mode=${calcMode}&originPin=${calcOriginPin}`
+      );
+      const data = await res.json();
+      setCalcResult(data);
+    } catch (e: any) {
+      setCalcResult({ error: e.message || 'Cost calculation failed' });
+    } finally {
+      setCalcLoading(false);
     }
   };
 
@@ -402,6 +428,240 @@ export default function AdminSettingsPage() {
                       <span>Check on Delhivery One</span>
                       <ExternalLink className="w-3 h-3" />
                     </a>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Interactive Delhivery Shipping Cost Calculator (Local & National API Tester) */}
+          <div className="p-4 rounded-xl bg-gradient-to-br from-black/60 to-black/30 border border-emerald-500/20 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <Calculator className="w-4 h-4 text-emerald-400" />
+                <div>
+                  <h4 className="text-xs font-bold text-foreground">
+                    Delhivery Shipping Cost Calculator (Local &amp; Pan-India API)
+                  </h4>
+                  <p className="text-[10px] text-muted-foreground">
+                    Calculates local intra-city Pune vs regional &amp; interstate freight via Delhivery One
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 self-start sm:self-auto">
+                API Endpoint: /api/shipping/delhivery/cost
+              </span>
+            </div>
+
+            {/* Quick Test Presets */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider block">
+                Quick Destination Presets:
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { label: '🏡 Local Pune (Camp: 411001)', pin: '411001' },
+                  { label: '🏡 Local Pune (Kothrud: 411038)', pin: '411038' },
+                  { label: '🏙️ Regional Mumbai (400001)', pin: '400001' },
+                  { label: '✈️ Metro Bengaluru (560001)', pin: '560001' },
+                  { label: '✈️ Metro Delhi (110001)', pin: '110001' },
+                ].map((preset) => (
+                  <button
+                    key={preset.pin}
+                    type="button"
+                    onClick={() => {
+                      setCalcDestPin(preset.pin);
+                    }}
+                    className={`text-[11px] px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                      calcDestPin === preset.pin
+                        ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300 font-semibold'
+                        : 'bg-white/5 border-white/10 text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Input Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+              <div className="space-y-1">
+                <label className="text-[11px] font-medium text-foreground">Origin PIN</label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={calcOriginPin}
+                  onChange={(e) => setCalcOriginPin(e.target.value)}
+                  placeholder="411004"
+                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-white/5 border border-white/10 text-foreground font-mono focus:outline-none focus:border-primary"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-medium text-foreground">Destination PIN</label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={calcDestPin}
+                  onChange={(e) => setCalcDestPin(e.target.value)}
+                  placeholder="e.g. 411001"
+                  className="w-full px-3 py-1.5 text-xs rounded-xl bg-white/5 border border-white/10 text-foreground font-mono focus:outline-none focus:border-primary"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-medium text-foreground">Consignment Weight</label>
+                <select
+                  value={calcWeight}
+                  onChange={(e) => setCalcWeight(Number(e.target.value))}
+                  className="w-full px-2.5 py-1.5 text-xs rounded-xl bg-white/5 border border-white/10 text-foreground focus:outline-none focus:border-primary"
+                >
+                  <option value={600} className="bg-neutral-900">300g Jar (600g Gross)</option>
+                  <option value={1280} className="bg-neutral-900">750g Jar (1280g Gross)</option>
+                  <option value={1800} className="bg-neutral-900">1050g Jar (1800g Gross)</option>
+                  <option value={2400} className="bg-neutral-900">2x 750g Jars (2560g Gross)</option>
+                  <option value={500} className="bg-neutral-900">Sample Small Box (500g)</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-medium text-foreground">Courier Priority</label>
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setCalcMode('Express')}
+                    className={`flex-1 py-1.5 text-[11px] font-medium rounded-xl border transition-all cursor-pointer ${
+                      calcMode === 'Express'
+                        ? 'bg-primary text-primary-foreground border-primary font-semibold'
+                        : 'bg-white/5 border-white/10 text-muted-foreground'
+                    }`}
+                  >
+                    Air Express
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCalcMode('Surface')}
+                    className={`flex-1 py-1.5 text-[11px] font-medium rounded-xl border transition-all cursor-pointer ${
+                      calcMode === 'Surface'
+                        ? 'bg-primary text-primary-foreground border-primary font-semibold'
+                        : 'bg-white/5 border-white/10 text-muted-foreground'
+                    }`}
+                  >
+                    Surface
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-[10px] text-muted-foreground">
+                Origin: Pune Apiary ({calcOriginPin}) • Standard Insured Shock-Proof Packaging
+              </span>
+              <GlassButton
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={handleCalculateShippingCost}
+                isLoading={calcLoading}
+                className="gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white"
+              >
+                <Calculator className="w-3.5 h-3.5" />
+                <span>Calculate Cost via API</span>
+              </GlassButton>
+            </div>
+
+            {/* Live Calculation Output Display */}
+            {calcResult && (
+              <div className="p-4 rounded-xl bg-black/60 border border-emerald-500/30 text-xs space-y-3 animate-in fade-in">
+                {calcResult.error ? (
+                  <p className="text-destructive font-semibold">❌ {calcResult.error}</p>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-white/10">
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-sm text-foreground">
+                            {calcResult.zone}
+                          </span>
+                          {calcResult.isLocal ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                              🏡 Local Intra-City Pune Dispatch
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                              National Inter-City Delivery
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          {calcResult.destinationCity}, {calcResult.destinationState} ({calcResult.destinationPincode}) • SLA: {calcResult.estimatedDays} {calcResult.estimatedDays === 1 ? 'Business Day' : 'Business Days'}
+                        </p>
+                      </div>
+
+                      <div className="text-right">
+                        <span className="text-[10px] text-muted-foreground block uppercase font-semibold">Total Delhivery Freight</span>
+                        <span className="text-xl font-extrabold text-emerald-400 font-mono">
+                          ₹{calcResult.pricing.totalShippingCost.toFixed(2)}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground block">
+                          (Includes 18% Statutory GST)
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Itemized Breakdown Table */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-[11px] border-collapse font-mono">
+                        <thead>
+                          <tr className="border-b border-white/10 text-muted-foreground text-[10px] text-left uppercase">
+                            <th className="py-1">Charge Component</th>
+                            <th className="py-1 text-center">Weight / Basis</th>
+                            <th className="py-1 text-right">Amount (INR)</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                          <tr>
+                            <td className="py-1.5 font-sans">Base Freight (First 500g slab)</td>
+                            <td className="py-1.5 text-center text-muted-foreground">500g</td>
+                            <td className="py-1.5 text-right font-semibold">₹{calcResult.pricing.baseFreight.toFixed(2)}</td>
+                          </tr>
+                          {calcResult.pricing.additionalWeightCharge > 0 && (
+                            <tr>
+                              <td className="py-1.5 font-sans">Additional Weight Slab Surcharge</td>
+                              <td className="py-1.5 text-center text-muted-foreground">{calcResult.billableWeightGrams - 500}g</td>
+                              <td className="py-1.5 text-right font-semibold">₹{calcResult.pricing.additionalWeightCharge.toFixed(2)}</td>
+                            </tr>
+                          )}
+                          <tr>
+                            <td className="py-1.5 font-sans">Insured Solid Glass Shock-Proof Care</td>
+                            <td className="py-1.5 text-center text-muted-foreground">Consignment Fragile Fee</td>
+                            <td className="py-1.5 text-right font-semibold">₹{calcResult.pricing.insuredGlassHandlingFee.toFixed(2)}</td>
+                          </tr>
+                          <tr>
+                            <td className="py-1.5 font-sans">Fuel Surcharge (10%)</td>
+                            <td className="py-1.5 text-center text-muted-foreground">Logistics Fuel Index</td>
+                            <td className="py-1.5 text-right font-semibold">₹{calcResult.pricing.fuelSurcharge.toFixed(2)}</td>
+                          </tr>
+                          <tr className="border-t border-white/10">
+                            <td className="py-1.5 font-sans font-semibold">Subtotal Freight</td>
+                            <td className="py-1.5 text-center text-muted-foreground">Taxable Value</td>
+                            <td className="py-1.5 text-right font-bold text-foreground">₹{calcResult.pricing.subtotal.toFixed(2)}</td>
+                          </tr>
+                          <tr>
+                            <td className="py-1.5 font-sans">GST (18% Statutory Logistics Tax)</td>
+                            <td className="py-1.5 text-center text-muted-foreground">CGST 9% + SGST 9%</td>
+                            <td className="py-1.5 text-right font-semibold text-amber-400">₹{calcResult.pricing.gstAmount.toFixed(2)}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div className="p-2.5 rounded-lg bg-white/5 border border-white/5 flex items-center justify-between text-[10px] text-muted-foreground">
+                      <span>Rate Source: <strong>{calcResult.rateSource}</strong></span>
+                      <span>Gross Weight: <strong>{calcResult.weightGrams}g</strong> (Billable: {calcResult.billableWeightGrams}g)</span>
+                      <span>Carrier: <strong>{calcResult.provider}</strong></span>
+                    </div>
                   </div>
                 )}
               </div>
