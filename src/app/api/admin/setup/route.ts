@@ -5,12 +5,13 @@ import {
   sendAdminSetupOtp,
   verifyAdminSetupOtp,
   resetAdminToDefault,
+  resetManagerToDefault,
   directSetAdminAccount,
 } from '@/lib/auth/staff-store';
 import { SESSION_COOKIE_NAME, SESSION_MAX_AGE } from '@/lib/auth/session';
 
 const SetupSchema = z.object({
-  action: z.enum(['SEND_OTP', 'VERIFY_OTP', 'RESET_ADMIN', 'DIRECT_SETUP']),
+  action: z.enum(['SEND_OTP', 'VERIFY_OTP', 'RESET_ADMIN', 'RESET_MANAGER', 'DIRECT_SETUP']),
   name: z.string().min(2).optional(),
   email: z.string().email().optional(),
   phone: z.string().min(10).optional(),
@@ -44,6 +45,25 @@ export async function POST(req: NextRequest) {
         message: 'Root administrator account reset to default credentials (Admin@123456)',
         user: result.user,
         redirect: '/admin',
+      });
+      response.cookies.set(SESSION_COOKIE_NAME, result.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: SESSION_MAX_AGE,
+      });
+      return response;
+    }
+
+    // Direct Instant Reset to Default Manager (Manager@123456)
+    if (action === 'RESET_MANAGER') {
+      const result = await resetManagerToDefault();
+      const response = NextResponse.json({
+        success: true,
+        message: 'Store Manager account reset to default credentials (manager@devtushar.uk / Manager@123456)',
+        user: result.user,
+        redirect: '/manager',
       });
       response.cookies.set(SESSION_COOKIE_NAME, result.token, {
         httpOnly: true,

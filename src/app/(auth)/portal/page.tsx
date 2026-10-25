@@ -124,6 +124,37 @@ function StaffPortalContent() {
     }
   };
 
+  const handleResetManager = async () => {
+    setIsResetting(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    try {
+      const res = await fetch('/api/admin/setup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'RESET_MANAGER' }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to reset manager');
+      }
+
+      setEmail('manager@devtushar.uk');
+      setPassword('Manager@123456');
+      setSelectedRole('MANAGER');
+      setSuccessMessage('Manager account reset to default (Manager@123456). Launching Manager Workspace...');
+
+      setTimeout(() => {
+        window.location.href = redirectTarget || '/manager';
+      }, 700);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Failed to reset manager account');
+      setIsResetting(false);
+    }
+  };
+
   return (
     <div className="dark min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden bg-background text-foreground">
       {/* Background Lighting Elements */}
@@ -248,6 +279,30 @@ function StaffPortalContent() {
             </div>
           )}
 
+          {/* Manager Default Credentials Info Badge */}
+          {selectedRole === 'MANAGER' && (
+            <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10 text-[11px] text-muted-foreground space-y-1">
+              <div className="flex items-center justify-between text-foreground font-medium">
+                <span className="flex items-center gap-1.5 text-blue-400">
+                  <UserCheck className="w-3.5 h-3.5" />
+                  Default Store Manager Credentials
+                </span>
+                <button
+                  type="button"
+                  onClick={handleResetManager}
+                  disabled={isResetting}
+                  className="text-[10px] text-blue-400 hover:text-blue-300 underline font-semibold cursor-pointer disabled:opacity-50 flex items-center gap-1"
+                >
+                  <RotateCcw className={`w-3 h-3 ${isResetting ? 'animate-spin' : ''}`} />
+                  <span>Reset Manager</span>
+                </button>
+              </div>
+              <p className="font-mono text-[10px] text-gray-300">
+                Email: <span className="text-white">manager@devtushar.uk</span> • Pass: <span className="text-white">Manager@123456</span>
+              </p>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <GlassInput
               label="Staff Email"
@@ -267,7 +322,11 @@ function StaffPortalContent() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••••••"
               autoComplete="current-password"
-              hint={selectedRole === 'ADMIN' ? 'Default root password: Admin@123456' : undefined}
+              hint={
+                selectedRole === 'ADMIN'
+                  ? 'Default root password: Admin@123456'
+                  : 'Default manager password: Manager@123456 (or Admin@123456)'
+              }
             />
 
             <div className="pt-2">
@@ -285,7 +344,7 @@ function StaffPortalContent() {
 
           {/* Quick Actions & Links */}
           <div className="pt-3 border-t border-border/40 flex flex-col gap-2 text-center text-xs">
-            {selectedRole === 'ADMIN' && (
+            {selectedRole === 'ADMIN' ? (
               <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1">
                 <Link href="/config" className="text-primary hover:underline font-medium">
                   Set Custom Admin Password (/config)
@@ -297,6 +356,28 @@ function StaffPortalContent() {
                   className="text-amber-400 hover:text-amber-300 underline font-semibold cursor-pointer"
                 >
                   Reset Admin to Default
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1">
+                <button
+                  type="button"
+                  onClick={handleResetManager}
+                  disabled={isResetting}
+                  className="text-blue-400 hover:text-blue-300 underline font-medium cursor-pointer"
+                >
+                  Reset Manager to Default (Manager@123456)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedRole('ADMIN');
+                    setEmail('admin@devtushar.uk');
+                    setPassword('Admin@123456');
+                  }}
+                  className="text-amber-400 hover:text-amber-300 underline font-medium cursor-pointer"
+                >
+                  Sign in as Admin instead
                 </button>
               </div>
             )}
