@@ -39,7 +39,15 @@ export async function POST(req: NextRequest) {
         return response;
       }
     } catch (err: any) {
-      // If error message indicates wrong password, throw immediately
+      if (err.unconfigured) {
+        return NextResponse.json(
+          {
+            error: err.message,
+            unconfigured: true,
+          },
+          { status: 403 }
+        );
+      }
       if (err.message.includes('password')) {
         return NextResponse.json({ error: err.message }, { status: 401 });
       }

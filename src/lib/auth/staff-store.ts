@@ -68,7 +68,7 @@ const DATA_DIR = path.join(process.cwd(), '.data');
 const DATA_FILE = path.join(DATA_DIR, 'staff-registry.json');
 const TMP_FILE = path.join(os.tmpdir(), 'staff-registry-vercel.json');
 
-// Default Master Administrator fallback (Active root Administrator)
+// Default Master Administrator template (used as fallback reference only)
 export const DEFAULT_ROOT_ADMIN: AdminAccount = {
   id: 'usr-admin-root',
   name: 'Tushar (Super Administrator)',
@@ -82,11 +82,11 @@ export const DEFAULT_ROOT_ADMIN: AdminAccount = {
   createdAt: '2026-01-01T00:00:00.000Z',
 };
 
-// Default Store Manager fallback
+// Default Store Manager template
 export const DEFAULT_STORE_MANAGER: StoredManager = {
   id: 'mgr-default-operations',
   userId: 'usr-manager-default',
-  name: 'Vikram Mehta (Operations Manager)',
+  name: 'Operations Manager',
   email: 'manager@devtushar.uk',
   phone: '+91 98220 11111',
   department: 'Fulfillment & Operations',
@@ -100,7 +100,7 @@ export const DEFAULT_STORE_MANAGER: StoredManager = {
     'support.manage',
     'reports.view',
   ],
-  passwordHash: DEFAULT_ROOT_ADMIN.passwordHash, // 'Admin@123456' / 'Manager@123456'
+  passwordHash: DEFAULT_ROOT_ADMIN.passwordHash,
   isActive: true,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
@@ -112,18 +112,15 @@ function loadPersistedState(): { admin: AdminAccount | null; managers: StoredMan
       if (fs.existsSync(filePath)) {
         const raw = fs.readFileSync(filePath, 'utf-8');
         const parsed = JSON.parse(raw);
-        const managersList = Array.isArray(parsed.managers) && parsed.managers.length > 0
-          ? parsed.managers
-          : [DEFAULT_STORE_MANAGER];
         return {
-          admin: parsed.admin || DEFAULT_ROOT_ADMIN,
-          managers: managersList,
+          admin: parsed.admin || null,
+          managers: Array.isArray(parsed.managers) ? parsed.managers : [],
           invites: Array.isArray(parsed.invites) ? parsed.invites : [],
         };
       }
     }
   } catch {}
-  return { admin: DEFAULT_ROOT_ADMIN, managers: [DEFAULT_STORE_MANAGER], invites: [] };
+  return { admin: null, managers: [], invites: [] };
 }
 
 function persistState() {
@@ -151,7 +148,7 @@ function persistState() {
 if (!globalStaff.__STAFF_STORE__) {
   const persisted = loadPersistedState();
   globalStaff.__STAFF_STORE__ = {
-    admin: persisted.admin || DEFAULT_ROOT_ADMIN,
+    admin: persisted.admin,
     managers: persisted.managers,
     invites: persisted.invites,
     sessions: new Map(),
@@ -518,152 +515,81 @@ export async function authenticateStaffLogin(params: {
   password?: string;
   expectedRole: 'ADMIN' | 'MANAGER';
 }): Promise<{ success: boolean; user: SafeUser; token: string }> {
-  const cleanEmail = params.email.trim().toLowerCase();
-
-  // 1. Check Admin
-  if (params.expectedRole === 'ADMIN' || !params.expectedRole) {
-    if (!store.admin) {
-      store.admin = { ...DEFAULT_ROOT_ADMIN };
-      persistState();
-    }
-
-    const inputPw = (params.password || '').trim();
-    const isMaster =
-      inputPw === 'Admin@123456' ||
-      inputPw === 'admin' ||
-      inputPw === 'admin123' ||
-      inputPw === 'Admin@123' ||
-      inputPw === 'tushar' ||
-      inputPw === 'tushar123' ||
-      inputPw === 'devtushar' ||
-      (Boolean(process.env.ADMIN_PASSWORD) && inputPw === process.env.ADMIN_PASSWORD);
-
-    const matchesHash = store.admin?.passwordHash
-      ? await verifyPassword(inputPw, store.admin.passwordHash)
-      : false;
-
-    const isEmailMatch =
-      store.admin?.email.toLowerCase() === cleanEmail ||
-      cleanEmail === (process.env.ADMIN_EMAIL || '').toLowerCase() ||
-      cleanEmail.includes('admin') ||
-      cleanEmail.includes('tushar') ||
-      cleanEmail === 'tushar0p.test@gmail.com' ||
-      cleanEmail === 'admin@devtushar.uk' ||
-      cleanEmail === 'care@devtushar.uk' ||
-      cleanEmail === 'admin@ganeshmule.com';
-
-    // If master password, password matches current hash, or valid admin email with matching hash
-    if (isMaster || matchesHash || (isEmailMatch && (matchesHash || isMaster))) {
-      const safeUser: SafeUser = {
-        id: store.admin?.id || DEFAULT_ROOT_ADMIN.id,
-        name: store.admin?.name || DEFAULT_ROOT_ADMIN.name,
-        email: cleanEmail || store.admin?.email || DEFAULT_ROOT_ADMIN.email,
-        role: 'ADMIN',
-        isActive: true,
-        createdAt: store.admin?.createdAt || DEFAULT_ROOT_ADMIN.createdAt,
-        permissions: [],
-      };
-
-      const token = createUserSessionToken(safeUser);
-      store.sessions.set(token, {
-        user: safeUser,
-        expiresAt: Date.now() + SESSION_MAX_AGE * 1000,
-      });
-
-      await setSessionCookie(token);
-      return { success: true, user: safeUser, token };
-    }
-
-    if (isEmailMatch && !matchesHash && !isMaster) {
-      throw new Error('Invalid administrator password. Use default: Admin@123456');
-    }
+  // Portal cannot be used until the root Administrator is configured at /config
+  if (!store.admin || !store.admin.isActive) {
+    const err: any = new Error(
+      'System is not configured. Please visit /config to set up the root Administrator account first.'
+    );
+    err.unconfigured = true;
+    throw err;
   }
 
-  // 2. Check Managers
-  if (params.expectedRole === 'MANAGER' || !params.expectedRole) {
-    if (!store.managers || store.managers.length === 0) {
-      store.managers = [DEFAULT_STORE_MANAGER];
-      persistState();
+  const cleanEmail = params.email.trim().toLowerCase();
+  const inputPw = (params.password || '').trim();
+
+  if (!inputPw) {
+    throw new Error('Password is required.');
+  }
+
+  // 1. Expected Role: ADMINISTRATOR
+  if (params.expectedRole === 'ADMIN' || !params.expectedRole) {
+    const isRootAdminEmail = store.admin.email.toLowerCase() === cleanEmail;
+    if (!isRootAdminEmail) {
+      throw new Error('Administrator account not found for this email address.');
     }
 
-    const inputPw = (params.password || '').trim();
-    const isMaster =
-      inputPw === 'Manager@123456' ||
-      inputPw === 'Admin@123456' ||
-      inputPw === 'manager' ||
-      inputPw === 'admin' ||
-      inputPw === 'admin123' ||
-      inputPw === 'Admin@123' ||
-      inputPw === 'tushar' ||
-      inputPw === 'tushar123' ||
-      inputPw === 'devtushar';
+    const matches = await verifyPassword(inputPw, store.admin.passwordHash);
+    if (!matches) {
+      throw new Error('Invalid administrator password.');
+    }
 
-    const manager = store.managers.find((m) => m.email.toLowerCase() === cleanEmail && m.isActive);
+    const safeUser: SafeUser = {
+      id: store.admin.id,
+      name: store.admin.name,
+      email: store.admin.email,
+      role: 'ADMIN',
+      isActive: true,
+      createdAt: store.admin.createdAt,
+      permissions: ['FULL_ACCESS'],
+    };
 
-    // 2a. Direct match with a registered Store Manager
-    if (manager) {
-      const matches = inputPw ? await verifyPassword(inputPw, manager.passwordHash) : false;
-      if (matches || isMaster) {
-        const safeUser: SafeUser = {
-          id: manager.userId,
-          name: manager.name,
-          email: manager.email,
-          role: 'MANAGER',
-          isActive: true,
-          createdAt: manager.createdAt,
-          permissions: manager.permissions,
-          department: manager.department,
-        };
+    const token = createUserSessionToken(safeUser);
+    store.sessions.set(token, {
+      user: safeUser,
+      expiresAt: Date.now() + SESSION_MAX_AGE * 1000,
+    });
 
-        const token = createUserSessionToken(safeUser);
-        store.sessions.set(token, {
-          user: safeUser,
-          expiresAt: Date.now() + SESSION_MAX_AGE * 1000,
-        });
+    await setSessionCookie(token);
+    return { success: true, user: safeUser, token };
+  }
 
-        await setSessionCookie(token);
-        return { success: true, user: safeUser, token };
-      } else {
-        throw new Error('Invalid manager password. Use default: Manager@123456');
+  // 2. Expected Role: STORE MANAGER
+  if (params.expectedRole === 'MANAGER') {
+    // 2a. Administrator logging into Manager Portal -> authenticate seamlessly with their configured email & password
+    if (store.admin && store.admin.email.toLowerCase() === cleanEmail) {
+      const matches = await verifyPassword(inputPw, store.admin.passwordHash);
+      if (!matches) {
+        throw new Error('Invalid manager password.');
       }
-    }
 
-    // 2b. Root Administrator logging in while on Manager tab -> authenticate seamlessly
-    if (store.admin && (store.admin.email.toLowerCase() === cleanEmail || cleanEmail.includes('admin') || cleanEmail.includes('tushar'))) {
-      const adminMatches = inputPw ? await verifyPassword(inputPw, store.admin.passwordHash) : false;
-      if (adminMatches || isMaster) {
-        const safeUser: SafeUser = {
-          id: store.admin.id,
-          name: store.admin.name,
-          email: store.admin.email,
-          role: 'ADMIN',
-          isActive: true,
-          createdAt: store.admin.createdAt,
-          permissions: [],
-        };
-
-        const token = createUserSessionToken(safeUser);
-        store.sessions.set(token, {
-          user: safeUser,
-          expiresAt: Date.now() + SESSION_MAX_AGE * 1000,
-        });
-
-        await setSessionCookie(token);
-        return { success: true, user: safeUser, token };
-      }
-    }
-
-    // 2c. Master password used with any manager-intended email
-    if (isMaster) {
       const safeUser: SafeUser = {
-        id: `usr-manager-${cleanEmail.replace(/[^a-z0-9]/g, '') || 'default'}`,
-        name: cleanEmail.startsWith('manager') ? 'Vikram Mehta (Operations Manager)' : `${cleanEmail.split('@')[0]} (Manager)`,
-        email: cleanEmail,
+        id: store.admin.id,
+        name: store.admin.name,
+        email: store.admin.email,
         role: 'MANAGER',
         isActive: true,
-        createdAt: new Date().toISOString(),
-        permissions: DEFAULT_STORE_MANAGER.permissions,
-        department: 'Operations & Inventory',
+        createdAt: store.admin.createdAt,
+        permissions: [
+          'orders.read',
+          'orders.update',
+          'inventory.read',
+          'inventory.update',
+          'coupons.read',
+          'coupons.manage',
+          'support.manage',
+          'reports.view',
+        ],
+        department: 'Executive Operations',
       };
 
       const token = createUserSessionToken(safeUser);
@@ -675,13 +601,40 @@ export async function authenticateStaffLogin(params: {
       await setSessionCookie(token);
       return { success: true, user: safeUser, token };
     }
+
+    // 2b. Direct match with an invited / registered Store Manager
+    const manager = store.managers.find((m) => m.email.toLowerCase() === cleanEmail && m.isActive);
+    if (manager) {
+      const matches = await verifyPassword(inputPw, manager.passwordHash);
+      if (!matches) {
+        throw new Error('Invalid manager password.');
+      }
+
+      const safeUser: SafeUser = {
+        id: manager.userId,
+        name: manager.name,
+        email: manager.email,
+        role: 'MANAGER',
+        isActive: true,
+        createdAt: manager.createdAt,
+        permissions: manager.permissions,
+        department: manager.department,
+      };
+
+      const token = createUserSessionToken(safeUser);
+      store.sessions.set(token, {
+        user: safeUser,
+        expiresAt: Date.now() + SESSION_MAX_AGE * 1000,
+      });
+
+      await setSessionCookie(token);
+      return { success: true, user: safeUser, token };
+    }
+
+    throw new Error('Manager account not found. Please verify your email or contact the administrator.');
   }
 
-  throw new Error(
-    params.expectedRole === 'MANAGER'
-      ? 'Manager account not found. Use default: manager@devtushar.uk (Pass: Manager@123456)'
-      : `No active ${params.expectedRole.toLowerCase()} account found for ${cleanEmail}.`
-  );
+  throw new Error('Invalid portal role specified.');
 }
 
 export function findStaffBySessionToken(token: string): SafeUser | null {
@@ -700,33 +653,6 @@ export function findStaffBySessionToken(token: string): SafeUser | null {
 }
 
 /**
- * Resets Root Administrator account to default credentials (Admin@123456)
- */
-export async function resetAdminToDefault(): Promise<{ success: boolean; user: SafeUser; token: string }> {
-  store.admin = { ...DEFAULT_ROOT_ADMIN };
-  persistState();
-
-  const safeUser: SafeUser = {
-    id: DEFAULT_ROOT_ADMIN.id,
-    name: DEFAULT_ROOT_ADMIN.name,
-    email: DEFAULT_ROOT_ADMIN.email,
-    role: 'ADMIN',
-    isActive: true,
-    createdAt: DEFAULT_ROOT_ADMIN.createdAt,
-    permissions: [],
-  };
-
-  const token = createUserSessionToken(safeUser);
-  store.sessions.set(token, {
-    user: safeUser,
-    expiresAt: Date.now() + SESSION_MAX_AGE * 1000,
-  });
-
-  await setSessionCookie(token);
-  return { success: true, user: safeUser, token };
-}
-
-/**
  * Directly provision or update root Admin account with custom password
  */
 export async function directSetAdminAccount(params: {
@@ -738,9 +664,13 @@ export async function directSetAdminAccount(params: {
   const cleanEmail = params.email.trim().toLowerCase();
   const cleanName = params.name.trim();
   const phone = params.phone?.trim() || '+91 98220 00000';
-  const passwordHash = params.password
-    ? await hashPassword(params.password.trim())
-    : DEFAULT_ROOT_ADMIN.passwordHash;
+  const password = (params.password || '').trim();
+
+  if (!password || password.length < 6) {
+    throw new Error('Password must be at least 6 characters.');
+  }
+
+  const passwordHash = await hashPassword(password);
 
   const adminAccount: AdminAccount = {
     id: `usr-admin-${Date.now()}`,
@@ -763,7 +693,7 @@ export async function directSetAdminAccount(params: {
     role: 'ADMIN',
     isActive: true,
     createdAt: adminAccount.createdAt,
-    permissions: [],
+    permissions: ['FULL_ACCESS'],
   };
 
   const token = createUserSessionToken(safeUser);
@@ -777,30 +707,14 @@ export async function directSetAdminAccount(params: {
 }
 
 /**
- * Resets Store Manager account to default credentials (manager@devtushar.uk / Manager@123456)
+ * Clears all accounts and sessions for a complete clean start
  */
-export async function resetManagerToDefault(): Promise<{ success: boolean; user: SafeUser; token: string }> {
-  store.managers = [DEFAULT_STORE_MANAGER];
+export function _clearAllStaffForFreshStart() {
+  store.admin = null;
+  store.managers = [];
+  store.invites = [];
+  store.sessions.clear();
+  store.otps.clear();
   persistState();
-
-  const safeUser: SafeUser = {
-    id: DEFAULT_STORE_MANAGER.userId,
-    name: DEFAULT_STORE_MANAGER.name,
-    email: DEFAULT_STORE_MANAGER.email,
-    role: 'MANAGER',
-    isActive: true,
-    createdAt: DEFAULT_STORE_MANAGER.createdAt,
-    permissions: DEFAULT_STORE_MANAGER.permissions,
-    department: DEFAULT_STORE_MANAGER.department,
-  };
-
-  const token = createUserSessionToken(safeUser);
-  store.sessions.set(token, {
-    user: safeUser,
-    expiresAt: Date.now() + SESSION_MAX_AGE * 1000,
-  });
-
-  await setSessionCookie(token);
-  return { success: true, user: safeUser, token };
 }
 

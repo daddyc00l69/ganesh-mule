@@ -1,26 +1,72 @@
-import { describe, it, expect } from 'vitest';
-import { getAdminConfigStatus, authenticateStaffLogin } from '@/lib/auth/staff-store';
+import { describe, it, expect, beforeEach } from 'vitest';
+import {
+  getAdminConfigStatus,
+  authenticateStaffLogin,
+  directSetAdminAccount,
+  _clearAllStaffForFreshStart,
+} from '@/lib/auth/staff-store';
 import { calculateDelhiveryShippingCost } from '@/lib/shipping/delhivery';
 import { calculateOrderFees } from '@/lib/config/fee-settings';
 import { MOCK_PRODUCTS } from '@/lib/mock-data';
 
 describe('Admin Configuration & Delhivery Dynamic Checkout Logistics', () => {
-  it('should report administrator as configured by default so initial setup alert is not shown', () => {
-    const status = getAdminConfigStatus();
-    expect(status.configured).toBe(true);
-    expect(status.adminEmail).toBeDefined();
-    expect(status.adminName).toBeDefined();
+  beforeEach(() => {
+    _clearAllStaffForFreshStart();
   });
 
-  it('should authenticate configured administrator with correct password', async () => {
+  it('should report administrator as unconfigured initially and block portal login', async () => {
     const status = getAdminConfigStatus();
-    const result = await authenticateStaffLogin({
-      email: status.adminEmail || 'tushar0p.test@gmail.com',
-      password: 'Admin@123456',
+    expect(status.configured).toBe(false);
+
+    await expect(
+      authenticateStaffLogin({
+        email: 'manager@devtushar.uk',
+        password: 'Manager@123456',
+        expectedRole: 'ADMIN',
+      })
+    ).rejects.toThrow('System is not configured');
+  });
+
+  it('should configure administrator via /config and allow logging in as both ADMIN and MANAGER with that email and password', async () => {
+    // 1. Initial setup at /config
+    const setupResult = await directSetAdminAccount({
+      name: 'Tushar',
+      email: 'manager@devtushar.uk',
+      phone: '+91 98220 00000',
+      password: 'Manager@123456',
+    });
+    expect(setupResult.success).toBe(true);
+
+    const status = getAdminConfigStatus();
+    expect(status.configured).toBe(true);
+    expect(status.adminEmail).toBe('manager@devtushar.uk');
+
+    // 2. Login under Administrator tab
+    const adminLogin = await authenticateStaffLogin({
+      email: 'manager@devtushar.uk',
+      password: 'Manager@123456',
       expectedRole: 'ADMIN',
     });
-    expect(result.success).toBe(true);
-    expect(result.user.role).toBe('ADMIN');
+    expect(adminLogin.success).toBe(true);
+    expect(adminLogin.user.role).toBe('ADMIN');
+
+    // 3. Login under Store Manager tab using the same configured email and password
+    const managerLogin = await authenticateStaffLogin({
+      email: 'manager@devtushar.uk',
+      password: 'Manager@123456',
+      expectedRole: 'MANAGER',
+    });
+    expect(managerLogin.success).toBe(true);
+    expect(managerLogin.user.role).toBe('MANAGER');
+
+    // 4. Reject invalid password
+    await expect(
+      authenticateStaffLogin({
+        email: 'manager@devtushar.uk',
+        password: 'WrongPassword@123',
+        expectedRole: 'ADMIN',
+      })
+    ).rejects.toThrow('Invalid administrator password');
   });
 
   it('should calculate live Delhivery shipping cost + 18% GST for Mumbai (400005) Zone B', async () => {

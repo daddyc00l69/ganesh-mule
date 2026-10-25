@@ -19,17 +19,18 @@ function StaffPortalContent() {
   const [password, setPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState<'ADMIN' | 'MANAGER'>('ADMIN');
   const [isLoading, setIsLoading] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(
     urlError === 'unauthorized' ? 'You do not have Administrator privileges for that section.' : null
   );
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [isUnconfigured, setIsUnconfigured] = useState(false);
+  const [isCheckingSetup, setIsCheckingSetup] = useState(true);
+  const [isConfigured, setIsConfigured] = useState(false);
 
-  // 1. Check if user already has an active, valid session
+  // 1. Check if user already has an active, valid session or if setup is needed
   useEffect(() => {
     let isMounted = true;
 
+    // Check existing session
     fetch('/api/auth/me', {
       cache: 'no-store',
       headers: { 'Cache-Control': 'no-cache' },
@@ -44,14 +45,25 @@ function StaffPortalContent() {
       })
       .catch(() => {});
 
-    // Check system setup status
-    fetch('/api/admin/setup')
+    // Check system setup status (/config)
+    fetch('/api/admin/setup', { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
         if (!isMounted) return;
-        setIsUnconfigured(data.configured === false);
+        if (!data.configured) {
+          setIsConfigured(false);
+          setIsCheckingSetup(false);
+          // Redirect immediately to /config setup
+          window.location.replace('/config');
+          return;
+        }
+        setIsConfigured(true);
+        setIsCheckingSetup(false);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!isMounted) return;
+        setIsCheckingSetup(false);
+      });
 
     return () => {
       isMounted = false;
@@ -75,7 +87,9 @@ function StaffPortalContent() {
 
       if (!res.ok) {
         if (data.unconfigured) {
-          setIsUnconfigured(true);
+          setIsConfigured(false);
+          window.location.replace('/config');
+          return;
         }
         throw new Error(data.error || 'Authentication failed');
       }
@@ -93,67 +107,35 @@ function StaffPortalContent() {
     }
   };
 
-  const handleResetAdmin = async () => {
-    setIsResetting(true);
-    setErrorMessage(null);
-    setSuccessMessage(null);
-
-    try {
-      const res = await fetch('/api/admin/setup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'RESET_ADMIN' }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to reset administrator');
-      }
-
-      setEmail('admin@devtushar.uk');
-      setPassword('Admin@123456');
-      setSelectedRole('ADMIN');
-      setSuccessMessage('Administrator reset to default (Admin@123456). Launching Admin Console...');
-
-      setTimeout(() => {
-        window.location.href = redirectTarget || '/admin';
-      }, 700);
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Failed to reset admin account');
-      setIsResetting(false);
-    }
-  };
-
-  const handleResetManager = async () => {
-    setIsResetting(true);
-    setErrorMessage(null);
-    setSuccessMessage(null);
-
-    try {
-      const res = await fetch('/api/admin/setup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'RESET_MANAGER' }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to reset manager');
-      }
-
-      setEmail('manager@devtushar.uk');
-      setPassword('Manager@123456');
-      setSelectedRole('MANAGER');
-      setSuccessMessage('Manager account reset to default (Manager@123456). Launching Manager Workspace...');
-
-      setTimeout(() => {
-        window.location.href = redirectTarget || '/manager';
-      }, 700);
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Failed to reset manager account');
-      setIsResetting(false);
-    }
-  };
+  // Block portal if root administrator is not yet configured at /config
+  if (isCheckingSetup || !isConfigured) {
+    return (
+      <div className="dark min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden bg-background text-foreground">
+        <div className="w-full max-w-md z-10 text-center space-y-4">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl glass-primary shadow-lg">
+            <Shield className="w-7 h-7 text-amber-400" />
+          </div>
+          <h1 className="text-xl font-bold tracking-tight text-foreground">
+            Initial Administrator Setup Required
+          </h1>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            No root Administrator account has been provisioned yet. The Staff Portal is locked until the Administrator account is configured at /config.
+          </p>
+          <div className="pt-2">
+            <Link
+              href="/config"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold shadow-lg transition-all"
+            >
+              <span>Configure Administrator at /config →</span>
+            </Link>
+          </div>
+          <p className="text-[11px] text-muted-foreground animate-pulse">
+            Redirecting to /config setup...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dark min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden bg-background text-foreground">
@@ -190,25 +172,6 @@ function StaffPortalContent() {
             </span>
           )}
         </div>
-
-        {/* First-Time Setup Alert */}
-        {isUnconfigured && (
-          <div className="p-4 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-200 text-xs space-y-2 animate-in fade-in">
-            <div className="flex items-center gap-2 font-semibold text-amber-300">
-              <Shield className="w-4 h-4 text-amber-400" />
-              <span>Initial System Setup Required</span>
-            </div>
-            <p className="text-[11px] text-amber-300/80 leading-relaxed">
-              No root Administrator account has been provisioned yet. Set up your Admin identity with verified email OTP or direct setup.
-            </p>
-            <Link
-              href="/config"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-400 hover:text-amber-300 underline pt-1"
-            >
-              <span>Go to /config Setup Page →</span>
-            </Link>
-          </div>
-        )}
 
         {/* Role Selector Tabs */}
         <div className="grid grid-cols-2 p-1 glass-panel rounded-xl gap-1">
@@ -255,54 +218,6 @@ function StaffPortalContent() {
             </div>
           )}
 
-          {/* Administrator Default Credentials Info Badge */}
-          {selectedRole === 'ADMIN' && (
-            <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10 text-[11px] text-muted-foreground space-y-1">
-              <div className="flex items-center justify-between text-foreground font-medium">
-                <span className="flex items-center gap-1.5 text-amber-400">
-                  <KeyRound className="w-3.5 h-3.5" />
-                  Default Administrator Credentials
-                </span>
-                <button
-                  type="button"
-                  onClick={handleResetAdmin}
-                  disabled={isResetting}
-                  className="text-[10px] text-blue-400 hover:text-blue-300 underline font-semibold cursor-pointer disabled:opacity-50 flex items-center gap-1"
-                >
-                  <RotateCcw className={`w-3 h-3 ${isResetting ? 'animate-spin' : ''}`} />
-                  <span>Reset Admin</span>
-                </button>
-              </div>
-              <p className="font-mono text-[10px] text-gray-300">
-                Email: <span className="text-white">admin@devtushar.uk</span> • Pass: <span className="text-white">Admin@123456</span>
-              </p>
-            </div>
-          )}
-
-          {/* Manager Default Credentials Info Badge */}
-          {selectedRole === 'MANAGER' && (
-            <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10 text-[11px] text-muted-foreground space-y-1">
-              <div className="flex items-center justify-between text-foreground font-medium">
-                <span className="flex items-center gap-1.5 text-blue-400">
-                  <UserCheck className="w-3.5 h-3.5" />
-                  Default Store Manager Credentials
-                </span>
-                <button
-                  type="button"
-                  onClick={handleResetManager}
-                  disabled={isResetting}
-                  className="text-[10px] text-blue-400 hover:text-blue-300 underline font-semibold cursor-pointer disabled:opacity-50 flex items-center gap-1"
-                >
-                  <RotateCcw className={`w-3 h-3 ${isResetting ? 'animate-spin' : ''}`} />
-                  <span>Reset Manager</span>
-                </button>
-              </div>
-              <p className="font-mono text-[10px] text-gray-300">
-                Email: <span className="text-white">manager@devtushar.uk</span> • Pass: <span className="text-white">Manager@123456</span>
-              </p>
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <GlassInput
               label="Staff Email"
@@ -310,7 +225,7 @@ function StaffPortalContent() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder={selectedRole === 'ADMIN' ? 'admin@devtushar.uk' : 'manager@devtushar.uk'}
+              placeholder="e.g. manager@devtushar.uk"
               autoComplete="email"
             />
 
@@ -324,8 +239,8 @@ function StaffPortalContent() {
               autoComplete="current-password"
               hint={
                 selectedRole === 'ADMIN'
-                  ? 'Default root password: Admin@123456'
-                  : 'Default manager password: Manager@123456 (or Admin@123456)'
+                  ? 'Enter your configured Administrator password'
+                  : 'Enter your configured Manager or Administrator password'
               }
             />
 
@@ -337,50 +252,25 @@ function StaffPortalContent() {
                 isLoading={isLoading}
                 className="w-full font-semibold"
               >
-                Sign In as {selectedRole === 'ADMIN' ? 'Administrator' : 'Operations Manager'}
+                Sign In as {selectedRole === 'ADMIN' ? 'Administrator' : 'Store Manager'}
               </GlassButton>
             </div>
           </form>
 
           {/* Quick Actions & Links */}
           <div className="pt-3 border-t border-border/40 flex flex-col gap-2 text-center text-xs">
-            {selectedRole === 'ADMIN' ? (
-              <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1">
-                <Link href="/config" className="text-primary hover:underline font-medium">
-                  Set Custom Admin Password (/config)
-                </Link>
-                <button
-                  type="button"
-                  onClick={handleResetAdmin}
-                  disabled={isResetting}
-                  className="text-amber-400 hover:text-amber-300 underline font-semibold cursor-pointer"
-                >
-                  Reset Admin to Default
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1">
-                <button
-                  type="button"
-                  onClick={handleResetManager}
-                  disabled={isResetting}
-                  className="text-blue-400 hover:text-blue-300 underline font-medium cursor-pointer"
-                >
-                  Reset Manager to Default (Manager@123456)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedRole('ADMIN');
-                    setEmail('admin@devtushar.uk');
-                    setPassword('Admin@123456');
-                  }}
-                  className="text-amber-400 hover:text-amber-300 underline font-medium cursor-pointer"
-                >
-                  Sign in as Admin instead
-                </button>
-              </div>
-            )}
+            <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1">
+              <Link href="/config" className="text-primary hover:underline font-medium">
+                Configure / Update Admin Credentials (/config)
+              </Link>
+              <button
+                type="button"
+                onClick={() => setSelectedRole(selectedRole === 'ADMIN' ? 'MANAGER' : 'ADMIN')}
+                className="text-muted-foreground hover:text-foreground underline font-medium cursor-pointer"
+              >
+                Switch to {selectedRole === 'ADMIN' ? 'Store Manager' : 'Administrator'}
+              </button>
+            </div>
 
             <Link
               href="/portal/join"

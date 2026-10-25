@@ -35,14 +35,13 @@ export default function AdminConfigPage() {
   // Setup Form States
   const [step, setStep] = useState<'DETAILS' | 'OTP' | 'SUCCESS'>('DETAILS');
   const [name, setName] = useState('Tushar');
-  const [email, setEmail] = useState('admin@devtushar.uk');
+  const [email, setEmail] = useState('manager@devtushar.uk');
   const [phone, setPhone] = useState('+91 98220 00000');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
 
   // Execution States
   const [isLoading, setIsLoading] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -63,34 +62,6 @@ export default function AdminConfigPage() {
     }
     checkStatus();
   }, []);
-
-  // One-click reset to default root admin
-  const handleResetAdmin = async () => {
-    setIsResetting(true);
-    setErrorMessage(null);
-    setSuccessMessage(null);
-
-    try {
-      const res = await fetch('/api/admin/setup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'RESET_ADMIN' }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to reset administrator');
-      }
-
-      setSuccessMessage('Administrator reset to default (Admin@123456). Redirecting to Admin Console...');
-      setTimeout(() => {
-        window.location.href = '/admin';
-      }, 900);
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Error resetting root admin account');
-      setIsResetting(false);
-    }
-  };
 
   // Direct setup: save password directly without OTP
   const handleDirectSetup = async (e: React.FormEvent) => {
@@ -262,7 +233,7 @@ export default function AdminConfigPage() {
               <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-center space-y-2">
                 <CheckCircle2 className="w-6 h-6 text-emerald-400 mx-auto" />
                 <p className="text-xs text-gray-300 leading-relaxed">
-                  Root Administrator account is registered. Default password is <span className="font-mono text-amber-300 font-semibold">Admin@123456</span>.
+                  Root Administrator account is active for <span className="font-mono text-white font-semibold">{configuredEmail}</span>.
                 </p>
               </div>
 
@@ -277,20 +248,10 @@ export default function AdminConfigPage() {
 
                 <button
                   type="button"
-                  onClick={handleResetAdmin}
-                  disabled={isResetting}
-                  className="w-full py-2.5 px-4 rounded-xl bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/40 text-amber-300 text-xs font-semibold text-center transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <RotateCcw className={`w-3.5 h-3.5 ${isResetting ? 'animate-spin' : ''}`} />
-                  <span>Reset Root Admin to Default (Admin@123456)</span>
-                </button>
-
-                <button
-                  type="button"
                   onClick={() => setShowReconfigureForm(true)}
                   className="w-full py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white text-xs font-medium text-center transition-all border border-white/10 cursor-pointer"
                 >
-                  Change / Set Custom Admin Password
+                  Change / Update Administrator Credentials
                 </button>
               </div>
             </div>
@@ -419,18 +380,6 @@ export default function AdminConfigPage() {
                       </>
                     )}
                   </button>
-
-                  {/* Reset Admin Quick Button */}
-                  <div className="pt-2 text-center">
-                    <button
-                      type="button"
-                      onClick={handleResetAdmin}
-                      disabled={isResetting}
-                      className="text-xs text-amber-400 hover:text-amber-300 underline font-medium cursor-pointer"
-                    >
-                      Or Reset to Default Admin (Admin@123456)
-                    </button>
-                  </div>
                 </form>
               )}
 

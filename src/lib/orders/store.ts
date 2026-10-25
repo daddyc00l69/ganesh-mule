@@ -92,3 +92,11 @@ export function updateLiveOrderStatus(
 
   return orders[idx];
 }
+
+export function clearLiveOrders(): void {
+  if (globalStore.__LIVE_ORDERS__) {
+    globalStore.__LIVE_ORDERS__ = [];
+  }
+  MOCK_ORDERS.length = 0;
+}
+
