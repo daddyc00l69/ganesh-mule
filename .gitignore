@@ -42,3 +42,9 @@ gh_bin/
 
 # local runtime data
 .data/
+
+# local test web files (not added to git)
+delhivery-local-test.html
+local-test/
+local-tester/
+
