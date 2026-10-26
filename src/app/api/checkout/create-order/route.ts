@@ -10,6 +10,8 @@ import { calculateOrderFees } from '@/lib/config/fee-settings';
 import {
   calculateDelhiveryShippingCost,
   calculateConsignmentWeightGrams,
+  getDelhiverySettings,
+  createDelhiveryShipment,
 } from '@/lib/shipping/delhivery';
 
 const CheckoutSchema = z.object({
@@ -38,6 +40,7 @@ const CheckoutSchema = z.object({
     country: z.string().default('India'),
   }),
   shippingMode: z.enum(['Express', 'Surface']).optional().default('Express'),
+  paymentMethod: z.enum(['ONLINE', 'COD']).optional().default('ONLINE'),
   couponCode: z.string().optional(),
 });
 
@@ -274,8 +277,9 @@ export async function POST(req: NextRequest) {
       assignedManagerName: appliedManagerName,
       totalAmount,
       feeBreakdown,
-      orderStatus: 'PENDING',
-      paymentStatus: 'CREATED',
+      paymentMethod: parsed.data.paymentMethod,
+      orderStatus: parsed.data.paymentMethod === 'COD' ? 'CONFIRMED' : 'PENDING',
+      paymentStatus: parsed.data.paymentMethod === 'COD' ? 'COD_PENDING' : 'CREATED',
       items: verifiedLineItems.map((item, idx) => ({
         id: `item-${Date.now()}-${idx}`,
         orderId: internalOrderId,
@@ -289,8 +293,8 @@ export async function POST(req: NextRequest) {
       payments: [
         {
           id: `pay-${Date.now()}`,
-          provider: 'RAZORPAY',
-          razorpayOrderId,
+          provider: parsed.data.paymentMethod === 'COD' ? 'COD' : 'RAZORPAY',
+          razorpayOrderId: parsed.data.paymentMethod === 'COD' ? undefined : razorpayOrderId,
           amount: totalAmount,
           currency: 'INR',
           status: 'PENDING',
@@ -301,8 +305,21 @@ export async function POST(req: NextRequest) {
     };
     addLiveOrder(orderRecord);
 
+    // If COD order, trigger automatic Delhivery One dispatch immediately
+    if (parsed.data.paymentMethod === 'COD') {
+      const delhiverySettings = getDelhiverySettings();
+      if (delhiverySettings.autoShipping) {
+        try {
+          await createDelhiveryShipment(orderRecord, { mode: chosenMode, isCod: true } as any);
+        } catch (shipErr) {
+          console.warn('[COD Delhivery Auto-Ship Notice]', shipErr);
+        }
+      }
+    }
+
     return NextResponse.json({
       success: true,
+      isCod: parsed.data.paymentMethod === 'COD',
       orderId: internalOrderId,
       orderNumber,
       razorpayOrderId,

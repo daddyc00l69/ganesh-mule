@@ -297,6 +297,13 @@ export async function createDelhiveryShipment(
   // If live Delhivery API key is provided, attempt live CMU shipment creation
   if (settings.apiKey && !settings.apiKey.includes('placeholder')) {
     try {
+      const isCod =
+        order.paymentStatus === 'COD_PENDING' ||
+        (order as any).paymentMethod === 'COD' ||
+        (options as any)?.isCod;
+      const paymentMode = isCod ? 'COD' : 'Prepaid';
+      const codAmount = isCod ? (order.totalAmount / 100).toFixed(2) : '0.00';
+
       const payload = {
         shipments: [
           {
@@ -308,7 +315,8 @@ export async function createDelhiveryShipment(
             country: 'India',
             phone: order.shippingAddress.phone || order.customerPhone || '9822000000',
             order: order.orderNumber,
-            payment_mode: 'Prepaid',
+            payment_mode: paymentMode,
+            cod_amount: codAmount,
             total_amount: (order.totalAmount / 100).toFixed(2),
             weight: weightGrams,
             products_desc: 'Ganesh Mule Pure Raw Honey (Solid Glass Insured Packaging)',

@@ -34,6 +34,8 @@ import {
   Loader2,
   RefreshCw,
   Trash2,
+  CreditCard,
+  Banknote,
 } from 'lucide-react';
 import {
   INDIAN_STATES,
@@ -68,6 +70,9 @@ function CheckoutContent() {
   const [shippingMode, setShippingMode] = useState<'Express' | 'Surface'>('Express');
   const [airAvailable, setAirAvailable] = useState<boolean>(true);
   const [airRestrictionReason, setAirRestrictionReason] = useState<string | null>(null);
+
+  // Payment Method Selection: ONLINE (Razorpay) vs COD (Temporary Test Mode)
+  const [paymentMethod, setPaymentMethod] = useState<'ONLINE' | 'COD'>('ONLINE');
 
   // Dynamic fee configuration manageable by operations managers
   const [feeSettings, setFeeSettings] = useState<FeeSettings>(DEFAULT_FEE_SETTINGS);
@@ -523,6 +528,7 @@ function CheckoutContent() {
             country: 'India',
           },
           shippingMode,
+          paymentMethod,
           couponCode: appliedCoupon?.code,
         }),
       });
@@ -530,6 +536,21 @@ function CheckoutContent() {
       const orderData = await res.json();
       if (!res.ok) {
         throw new Error(orderData.error || 'Failed to initiate checkout order');
+      }
+
+      // 1.5. Direct COD Order Completion (Cash on Delivery Temporary Testing)
+      if (orderData.isCod || paymentMethod === 'COD') {
+        clearCart();
+        setCompletedOrder({
+          orderNumber: orderData.orderNumber,
+          paymentId: `COD_CASH_${Date.now()}`,
+          amount: orderData.amount,
+          discountAmount: orderData.discountAmount,
+          couponCode: orderData.appliedCouponCode,
+        });
+        setIsProcessing(false);
+        setProcessingStep(null);
+        return;
       }
 
       const { razorpayOrderId, orderNumber, amount, currency, keyId } = orderData;
@@ -1481,6 +1502,72 @@ function CheckoutContent() {
                       </div>
                     )}
                   </div>
+
+                  {/* Payment Method Selector (with Temporary COD Testing Option) */}
+                  <div className="space-y-2 pt-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-[#1d1d1f] flex items-center gap-1.5">
+                        <CreditCard className="w-3.5 h-3.5 text-[#0071e3]" />
+                        <span>Select Payment Method</span>
+                      </label>
+                      <span className="text-[10px] text-amber-800 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full font-medium">
+                        ⚡ COD Enabled for Testing
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {/* Online Payment */}
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('ONLINE')}
+                        className={`p-3 rounded-[16px] text-left transition-all border relative flex flex-col justify-between ${
+                          paymentMethod === 'ONLINE'
+                            ? 'bg-[#0071e3]/5 border-[#0071e3] ring-2 ring-[#0071e3]/20 shadow-xs cursor-pointer'
+                            : 'bg-white hover:bg-[#f5f5f7] border-[#d2d2d7]/70 cursor-pointer'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <span className="text-xs font-bold text-[#1d1d1f]">Online (Razorpay)</span>
+                            <p className="text-[11px] text-[#6e6e73] mt-0.5">UPI, Credit/Debit Cards, NetBanking</p>
+                          </div>
+                          <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
+                            paymentMethod === 'ONLINE' ? 'border-[#0071e3] bg-[#0071e3] text-white' : 'border-[#d2d2d7] bg-white'
+                          }`}>
+                            {paymentMethod === 'ONLINE' && <Check className="w-2.5 h-2.5" />}
+                          </div>
+                        </div>
+                      </button>
+
+                      {/* Cash on Delivery (COD) */}
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod('COD')}
+                        className={`p-3 rounded-[16px] text-left transition-all border relative flex flex-col justify-between ${
+                          paymentMethod === 'COD'
+                            ? 'bg-amber-500/10 border-amber-500 ring-2 ring-amber-500/20 shadow-xs cursor-pointer'
+                            : 'bg-white hover:bg-[#f5f5f7] border-[#d2d2d7]/70 cursor-pointer'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-bold text-[#1d1d1f]">Cash on Delivery (COD)</span>
+                              <span className="text-[9px] px-1.5 py-0.2 rounded-full font-semibold bg-amber-500/20 text-amber-900 border border-amber-500/40">
+                                Testing
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-[#6e6e73] mt-0.5">Pay cash to Delhivery courier upon delivery</p>
+                          </div>
+                          <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
+                            paymentMethod === 'COD' ? 'border-amber-600 bg-amber-600 text-white' : 'border-[#d2d2d7] bg-white'
+                          }`}>
+                            {paymentMethod === 'COD' && <Check className="w-2.5 h-2.5" />}
+                          </div>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1868,12 +1955,18 @@ function CheckoutContent() {
                     type="button"
                     onClick={(e) => handleInitiatePayment(e, false)}
                     disabled={isProcessing}
-                    className="w-full py-3.5 px-6 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4] text-white font-medium text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-60"
+                    className={`w-full py-3.5 px-6 rounded-full text-white font-medium text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-60 ${
+                      paymentMethod === 'COD'
+                        ? 'bg-amber-600 hover:bg-amber-700 active:bg-amber-800 shadow-amber-600/20'
+                        : 'bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4]'
+                    }`}
                   >
-                    <Lock className="w-4 h-4" />
+                    {paymentMethod === 'COD' ? <Banknote className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
                     <span>
                       {isProcessing
                         ? processingStep || 'Processing...'
+                        : paymentMethod === 'COD'
+                        ? `Confirm COD Order (${formatCurrency(totalAmount)} on Delivery)`
                         : `Pay ${formatCurrency(totalAmount)} with Razorpay`}
                     </span>
                   </button>
@@ -1881,7 +1974,11 @@ function CheckoutContent() {
 
                 <div className="flex items-center justify-center gap-1.5 text-[11px] text-[#86868b] pt-1 text-center">
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>UPI, Cards &amp; NetBanking Protected by Razorpay</span>
+                  <span>
+                    {paymentMethod === 'COD'
+                      ? 'Pay cash upon delivery directly to Delhivery courier executive'
+                      : 'UPI, Cards & NetBanking Protected by Razorpay'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -1905,10 +2002,20 @@ function CheckoutContent() {
                     type="button"
                     onClick={(e) => handleInitiatePayment(e, false)}
                     disabled={isProcessing}
-                    className="w-full max-w-[260px] py-3 px-5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4] text-white font-medium text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer disabled:opacity-60"
+                    className={`w-full max-w-[260px] py-3 px-5 rounded-full text-white font-medium text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer disabled:opacity-60 ${
+                      paymentMethod === 'COD'
+                        ? 'bg-amber-600 hover:bg-amber-700 active:bg-amber-800'
+                        : 'bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4]'
+                    }`}
                   >
-                    <Lock className="w-3.5 h-3.5 shrink-0" />
-                    <span>{isProcessing ? processingStep || 'Processing...' : `Pay ${formatCurrency(totalAmount)}`}</span>
+                    {paymentMethod === 'COD' ? <Banknote className="w-3.5 h-3.5 shrink-0" /> : <Lock className="w-3.5 h-3.5 shrink-0" />}
+                    <span>
+                      {isProcessing
+                        ? processingStep || 'Processing...'
+                        : paymentMethod === 'COD'
+                        ? 'Confirm COD Order'
+                        : `Pay ${formatCurrency(totalAmount)}`}
+                    </span>
                   </button>
                 </div>
               </div>

@@ -30,10 +30,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Invariant: Only prepaid orders can be booked on Delhivery One
-    if (order.paymentStatus !== 'PAID') {
+    // Allow PAID or COD orders to be booked on Delhivery One
+    if (order.paymentStatus !== 'PAID' && order.paymentStatus !== 'COD_PENDING') {
       return NextResponse.json(
-        { error: 'Cannot book courier dispatch for unpaid order. Strict prepaid policy enforced.' },
+        { error: 'Cannot book courier dispatch for unconfirmed order.' },
         { status: 400 }
       );
     }

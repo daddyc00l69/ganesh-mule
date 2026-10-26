@@ -132,6 +132,8 @@ export async function GET(req: NextRequest) {
     (order.carrier || '').toLowerCase().includes('surface') ||
     (order as any).shippingMode === 'Surface';
   const modeText = isSurface ? 'SURFACE' : 'EXPRESS';
+  const isCod =
+    order.paymentStatus === 'COD_PENDING' || (order as any).paymentMethod === 'COD';
 
   const sortCode = (order as any).delhiverySortCode || resolveDelhiverySortCode(pin, city);
   const barcodeSvg = generateCode128Svg(awb, 62);
@@ -407,15 +409,25 @@ export async function GET(req: NextRequest) {
 
     <!-- 3. Payment Mode & Shipment Metadata -->
     <div class="type-and-meta-band">
-      <div class="prepaid-box">
-        <div class="prepaid-text">PREPAID</div>
-        <div class="prepaid-sub">COLLECT ZERO (₹0.00)</div>
-      </div>
+      ${
+        isCod
+          ? `<div class="prepaid-box" style="background: #000; color: #fff;">
+              <div class="prepaid-text" style="font-size: 16px; color: #fbbf24;">COD • CASH</div>
+              <div class="prepaid-sub" style="font-size: 11px; font-weight: 900; margin-top: 2px;">
+                COLLECT: ₹${(order.totalAmount / 100).toFixed(2)}
+              </div>
+            </div>`
+          : `<div class="prepaid-box">
+              <div class="prepaid-text">PREPAID</div>
+              <div class="prepaid-sub">COLLECT ZERO (₹0.00)</div>
+            </div>`
+      }
       <div class="meta-box">
         <strong>Weight:</strong> ${(weightGrams / 1000).toFixed(2)} KG<br/>
         <strong>Dimensions:</strong> 18 × 14 × 14 CM<br/>
         <strong>Date:</strong> ${(order.createdAt || '').split('T')[0] || new Date().toISOString().split('T')[0]}<br/>
-        <strong>Carrier:</strong> Delhivery One (${modeText})
+        <strong>Carrier:</strong> Delhivery One (${modeText})<br/>
+        <strong>Type:</strong> ${isCod ? 'Cash on Delivery (COD)' : 'Prepaid Express'}
       </div>
     </div>
 

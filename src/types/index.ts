@@ -96,6 +96,7 @@ export type OrderStatus =
 export type PaymentStatus =
   | 'CREATED'
   | 'PENDING'
+  | 'COD_PENDING'
   | 'AUTHORIZED'
   | 'PAID'
   | 'FAILED'
