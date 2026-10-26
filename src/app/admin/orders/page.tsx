@@ -191,6 +191,28 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const handleBookLiveDelhivery = async (order: OrderRecord) => {
+    try {
+      const res = await fetch('/api/shipping/delhivery/ship', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderNumber: order.orderNumber,
+          mode: order.carrier?.toLowerCase().includes('surface') ? 'Surface' : 'Express',
+          forceRegenerate: true,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to book live Delhivery shipment');
+      if (data?.shipment?.waybill) {
+        alert(`✓ Live Delhivery shipment booked! AWB: ${data.shipment.waybill} (${data.shipment.carrier})`);
+        fetchLiveOrders();
+      }
+    } catch (err: any) {
+      alert(err.message || 'Live booking error');
+    }
+  };
+
   const columns: Column<OrderRecord>[] = [
     {
       key: 'orderNumber',
@@ -319,20 +341,32 @@ export default function AdminOrdersPage() {
       className: 'text-right',
       headerClassName: 'text-right',
       render: (order) => (
-        <div className="flex items-center justify-end gap-1.5">
-          {order.trackingNumber && (
+        <div className="flex items-center justify-end gap-1.5 flex-wrap sm:flex-nowrap">
+          {(!order.trackingNumber || order.trackingNumber.startsWith('143')) && order.orderStatus !== 'CANCELLED' && (
+            <GlassButton
+              variant="primary"
+              size="sm"
+              onClick={() => handleBookLiveDelhivery(order)}
+              className="gap-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md border-emerald-400/30 whitespace-nowrap"
+              title="Book real live shipment on Delhivery One directly with 1 click"
+            >
+              <Truck className="w-3.5 h-3.5" />
+              <span>Book Live</span>
+            </GlassButton>
+          )}
+          {order.trackingNumber && !order.trackingNumber.startsWith('143') && (
             <GlassButton
               variant="outline"
               size="sm"
               onClick={() => window.open(`/api/shipping/delhivery/label?orderNumber=${order.orderNumber}`, '_blank')}
-              className="gap-1 text-emerald-400 hover:text-emerald-300 hover:border-emerald-500/30"
+              className="gap-1 text-emerald-400 hover:text-emerald-300 hover:border-emerald-500/30 text-xs"
               title="Print Delhivery One Shipping Label"
             >
               <Tag className="w-3.5 h-3.5" />
               <span>Label</span>
             </GlassButton>
           )}
-          {order.trackingNumber && order.orderStatus !== 'CANCELLED' && (
+          {order.trackingNumber && !order.trackingNumber.startsWith('143') && order.orderStatus !== 'CANCELLED' && (
             <GlassButton
               variant="outline"
               size="sm"

@@ -168,6 +168,7 @@ export async function POST(req: NextRequest) {
             mode:
               (mockOrder as any).shippingMode ||
               (mockOrder.carrier?.toLowerCase().includes('surface') ? 'Surface' : 'Express'),
+            forceRegenerate: true,
           });
           console.log(`[Delhivery Auto-Ship] Booked AWB ${shipmentResult.waybill} for Order #${mockOrder.orderNumber}`);
         } catch (shipErr) {

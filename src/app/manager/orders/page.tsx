@@ -268,6 +268,48 @@ export default function ManagerOrdersPage() {
     }
   };
 
+  const handleBookAllConfirmedLive = async () => {
+    const unbooked = orders.filter(
+      (o) =>
+        (!o.trackingNumber || o.trackingNumber.startsWith('143')) &&
+        o.orderStatus !== 'CANCELLED' &&
+        (o.paymentStatus === 'PAID' || o.paymentStatus === 'COD_PENDING')
+    );
+    if (unbooked.length === 0) {
+      alert('All confirmed orders already have live Delhivery bookings.');
+      return;
+    }
+    const confirmed = window.confirm(
+      `Book ${unbooked.length} confirmed order(s) live on Delhivery One now?\n\nThis will manifest each consignment on one.delhivery.com and allocate real AWB numbers.`
+    );
+    if (!confirmed) return;
+
+    setIsRefreshing(true);
+    let successCount = 0;
+    for (const order of unbooked) {
+      try {
+        const res = await fetch('/api/shipping/delhivery/ship', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderNumber: order.orderNumber,
+            mode: order.carrier?.toLowerCase().includes('surface') ? 'Surface' : 'Express',
+            forceRegenerate: true,
+          }),
+        });
+        const data = await res.json();
+        if (data?.shipment?.waybill) {
+          successCount++;
+        }
+      } catch (e) {
+        console.warn('Batch dispatch error for', order.orderNumber, e);
+      }
+    }
+    await fetchLiveOrders();
+    setIsRefreshing(false);
+    setTransitionSuccess(`✓ Successfully booked ${successCount} order(s) live on Delhivery One!`);
+  };
+
   const columns: Column<OrderRecord>[] = [
     {
       key: 'orderNumber',
@@ -426,7 +468,20 @@ export default function ManagerOrdersPage() {
               Claim
             </GlassButton>
           )}
-          {o.trackingNumber && (
+          {(!o.trackingNumber || o.trackingNumber.startsWith('143')) && o.orderStatus !== 'CANCELLED' && (
+            <GlassButton
+              variant="primary"
+              size="sm"
+              disabled={isRefreshing}
+              onClick={() => handleBookLiveDelhivery(o)}
+              className="gap-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md border-emerald-400/30 whitespace-nowrap"
+              title="Book real live shipment on Delhivery One directly with 1 click"
+            >
+              <Truck className="w-3.5 h-3.5" />
+              <span>Book Live</span>
+            </GlassButton>
+          )}
+          {o.trackingNumber && !o.trackingNumber.startsWith('143') && (
             <GlassButton
               variant="outline"
               size="sm"
@@ -438,7 +493,7 @@ export default function ManagerOrdersPage() {
               <span>Label</span>
             </GlassButton>
           )}
-          {o.trackingNumber && o.orderStatus !== 'CANCELLED' && (
+          {o.trackingNumber && !o.trackingNumber.startsWith('143') && o.orderStatus !== 'CANCELLED' && (
             <GlassButton
               variant="outline"
               size="sm"
@@ -476,7 +531,7 @@ export default function ManagerOrdersPage() {
               Fulfillment Queue &amp; Dispatch
             </h2>
             <GlassBadge variant="success" size="sm">
-              Prepaid Only • No COD
+              Prepaid &amp; COD Active • Live Delhivery One
             </GlassBadge>
           </div>
           <p className="text-xs text-muted-foreground">
@@ -484,7 +539,18 @@ export default function ManagerOrdersPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <GlassButton
+            variant="primary"
+            size="sm"
+            onClick={handleBookAllConfirmedLive}
+            className="gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md border-emerald-400/30"
+            disabled={isRefreshing}
+            title="Book all unmanifested confirmed orders directly on Delhivery One in 1 click"
+          >
+            <Truck className="w-3.5 h-3.5" />
+            <span>⚡ Book Confirmed Orders on Delhivery</span>
+          </GlassButton>
           <GlassButton
             variant="outline"
             size="sm"

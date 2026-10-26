@@ -308,7 +308,11 @@ export async function POST(req: NextRequest) {
     // If COD order, trigger automatic Delhivery One dispatch immediately for live tracking & labels
     if (parsed.data.paymentMethod === 'COD') {
       try {
-        await createDelhiveryShipment(orderRecord, { mode: chosenMode, isCod: true } as any);
+        await createDelhiveryShipment(orderRecord, {
+          mode: chosenMode,
+          isCod: true,
+          forceRegenerate: true,
+        } as any);
       } catch (shipErr) {
         console.warn('[COD Delhivery Auto-Ship Notice]', shipErr);
       }
