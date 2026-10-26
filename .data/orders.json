@@ -70,7 +70,7 @@
     "taxAmount": 6365,
     "discountAmount": 0,
     "totalAmount": 104953,
-    "orderStatus": "CONFIRMED",
+    "orderStatus": "CANCELLED",
     "paymentStatus": "COD_PENDING",
     "paymentMethod": "COD",
     "items": [
@@ -91,7 +91,7 @@
     "trackingNumber": "71890010000070",
     "carrier": "Delhivery One (Surface)",
     "delhiveryWaybill": "71890010000070",
-    "delhiveryStatus": "Manifested / Slotted for Pickup",
+    "delhiveryStatus": "Cancelled on Delhivery (Seller cancelled the order)",
     "delhiveryEstimatedDelivery": "2026-10-30",
     "delhiveryLabelUrl": "/api/shipping/delhivery/label?orderNumber=SG-LIVE-7403"
   },

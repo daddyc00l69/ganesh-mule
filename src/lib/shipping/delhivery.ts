@@ -500,7 +500,7 @@ export interface DelhiveryTrackingResult {
   waybill: string;
   orderNumber?: string;
   status: string;
-  statusCode: 'MANIFESTED' | 'IN_TRANSIT' | 'OUT_FOR_DELIVERY' | 'DELIVERED';
+  statusCode: 'MANIFESTED' | 'IN_TRANSIT' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED';
   origin: string;
   destination: string;
   expectedDelivery: string;
@@ -508,6 +508,8 @@ export interface DelhiveryTrackingResult {
   checkpoints: DelhiveryTrackingCheckpoint[];
   portalUrl: string;
   trackingUrl: string;
+  isCancelled?: boolean;
+  cancellationReason?: string;
 }
 
 export async function getDelhiveryTracking(
@@ -542,16 +544,74 @@ export async function getDelhiveryTracking(
             instructions: s?.ScanDetail?.Instructions || 'In Transit via Insured Express',
           }));
 
+          const statusObj = pkg.Status || {};
+          const instructions = (statusObj.Instructions || '').toLowerCase();
+          const statusText = (statusObj.Status || '').toLowerCase();
+          const statusCodeRaw = statusObj.StatusCode || '';
+          const scanCheckCancelled = (pkg.Scans || []).some(
+            (s: any) =>
+              s?.ScanDetail?.StatusCode === 'DTUP-210' ||
+              (s?.ScanDetail?.Instructions || '').toLowerCase().includes('cancel') ||
+              (s?.ScanDetail?.Scan || '').toLowerCase().includes('cancel')
+          );
+
+          const isCancelledOnDelhivery =
+            statusCodeRaw === 'DTUP-210' ||
+            instructions.includes('cancel') ||
+            statusText.includes('cancel') ||
+            scanCheckCancelled;
+
+          let resolvedStatusCode: 'MANIFESTED' | 'IN_TRANSIT' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED' = 'IN_TRANSIT';
+          if (isCancelledOnDelhivery) {
+            resolvedStatusCode = 'CANCELLED';
+          } else if (statusText.includes('delivered')) {
+            resolvedStatusCode = 'DELIVERED';
+          } else if (statusText.includes('out')) {
+            resolvedStatusCode = 'OUT_FOR_DELIVERY';
+          } else if (statusText.includes('manifest')) {
+            resolvedStatusCode = 'MANIFESTED';
+          }
+
+          const resolvedStatus = isCancelledOnDelhivery
+            ? `Cancelled on Delhivery (${statusObj.Instructions || 'Seller cancelled'})`
+            : statusObj.Status || 'In Transit';
+
+          // Automatically synchronize with local order database
+          const resolvedOrderNumber = pkg.ReferenceNo || orderNumber;
+          if (resolvedOrderNumber) {
+            const liveOrders = getLiveOrders();
+            const orderToUpdate =
+              liveOrders.find((o) => o.orderNumber === resolvedOrderNumber) ||
+              liveOrders.find((o) => o.delhiveryWaybill === cleanAwb || o.trackingNumber === cleanAwb);
+
+            if (orderToUpdate) {
+              if (isCancelledOnDelhivery && orderToUpdate.orderStatus !== 'CANCELLED') {
+                updateLiveOrderStatus(orderToUpdate.orderNumber, {
+                  orderStatus: 'CANCELLED',
+                  delhiveryStatus: resolvedStatus,
+                });
+              } else if (!isCancelledOnDelhivery) {
+                if (resolvedStatusCode === 'DELIVERED' && orderToUpdate.orderStatus !== 'DELIVERED') {
+                  updateLiveOrderStatus(orderToUpdate.orderNumber, {
+                    orderStatus: 'DELIVERED',
+                    delhiveryStatus: 'Delivered',
+                  });
+                } else if (statusObj.Status && orderToUpdate.delhiveryStatus !== statusObj.Status) {
+                  updateLiveOrderStatus(orderToUpdate.orderNumber, {
+                    delhiveryStatus: statusObj.Status,
+                  });
+                }
+              }
+            }
+          }
+
           return {
             waybill: cleanAwb,
             orderNumber: pkg.ReferenceNo || orderNumber,
-            status: pkg.Status?.Status || 'In Transit',
-            statusCode:
-              pkg.Status?.Status?.toUpperCase().includes('DELIVERED')
-                ? 'DELIVERED'
-                : pkg.Status?.Status?.toUpperCase().includes('OUT')
-                ? 'OUT_FOR_DELIVERY'
-                : 'IN_TRANSIT',
+            status: resolvedStatus,
+            statusCode: resolvedStatusCode,
+            isCancelled: isCancelledOnDelhivery,
+            cancellationReason: isCancelledOnDelhivery ? (statusObj.Instructions || 'Seller cancelled') : undefined,
             origin: pkg.Origin || 'Pune Apiary Dispatch Center',
             destination: pkg.Destination || 'Customer Address',
             expectedDelivery: pkg.ExpectedDeliveryDate || 'Within 2-3 Business Days',
@@ -567,8 +627,9 @@ export async function getDelhiveryTracking(
     }
   }
 
-  // Structured tracking response
+  // Structured tracking response fallback
   const order = orderNumber ? getLiveOrderById(orderNumber) : undefined;
+  const isCancelled = order?.orderStatus === 'CANCELLED';
   const isDelivered = order?.orderStatus === 'DELIVERED';
   const isShipped = order?.orderStatus === 'SHIPPED';
 
@@ -583,7 +644,14 @@ export async function getDelhiveryTracking(
     },
   ];
 
-  if (isShipped || isDelivered) {
+  if (isCancelled) {
+    checkpoints.push({
+      timestamp: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+      location: 'Delhivery Dispatch Control Center',
+      status: 'Shipment Cancelled / Voided',
+      instructions: 'Consignment cancelled on Delhivery One. Freight charges returned.',
+    });
+  } else if (isShipped || isDelivered) {
     const pickupDate = new Date(createdDate.getTime() + 4 * 60 * 60 * 1000);
     checkpoints.push({
       timestamp: pickupDate.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
@@ -614,8 +682,16 @@ export async function getDelhiveryTracking(
   return {
     waybill: cleanAwb,
     orderNumber: order?.orderNumber || orderNumber,
-    status: isDelivered ? 'Delivered' : isShipped ? 'In Transit' : 'Manifested / Ready for Courier Pickup',
-    statusCode: isDelivered ? 'DELIVERED' : isShipped ? 'IN_TRANSIT' : 'MANIFESTED',
+    status: isCancelled
+      ? 'Cancelled on Delhivery'
+      : isDelivered
+      ? 'Delivered'
+      : isShipped
+      ? 'In Transit'
+      : 'Manifested / Ready for Courier Pickup',
+    statusCode: isCancelled ? 'CANCELLED' : isDelivered ? 'DELIVERED' : isShipped ? 'IN_TRANSIT' : 'MANIFESTED',
+    isCancelled,
+    cancellationReason: isCancelled ? (order?.delhiveryStatus || 'Shipment voided') : undefined,
     origin: 'Pune Apiary Dispatch Center (411004)',
     destination: order?.shippingAddress ? `${order.shippingAddress.city} (${order.shippingAddress.postalCode})` : 'Destination Hub',
     expectedDelivery: order?.delhiveryEstimatedDelivery || '2-3 Business Days',
@@ -624,6 +700,205 @@ export async function getDelhiveryTracking(
     portalUrl: DELHIVERY_URLS.PORTAL,
     trackingUrl: `${DELHIVERY_URLS.TRACKING_BASE}/${cleanAwb}`,
   };
+}
+
+/**
+ * Batch synchronize all active live shipments with Delhivery One
+ * Automatically detects cancellations, status changes, and deliveries.
+ */
+export async function syncAllActiveDelhiveryOrders(): Promise<{
+  success: boolean;
+  totalChecked: number;
+  cancelledCount: number;
+  updatedCount: number;
+  details: Array<{
+    orderNumber: string;
+    waybill: string;
+    prevStatus: string;
+    newStatus: string;
+    delhiveryStatus: string;
+  }>;
+}> {
+  const settings = getDelhiverySettings();
+  if (!settings.apiKey || settings.apiKey.includes('placeholder')) {
+    return { success: false, totalChecked: 0, cancelledCount: 0, updatedCount: 0, details: [] };
+  }
+
+  const apiBase =
+    settings.environment === 'staging'
+      ? DELHIVERY_URLS.STAGING_API
+      : DELHIVERY_URLS.PRODUCTION_API;
+
+  const liveOrders = getLiveOrders();
+  // We check all orders with a live tracking number (especially starting with 718, or non-simulated)
+  const candidates = liveOrders.filter(
+    (o) => o.trackingNumber && !o.trackingNumber.startsWith('143')
+  );
+
+  if (candidates.length === 0) {
+    return { success: true, totalChecked: 0, cancelledCount: 0, updatedCount: 0, details: [] };
+  }
+
+  const waybills = candidates.map((o) => o.trackingNumber!.trim());
+  let cancelledCount = 0;
+  let updatedCount = 0;
+  const details: any[] = [];
+
+  // Query in chunks of 20
+  for (let i = 0; i < waybills.length; i += 20) {
+    const chunk = waybills.slice(i, i + 20);
+    try {
+      const res = await fetch(`${apiBase}/api/v1/packages/json/?waybill=${chunk.join(',')}`, {
+        headers: { Authorization: `Token ${settings.apiKey}` },
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const shipments = data?.ShipmentData || [];
+
+      for (const s of shipments) {
+        const pkg = s?.Shipment;
+        if (!pkg?.AWB) continue;
+        const targetOrder = candidates.find(
+          (c) =>
+            c.trackingNumber === pkg.AWB ||
+            c.delhiveryWaybill === pkg.AWB ||
+            c.orderNumber === pkg.ReferenceNo
+        );
+        if (!targetOrder) continue;
+
+        const statusObj = pkg.Status || {};
+        const instructions = (statusObj.Instructions || '').toLowerCase();
+        const statusText = (statusObj.Status || '').toLowerCase();
+        const statusCodeRaw = statusObj.StatusCode || '';
+        const scanCheckCancelled = (pkg.Scans || []).some(
+          (sc: any) =>
+            sc?.ScanDetail?.StatusCode === 'DTUP-210' ||
+            (sc?.ScanDetail?.Instructions || '').toLowerCase().includes('cancel') ||
+            (sc?.ScanDetail?.Scan || '').toLowerCase().includes('cancel')
+        );
+
+        const isCancelled =
+          statusCodeRaw === 'DTUP-210' ||
+          instructions.includes('cancel') ||
+          statusText.includes('cancel') ||
+          scanCheckCancelled;
+
+        if (isCancelled && targetOrder.orderStatus !== 'CANCELLED') {
+          cancelledCount++;
+          const note = `Cancelled on Delhivery (${statusObj.Instructions || 'Seller cancelled'})`;
+          updateLiveOrderStatus(targetOrder.orderNumber, {
+            orderStatus: 'CANCELLED',
+            delhiveryStatus: note,
+          });
+          details.push({
+            orderNumber: targetOrder.orderNumber,
+            waybill: pkg.AWB,
+            prevStatus: targetOrder.orderStatus,
+            newStatus: 'CANCELLED',
+            delhiveryStatus: note,
+          });
+        } else if (!isCancelled) {
+          if (statusText.includes('delivered') && targetOrder.orderStatus !== 'DELIVERED') {
+            updatedCount++;
+            updateLiveOrderStatus(targetOrder.orderNumber, {
+              orderStatus: 'DELIVERED',
+              delhiveryStatus: 'Delivered',
+            });
+            details.push({
+              orderNumber: targetOrder.orderNumber,
+              waybill: pkg.AWB,
+              prevStatus: targetOrder.orderStatus,
+              newStatus: 'DELIVERED',
+              delhiveryStatus: 'Delivered',
+            });
+          } else if (statusObj.Status && targetOrder.delhiveryStatus !== statusObj.Status) {
+            updatedCount++;
+            updateLiveOrderStatus(targetOrder.orderNumber, {
+              delhiveryStatus: statusObj.Status,
+            });
+            details.push({
+              orderNumber: targetOrder.orderNumber,
+              waybill: pkg.AWB,
+              prevStatus: targetOrder.delhiveryStatus || '',
+              newStatus: targetOrder.orderStatus,
+              delhiveryStatus: statusObj.Status,
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[Delhivery Batch Sync Error]', err);
+    }
+  }
+
+  return {
+    success: true,
+    totalChecked: candidates.length,
+    cancelledCount,
+    updatedCount,
+    details,
+  };
+}
+
+/**
+ * Fetch Official Delhivery Packing Slip (PDF buffer or JSON package data)
+ */
+export async function getDelhiveryOfficialPackingSlip(
+  waybill: string
+): Promise<{
+  pdfBuffer?: Buffer;
+  pdfDownloadLink?: string;
+  packageData?: any;
+  error?: string;
+}> {
+  const cleanAwb = waybill.trim().replace(/\D/g, '');
+  const settings = getDelhiverySettings();
+  if (!settings.apiKey || settings.apiKey.includes('placeholder')) {
+    return { error: 'No live Delhivery API key configured' };
+  }
+
+  const apiBase =
+    settings.environment === 'staging'
+      ? DELHIVERY_URLS.STAGING_API
+      : DELHIVERY_URLS.PRODUCTION_API;
+
+  try {
+    // 1. Fetch official PDF download link
+    const res = await fetch(`${apiBase}/api/p/packing_slip?wbns=${cleanAwb}&pdf=true`, {
+      headers: { Authorization: `Token ${settings.apiKey}` },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const link = data?.packages?.[0]?.pdf_download_link;
+      if (link) {
+        const pdfRes = await fetch(link);
+        if (pdfRes.ok) {
+          const buf = await pdfRes.arrayBuffer();
+          return {
+            pdfBuffer: Buffer.from(buf),
+            pdfDownloadLink: link,
+          };
+        }
+        return { pdfDownloadLink: link };
+      }
+    }
+
+    // 2. Fallback to JSON packing slip
+    const jsonRes = await fetch(`${apiBase}/api/p/packing_slip?wbns=${cleanAwb}`, {
+      headers: { Authorization: `Token ${settings.apiKey}` },
+    });
+    if (jsonRes.ok) {
+      const jsonData = await jsonRes.json();
+      const pkg = jsonData?.packages?.[0];
+      if (pkg) {
+        return { packageData: pkg };
+      }
+    }
+  } catch (err: any) {
+    return { error: err.message };
+  }
+
+  return { error: 'Packing slip not found on Delhivery' };
 }
 
 /**

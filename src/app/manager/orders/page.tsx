@@ -52,6 +52,11 @@ export default function ManagerOrdersPage() {
   }, []);
 
   // Live order synchronization
+  const [isSyncingDelhivery, setIsSyncingDelhivery] = useState(false);
+  const [trackingModalOrder, setTrackingModalOrder] = useState<OrderRecord | null>(null);
+  const [trackingDetails, setTrackingDetails] = useState<any | null>(null);
+  const [isLoadingTracking, setIsLoadingTracking] = useState(false);
+
   const fetchLiveOrders = async () => {
     setIsRefreshing(true);
     try {
@@ -70,8 +75,58 @@ export default function ManagerOrdersPage() {
     setIsRefreshing(false);
   };
 
+  const handleSyncDelhiveryStatus = async () => {
+    setIsSyncingDelhivery(true);
+    try {
+      const res = await fetch('/api/shipping/delhivery/sync', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to sync with Delhivery');
+      await fetchLiveOrders();
+      setTransitionSuccess(
+        `✓ ${data.message || 'Delhivery sync complete'} (${data.cancelledCount || 0} cancellations updated)`
+      );
+    } catch (err: any) {
+      alert(err.message || 'Delhivery sync failed');
+    } finally {
+      setIsSyncingDelhivery(false);
+    }
+  };
+
+  const handleOpenTracking = async (order: OrderRecord) => {
+    setTrackingModalOrder(order);
+    setTrackingDetails(null);
+    setIsLoadingTracking(true);
+    try {
+      const res = await fetch(
+        `/api/shipping/delhivery/track?awb=${order.trackingNumber || ''}&orderNumber=${order.orderNumber}`
+      );
+      const data = await res.json();
+      if (data.success && data.tracking) {
+        setTrackingDetails(data.tracking);
+        // If status changed to cancelled, refresh orders in background
+        if (data.tracking.statusCode === 'CANCELLED' && order.orderStatus !== 'CANCELLED') {
+          fetchLiveOrders();
+        }
+      }
+    } catch (err) {
+      console.warn('Tracking fetch failed:', err);
+    } finally {
+      setIsLoadingTracking(false);
+    }
+  };
+
   useEffect(() => {
     fetchLiveOrders();
+    // Auto-sync active Delhivery shipments on page mount
+    fetch('/api/shipping/delhivery/sync', { method: 'POST' })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.cancelledCount > 0 || d.updatedCount > 0) {
+          fetchLiveOrders();
+        }
+      })
+      .catch(() => {});
+
     const timer = setInterval(fetchLiveOrders, 8000);
     return () => clearInterval(timer);
   }, []);
@@ -343,22 +398,35 @@ export default function ManagerOrdersPage() {
     {
       key: 'orderStatus',
       header: 'Current Stage',
-      render: (o) => (
-        <GlassBadge
-          variant={
-            o.orderStatus === 'DELIVERED'
-              ? 'success'
-              : o.orderStatus === 'SHIPPED'
-              ? 'info'
-              : o.orderStatus === 'CONFIRMED'
-              ? 'warning'
-              : 'default'
-          }
-          size="sm"
-        >
-          {o.orderStatus}
-        </GlassBadge>
-      ),
+      render: (o) => {
+        const isCancelled = o.orderStatus === 'CANCELLED';
+        const isDelhiveryCancelled = isCancelled && (o.delhiveryStatus || '').toLowerCase().includes('delhivery');
+        return (
+          <div className="space-y-0.5">
+            <GlassBadge
+              variant={
+                o.orderStatus === 'DELIVERED'
+                  ? 'success'
+                  : o.orderStatus === 'SHIPPED'
+                  ? 'info'
+                  : o.orderStatus === 'CONFIRMED'
+                  ? 'warning'
+                  : isCancelled
+                  ? 'destructive'
+                  : 'default'
+              }
+              size="sm"
+            >
+              {isDelhiveryCancelled ? 'CANCELLED (Delhivery)' : o.orderStatus}
+            </GlassBadge>
+            {o.delhiveryStatus && (
+              <p className="text-[10px] text-muted-foreground leading-tight max-w-[140px] truncate" title={o.delhiveryStatus}>
+                {o.delhiveryStatus}
+              </p>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: 'assignedManagerName',
@@ -397,7 +465,7 @@ export default function ManagerOrdersPage() {
         const rawCarrier = (o.carrier || 'Delhivery One').trim();
         const isLiveAwb = o.trackingNumber?.startsWith('718');
         return (
-          <div className="space-y-0.5 min-w-[160px]">
+          <div className="space-y-1 min-w-[170px]">
             {o.trackingNumber ? (
               <div className="flex flex-col gap-0.5">
                 <div className="flex items-center gap-1.5 flex-wrap">
@@ -406,7 +474,7 @@ export default function ManagerOrdersPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="font-mono text-xs font-semibold text-brand hover:underline inline-flex items-center gap-1"
-                    title="Track package live on Delhivery One"
+                    title="Track package live on Delhivery One portal"
                   >
                     <span>{o.trackingNumber}</span>
                     <ExternalLink className="w-3 h-3 opacity-70" />
@@ -425,6 +493,14 @@ export default function ManagerOrdersPage() {
                       ⚡ Book Live
                     </button>
                   )}
+                  <button
+                    type="button"
+                    onClick={() => handleOpenTracking(o)}
+                    className="text-[9px] px-1.5 py-0.2 rounded-full bg-sky-500/20 text-sky-300 font-semibold border border-sky-500/30 hover:bg-sky-500/30 cursor-pointer inline-flex items-center gap-0.5"
+                    title="Open live scan checkpoint drawer"
+                  >
+                    📡 Track
+                  </button>
                 </div>
                 <span className="text-[10px] text-muted-foreground">
                   {rawCarrier.includes('(') ? rawCarrier : `(${rawCarrier})`}
@@ -481,13 +557,24 @@ export default function ManagerOrdersPage() {
               <span>Book Live</span>
             </GlassButton>
           )}
-          {o.trackingNumber && !o.trackingNumber.startsWith('143') && (
+          {o.trackingNumber && (
+            <GlassButton
+              variant="outline"
+              size="sm"
+              onClick={() => handleOpenTracking(o)}
+              className="gap-1 text-sky-400 hover:text-sky-300 hover:border-sky-500/30 text-xs"
+              title="View live checkpoints from Delhivery"
+            >
+              <span>Track</span>
+            </GlassButton>
+          )}
+          {o.trackingNumber && (
             <GlassButton
               variant="outline"
               size="sm"
               onClick={() => window.open(`/api/shipping/delhivery/label?orderNumber=${o.orderNumber}`, '_blank')}
               className="gap-1 text-emerald-400 hover:text-emerald-300 hover:border-emerald-500/30 text-xs"
-              title="Print Delhivery One Shipping Label"
+              title="Print official Delhivery Shipping Label PDF"
             >
               <Tag className="w-3.5 h-3.5" />
               <span>Label</span>
@@ -550,6 +637,17 @@ export default function ManagerOrdersPage() {
           >
             <Truck className="w-3.5 h-3.5" />
             <span>⚡ Book Confirmed Orders on Delhivery</span>
+          </GlassButton>
+          <GlassButton
+            variant="outline"
+            size="sm"
+            onClick={handleSyncDelhiveryStatus}
+            className="gap-1.5 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 font-semibold"
+            disabled={isSyncingDelhivery || isRefreshing}
+            title="Synchronize live status directly from Delhivery One (updates cancellations, deliveries, transit scans)"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isSyncingDelhivery ? 'animate-spin text-emerald-400' : ''}`} />
+            <span>{isSyncingDelhivery ? 'Syncing...' : '🔄 Sync Delhivery'}</span>
           </GlassButton>
           <GlassButton
             variant="outline"
@@ -857,6 +955,177 @@ export default function ManagerOrdersPage() {
               </div>
             </div>
           </form>
+        )}
+      </FormDialog>
+
+      {/* Live Delhivery Tracking Modal */}
+      <FormDialog
+        isOpen={Boolean(trackingModalOrder)}
+        onClose={() => setTrackingModalOrder(null)}
+        title={`📡 Delhivery One Live Tracking • #${trackingModalOrder?.orderNumber}`}
+      >
+        {trackingModalOrder && (
+          <div className="space-y-4">
+            <div className="p-3.5 rounded-xl bg-card border border-border/50 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs text-muted-foreground">Waybill (AWB):</p>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-bold text-sm text-foreground">
+                    {trackingModalOrder.trackingNumber || 'No Waybill'}
+                  </span>
+                  {trackingModalOrder.trackingNumber && (
+                    <a
+                      href={`https://www.delhivery.com/track/package/${trackingModalOrder.trackingNumber}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] text-brand hover:underline inline-flex items-center gap-1"
+                    >
+                      <span>delhivery.com</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                <GlassBadge
+                  variant={
+                    trackingDetails?.statusCode === 'CANCELLED' || trackingModalOrder.orderStatus === 'CANCELLED'
+                      ? 'destructive'
+                      : trackingDetails?.statusCode === 'DELIVERED'
+                      ? 'success'
+                      : trackingDetails?.statusCode === 'OUT_FOR_DELIVERY'
+                      ? 'warning'
+                      : 'info'
+                  }
+                  size="sm"
+                >
+                  {trackingDetails?.status || trackingModalOrder.delhiveryStatus || trackingModalOrder.orderStatus}
+                </GlassBadge>
+                <span className="text-[10px] text-muted-foreground font-mono">
+                  Carrier: {trackingModalOrder.carrier || 'Delhivery One'}
+                </span>
+              </div>
+            </div>
+
+            {/* Hub Route Details */}
+            {trackingDetails && (
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="p-2.5 rounded-lg bg-card/60 border border-border/40">
+                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Origin Hub</p>
+                  <p className="font-semibold text-foreground text-xs mt-0.5">{trackingDetails.origin}</p>
+                </div>
+                <div className="p-2.5 rounded-lg bg-card/60 border border-border/40">
+                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Destination Hub</p>
+                  <p className="font-semibold text-foreground text-xs mt-0.5">{trackingDetails.destination}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Cancellation Notice Banner */}
+            {(trackingDetails?.isCancelled || trackingModalOrder.orderStatus === 'CANCELLED') && (
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold">Shipment Cancelled on Delhivery One</p>
+                  <p className="text-muted-foreground mt-0.5">
+                    {trackingDetails?.cancellationReason || trackingModalOrder.delhiveryStatus || 'This shipment was cancelled by seller or voided. Local order status synchronized to CANCELLED.'}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Checkpoints Timeline */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-semibold text-foreground flex items-center justify-between">
+                <span>Carrier Scan History ({trackingDetails?.checkpoints?.length || 0} Events)</span>
+                {isLoadingTracking && (
+                  <span className="text-[11px] text-amber-400 flex items-center gap-1">
+                    <RefreshCw className="w-3 h-3 animate-spin" />
+                    <span>Querying Delhivery API...</span>
+                  </span>
+                )}
+              </h4>
+
+              {isLoadingTracking ? (
+                <div className="p-8 text-center text-xs text-muted-foreground">
+                  <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-amber-500" />
+                  <span>Fetching live tracking checkpoints from track.delhivery.com...</span>
+                </div>
+              ) : trackingDetails?.checkpoints?.length ? (
+                <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
+                  {trackingDetails.checkpoints.map((cp: any, idx: number) => {
+                    const isCancelledScan =
+                      (cp.status || '').toLowerCase().includes('cancel') ||
+                      (cp.instructions || '').toLowerCase().includes('cancel') ||
+                      cp.status === 'Not Picked';
+
+                    return (
+                      <div
+                        key={idx}
+                        className={`p-2.5 rounded-lg border text-xs flex items-start gap-3 ${
+                          idx === trackingDetails.checkpoints.length - 1
+                            ? isCancelledScan
+                              ? 'bg-rose-500/10 border-rose-500/30'
+                              : 'bg-emerald-500/10 border-emerald-500/30'
+                            : 'bg-card/40 border-border/30'
+                        }`}
+                      >
+                        <div
+                          className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
+                            isCancelledScan ? 'bg-rose-500' : 'bg-emerald-500'
+                          }`}
+                        />
+                        <div className="flex-1 space-y-0.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-semibold text-foreground">{cp.status}</span>
+                            <span className="text-[10px] text-muted-foreground font-mono">{cp.timestamp}</span>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground">{cp.instructions}</p>
+                          <p className="text-[10px] text-muted-foreground/70 font-mono">📍 {cp.location}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="p-4 rounded-lg bg-card border border-border/40 text-center text-xs text-muted-foreground">
+                  No scan events recorded yet for this waybill.
+                </div>
+              )}
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-between gap-2 pt-3 border-t border-border/40 flex-wrap">
+              <GlassButton
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(`/api/shipping/delhivery/label?orderNumber=${trackingModalOrder.orderNumber}`, '_blank')}
+                className="gap-1.5 text-emerald-400 hover:text-emerald-300 text-xs"
+              >
+                <Tag className="w-3.5 h-3.5" />
+                <span>Open Official Shipping Label</span>
+              </GlassButton>
+              <div className="flex items-center gap-2">
+                {(trackingDetails?.isCancelled || trackingModalOrder.orderStatus === 'CANCELLED') && (
+                  <GlassButton
+                    variant="primary"
+                    size="sm"
+                    onClick={() => {
+                      const ord = trackingModalOrder;
+                      setTrackingModalOrder(null);
+                      handleBookLiveDelhivery(ord);
+                    }}
+                    className="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
+                  >
+                    ⚡ Re-Book Live on Delhivery
+                  </GlassButton>
+                )}
+                <GlassButton variant="outline" size="sm" onClick={() => setTrackingModalOrder(null)}>
+                  Close
+                </GlassButton>
+              </div>
+            </div>
+          </div>
         )}
       </FormDialog>
     </DashboardLayout>

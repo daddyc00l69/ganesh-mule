@@ -7,10 +7,12 @@ import {
   getDelhiveryTracking,
   getDelhiverySettings,
   saveDelhiverySettings,
+  syncAllActiveDelhiveryOrders,
+  getDelhiveryOfficialPackingSlip,
   DELHIVERY_URLS,
 } from '@/lib/shipping/delhivery';
 import { OrderRecord } from '@/types';
-import { addLiveOrder } from '@/lib/orders/store';
+import { addLiveOrder, getLiveOrderById } from '@/lib/orders/store';
 
 describe('Delhivery One Automatic Shipping Integration (https://one.delhivery.com)', () => {
   beforeEach(() => {
@@ -204,4 +206,76 @@ describe('Delhivery One Automatic Shipping Integration (https://one.delhivery.co
     expect(reloaded.shippingMode).toBe('Surface');
     expect(reloaded.autoShipping).toBe(false);
   });
+
+  it('should detect cancelled status from Delhivery and update local order', async () => {
+    const testCancelOrder: OrderRecord = {
+      id: `ord-cancel-test-${Date.now()}`,
+      orderNumber: `SG-CNCL-${Date.now().toString().slice(-4)}`,
+      userId: 'usr-customer-2',
+      customerName: 'Rohit Patil',
+      customerEmail: 'rohit@patil.com',
+      shippingAddress: {
+        fullName: 'Rohit Patil',
+        phone: '+91 98220 12345',
+        street: 'Lokhandwala Complex',
+        city: 'Mumbai',
+        state: 'Maharashtra',
+        postalCode: '400053',
+        country: 'India',
+      },
+      subtotal: 89900,
+      shippingCost: 0,
+      taxAmount: 4500,
+      discountAmount: 0,
+      totalAmount: 94400,
+      orderStatus: 'CONFIRMED',
+      paymentStatus: 'COD_PENDING',
+      trackingNumber: '71890010000070', // verified cancelled test waybill
+      delhiveryWaybill: '71890010000070',
+      delhiveryStatus: 'Manifested',
+      items: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    addLiveOrder(testCancelOrder);
+
+    // Save temporary production API key for live tracking verification
+    saveDelhiverySettings({
+      apiKey: '1dc311f006e46db696c3e34bff2f130fc1e8a22c',
+      environment: 'production',
+    });
+
+    const trackingResult = await getDelhiveryTracking('71890010000070', testCancelOrder.orderNumber);
+    expect(trackingResult.waybill).toBe('71890010000070');
+    expect(trackingResult.statusCode).toBe('CANCELLED');
+    expect(trackingResult.isCancelled).toBe(true);
+    expect(trackingResult.status.toLowerCase()).toContain('cancel');
+  });
+
+  it('should fetch official Delhivery PDF packing slip and download link', async () => {
+    saveDelhiverySettings({
+      apiKey: '1dc311f006e46db696c3e34bff2f130fc1e8a22c',
+      environment: 'production',
+    });
+
+    const slip = await getDelhiveryOfficialPackingSlip('71890010000070');
+    expect(slip.error).toBeUndefined();
+    expect(slip.pdfDownloadLink || slip.pdfBuffer || slip.packageData).toBeDefined();
+    if (slip.pdfDownloadLink) {
+      expect(slip.pdfDownloadLink).toContain('.pdf');
+    }
+  });
+
+  it('should batch sync active Delhivery orders and update database statuses', async () => {
+    saveDelhiverySettings({
+      apiKey: '1dc311f006e46db696c3e34bff2f130fc1e8a22c',
+      environment: 'production',
+    });
+
+    const syncResult = await syncAllActiveDelhiveryOrders();
+    expect(syncResult.success).toBe(true);
+    expect(typeof syncResult.totalChecked).toBe('number');
+  });
 });
+

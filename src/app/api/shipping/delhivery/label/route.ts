@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLiveOrders, getLiveOrderById } from '@/lib/orders/store';
 import { MOCK_ORDERS } from '@/lib/mock-data';
-import { calculateConsignmentWeightGrams } from '@/lib/shipping/delhivery';
+import {
+  calculateConsignmentWeightGrams,
+  getDelhiveryOfficialPackingSlip,
+} from '@/lib/shipping/delhivery';
 import { OrderRecord } from '@/types';
 
 /**
@@ -85,6 +88,7 @@ export async function GET(req: NextRequest) {
     searchParams.get('id') ||
     '';
 
+  const format = searchParams.get('format')?.toLowerCase() || '';
   const cleanNumber = decodeURIComponent(rawOrderNumber).replace(/^#/, '').trim();
 
   let order: OrderRecord | undefined = undefined;
@@ -122,6 +126,40 @@ export async function GET(req: NextRequest) {
   }
 
   const awb = order.delhiveryWaybill || order.trackingNumber || `143${Date.now().toString().slice(-8)}88`;
+  const isRealAwb = Boolean(awb && !awb.startsWith('143'));
+
+  // 1. OFFICIAL DELHIVERY PDF DIRECT STREAMING:
+  // If order has a real Delhivery waybill and HTML format is not explicitly requested:
+  // Stream the authentic, official Delhivery One PDF shipping label directly!
+  if (isRealAwb && format !== 'html') {
+    try {
+      const officialSlip = await getDelhiveryOfficialPackingSlip(awb);
+      if (officialSlip.pdfBuffer) {
+        return new NextResponse(officialSlip.pdfBuffer as any, {
+          headers: {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `inline; filename="delhivery-official-label-${awb}.pdf"`,
+            'Cache-Control': 'public, max-age=3600',
+          },
+        });
+      } else if (officialSlip.pdfDownloadLink) {
+        return NextResponse.redirect(officialSlip.pdfDownloadLink, { status: 307 });
+      }
+    } catch (pdfErr) {
+      console.warn('[Official Delhivery PDF Fetch Warning, Falling back to HTML]:', pdfErr);
+    }
+  }
+
+  // 2. OFFICIAL DELHIVERY DATA ENRICHMENT:
+  // If viewing HTML, attempt to enrich with Delhivery's live official packing slip payload (official barcodes & logos)
+  let liveDelhiveryPkg: any = null;
+  if (isRealAwb) {
+    try {
+      const officialSlip = await getDelhiveryOfficialPackingSlip(awb);
+      liveDelhiveryPkg = officialSlip.packageData;
+    } catch {}
+  }
+
   const weightGrams = calculateConsignmentWeightGrams(order.items);
   const pin = (order.shippingAddress?.postalCode || '400008').replace(/\D/g, '').slice(0, 6);
   const city = order.shippingAddress?.city || 'Mumbai';
@@ -130,17 +168,27 @@ export async function GET(req: NextRequest) {
   // Explicit shipping mode detection: Surface vs Express
   const isSurface =
     (order.carrier || '').toLowerCase().includes('surface') ||
-    (order as any).shippingMode === 'Surface';
+    (order as any).shippingMode === 'Surface' ||
+    liveDelhiveryPkg?.mot === 'S';
   const modeText = isSurface ? 'SURFACE' : 'EXPRESS';
   const isCod =
-    order.paymentStatus === 'COD_PENDING' || (order as any).paymentMethod === 'COD';
+    order.paymentStatus === 'COD_PENDING' ||
+    (order as any).paymentMethod === 'COD' ||
+    liveDelhiveryPkg?.pt === 'COD';
 
-  const sortCode = (order as any).delhiverySortCode || resolveDelhiverySortCode(pin, city);
+  const sortCode =
+    liveDelhiveryPkg?.sort_code ||
+    (order as any).delhiverySortCode ||
+    resolveDelhiverySortCode(pin, city);
+
   const barcodeSvg = generateCode128Svg(awb, 62);
   const orderBarcodeSvg = generateCode128Svg(order.orderNumber, 36);
 
   // Format AWB with clean 4-digit logistics spacing
   const formattedAwb = awb.replace(/(\d{4})(?=\d)/g, '$1 ');
+  const clientName = liveDelhiveryPkg?.cl || 'ARCADE SHIP B2C (Ganesh Mule Apiaries)';
+  const originHub = liveDelhiveryPkg?.origin || 'Pune_Dhanori1_C (Maharashtra)';
+  const destinationHub = liveDelhiveryPkg?.destination || `${city} Hub (${state})`;
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -202,6 +250,14 @@ export async function GET(req: NextRequest) {
       color: #e53935;
       font-size: 26px;
       line-height: 0;
+    }
+    .client-sub {
+      font-size: 8px;
+      font-weight: 700;
+      color: #444;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 1px;
     }
     .mode-and-sort {
       display: flex;
@@ -303,6 +359,14 @@ export async function GET(req: NextRequest) {
       font-family: monospace;
       letter-spacing: 2px;
     }
+    .hub-routing-band {
+      background: #f9f9f9;
+      border-bottom: 2px solid #000;
+      padding: 4px 8px;
+      font-size: 8.5px;
+      display: flex;
+      justify-content: space-between;
+    }
     .fragile-band {
       background: #fff;
       border-bottom: 2px solid #000;
@@ -355,13 +419,41 @@ export async function GET(req: NextRequest) {
       border-top: 1px solid #000;
     }
     .print-actions {
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       display: flex;
-      justify-content: flex-end;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
       gap: 8px;
     }
+    .notice-banner {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 11px;
+      color: #92400e;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .book-btn {
+      background: #059669;
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      font-weight: 700;
+      font-size: 11px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .book-btn:hover {
+      background: #047857;
+    }
     @media print {
-      .print-actions {
+      .print-actions, .notice-banner {
         display: none !important;
       }
       body {
@@ -378,20 +470,74 @@ export async function GET(req: NextRequest) {
       font-size: 12px;
       border-radius: 6px;
       cursor: pointer;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .pdf-btn {
+      background: #e53935;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      font-weight: 600;
+      font-size: 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
   </style>
 </head>
 <body>
+  ${
+    !isRealAwb
+      ? `<div class="notice-banner">
+          <div>
+            <strong>⚠️ Simulated Draft AWB (${awb}):</strong> This order has not yet been slotted live on Delhivery One.
+          </div>
+          <button class="book-btn" onclick="bookLiveShipment('${order.orderNumber}')">
+            ⚡ Book Live on Delhivery One
+          </button>
+        </div>`
+      : `<div class="notice-banner" style="background: #ecfdf5; border-color: #a7f3d0; color: #065f46;">
+          <div>
+            <strong>✓ Official Delhivery One Waybill (${awb}):</strong> Live manifest synchronized.
+          </div>
+          <a class="pdf-btn" href="/api/shipping/delhivery/label?orderNumber=${order.orderNumber}" target="_blank">
+            📄 Open Official Delhivery PDF
+          </a>
+        </div>`
+  }
+
   <div class="print-actions">
-    <button class="print-btn" onclick="window.print()">🖨️ Print Delhivery Shipping Label (4" × 6")</button>
+    <div style="font-size: 11px; font-weight: 700; color: #555;">
+      Order: #${order.orderNumber} • Carrier: ${order.carrier || 'Delhivery One'}
+    </div>
+    <div style="display: flex; gap: 8px;">
+      ${
+        isRealAwb
+          ? `<a class="pdf-btn" href="/api/shipping/delhivery/label?orderNumber=${order.orderNumber}">
+              📄 Official Delhivery PDF
+            </a>`
+          : ''
+      }
+      <button class="print-btn" onclick="window.print()">
+        🖨️ Print Label (4" × 6")
+      </button>
+    </div>
   </div>
 
   <div class="thermal-label">
-    <!-- 1. Header with Delhivery Branding and Routing Code -->
+    <!-- 1. Header with Delhivery Branding, Client Name and Routing Code -->
     <div class="header-band">
-      <div class="delhivery-brand">
-        <span>DELHIVERY</span><span class="dot">•</span>
+      <div>
+        <div class="delhivery-brand">
+          <span>DELHIVERY</span><span class="dot">•</span>
+        </div>
+        <div class="client-sub">${clientName}</div>
       </div>
       <div class="mode-and-sort">
         <div class="mode-box">${modeText}</div>
@@ -401,13 +547,23 @@ export async function GET(req: NextRequest) {
 
     <!-- 2. Primary Waybill Barcode -->
     <div class="barcode-band">
-      <div style="max-width: 95%; margin: 0 auto; height: 60px;">
-        ${barcodeSvg}
+      <div style="max-width: 95%; margin: 0 auto; min-height: 60px; display: flex; justify-content: center; align-items: center;">
+        ${
+          liveDelhiveryPkg?.barcode
+            ? `<img src="${liveDelhiveryPkg.barcode}" alt="AWB Barcode" style="max-width: 100%; height: 60px; object-fit: contain;" />`
+            : barcodeSvg
+        }
       </div>
       <div class="awb-human-readable">AWB: ${formattedAwb}</div>
     </div>
 
-    <!-- 3. Payment Mode & Shipment Metadata -->
+    <!-- 3. Hub Routing Information -->
+    <div class="hub-routing-band">
+      <div><strong>Origin:</strong> ${originHub}</div>
+      <div><strong>Dest:</strong> ${destinationHub}</div>
+    </div>
+
+    <!-- 4. Payment Mode & Shipment Metadata -->
     <div class="type-and-meta-band">
       ${
         isCod
@@ -431,7 +587,7 @@ export async function GET(req: NextRequest) {
       </div>
     </div>
 
-    <!-- 4. Consignee / Ship-To Address -->
+    <!-- 5. Consignee / Ship-To Address -->
     <div class="ship-to-band">
       <div class="section-tag">Ship To (Recipient):</div>
       <div class="consignee-name">${order.customerName}</div>
@@ -445,12 +601,12 @@ export async function GET(req: NextRequest) {
       </div>
     </div>
 
-    <!-- 5. Fragile & Handling Warning -->
+    <!-- 6. Fragile & Handling Warning -->
     <div class="fragile-band">
       ⚠️ FRAGILE: COLD-EXTRACTED RAW HONEY IN SOLID GLASS JARS • HANDLE WITH EXTREME CARE
     </div>
 
-    <!-- 6. Itemized Order Description -->
+    <!-- 7. Itemized Order Description -->
     <div class="items-table-band">
       <div class="section-tag">Order Description (${order.orderNumber}):</div>
       <table class="items-table">
@@ -475,7 +631,7 @@ export async function GET(req: NextRequest) {
       </table>
     </div>
 
-    <!-- 7. Return to Shipper & Order Barcode -->
+    <!-- 8. Return to Shipper & Order Barcode -->
     <div class="shipper-band">
       <div class="shipper-left">
         <strong>If undelivered, return to:</strong><br/>
@@ -485,18 +641,47 @@ export async function GET(req: NextRequest) {
         <strong>GSTIN:</strong> 27AABCG1234F1Z5 • <strong>FSSAI:</strong> 11524999000123
       </div>
       <div class="order-barcode-right">
-        <div style="height: 36px; width: 100%;">
-          ${orderBarcodeSvg}
+        <div style="min-height: 36px; width: 100%; display: flex; justify-content: center; align-items: center;">
+          ${
+            liveDelhiveryPkg?.oid_barcode
+              ? `<img src="${liveDelhiveryPkg.oid_barcode}" alt="Order Barcode" style="max-width: 100%; height: 35px; object-fit: contain;" />`
+              : orderBarcodeSvg
+          }
         </div>
         <div style="font-family: monospace; font-size: 8px; font-weight: 700;">${order.orderNumber}</div>
       </div>
     </div>
 
-    <!-- 8. Footer -->
+    <!-- 9. Footer -->
     <div class="footer-note">
-      Track package at www.delhivery.com/track/package/${awb} • Standard 4" × 6" Delhivery Logistics Dispatch Label
+      Track package at www.delhivery.com/track/package/${awb} • Official Delhivery Logistics Dispatch Label
     </div>
   </div>
+
+  <script>
+    async function bookLiveShipment(orderNumber) {
+      const btn = event.target;
+      const prevText = btn.innerText;
+      btn.innerText = 'Booking Live on Delhivery...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/shipping/delhivery/ship', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderNumber: orderNumber, forceRegenerate: true })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to book live shipment');
+        alert('✓ Real shipment manifested on Delhivery One! Assigned Live AWB: ' + data.shipment.waybill);
+        window.location.reload();
+      } catch (err) {
+        alert('Booking Error: ' + err.message);
+        btn.innerText = prevText;
+        btn.disabled = false;
+      }
+    }
+  </script>
 </body>
 </html>`;
 
