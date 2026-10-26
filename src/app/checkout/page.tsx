@@ -479,8 +479,8 @@ function CheckoutContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           code,
-          subtotal,
-          customerEmail: email,
+          subtotal: Math.round(subtotal),
+          customerEmail: email.trim() ? email.trim().toLowerCase() : undefined,
         }),
       });
 
@@ -963,10 +963,10 @@ function CheckoutContent() {
 
   return (
     <StoreProvider>
-      <div className="bg-[#FAF8F5] min-h-screen pb-36 lg:pb-24 text-stone-900 selection:bg-amber-200">
+      <div className="bg-[#FAF8F5] min-h-screen pb-44 lg:pb-20 text-stone-900 selection:bg-amber-200 scroll-smooth overscroll-y-contain">
         
         {/* Top Progress & Guarantee Header */}
-        <div className="border-b border-stone-200/80 bg-white/70 backdrop-blur-md sticky top-0 z-20">
+        <div className="border-b border-stone-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-20">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
             <Link
               href="/shop"
@@ -1082,7 +1082,7 @@ function CheckoutContent() {
                     <Trash2 className="w-3 h-3" /> Clear Bag
                   </button>
                 </div>
-                <div className="divide-y divide-stone-100 max-h-56 overflow-y-auto">
+                <div className="divide-y divide-stone-100">
                   {items.map((item) => (
                     <div key={item.productId} className="py-2.5 flex items-center justify-between gap-3">
                       <div className="flex-1 min-w-0">
@@ -1745,7 +1745,7 @@ function CheckoutContent() {
 
             {/* Right Desktop Sidebar: Sticky Order Summary, Coupons & Razorpay Pay */}
             <div className="space-y-4">
-              <div className="bg-white rounded-3xl border border-stone-200/90 p-6 space-y-4 shadow-sm lg:sticky lg:top-20">
+              <div className="bg-white rounded-3xl border border-stone-200/90 p-6 space-y-4 shadow-sm lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto no-scrollbar overscroll-contain">
                 <div className="flex items-center justify-between pb-3 border-b border-stone-100">
                   <h3 className="text-xs font-bold text-stone-900 uppercase tracking-wider">
                     Order Summary ({items.length} {items.length === 1 ? 'jar' : 'jars'})
@@ -1762,7 +1762,7 @@ function CheckoutContent() {
                 </div>
 
                 {/* Items List */}
-                <div className="divide-y divide-stone-100 max-h-56 overflow-y-auto pr-1">
+                <div className="divide-y divide-stone-100">
                   {items.map((item) => (
                     <div key={item.productId} className="py-2.5 flex items-center justify-between text-xs gap-3">
                       <div className="pr-1 flex-1 min-w-0">

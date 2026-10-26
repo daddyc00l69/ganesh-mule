@@ -4,17 +4,26 @@ import { MOCK_COUPONS } from '@/lib/mock-data';
 import { prisma, isDatabaseOnline } from '@/lib/db';
 
 const ValidateCouponSchema = z.object({
-  code: z.string().min(2).max(30),
-  subtotal: z.number().int().nonnegative(),
-  customerEmail: z.string().email().optional(),
+  code: z.string().min(1, 'Please enter a coupon code').max(50),
+  subtotal: z.coerce.number().nonnegative().default(0),
+  customerEmail: z
+    .string()
+    .optional()
+    .nullable()
+    .transform((val) => {
+      if (!val || typeof val !== 'string') return undefined;
+      const clean = val.trim().toLowerCase();
+      return clean.includes('@') ? clean : undefined;
+    }),
 });
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const parsed = ValidateCouponSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ valid: false, error: 'Invalid coupon validation parameters' }, { status: 400 });
+      const firstIssue = parsed.error.issues?.[0]?.message || 'Please provide a valid coupon code.';
+      return NextResponse.json({ valid: false, error: firstIssue }, { status: 400 });
     }
 
     const { code, subtotal } = parsed.data;
