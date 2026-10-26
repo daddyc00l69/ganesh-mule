@@ -208,6 +208,28 @@ export default function ManagerOrdersPage() {
     setActiveOrder(null);
   };
 
+  const handleCancelShipment = async (order: OrderRecord) => {
+    if (!order.trackingNumber) return;
+    const confirmed = window.confirm(
+      `Cancel Delhivery shipment (${order.trackingNumber}) for order #${order.orderNumber}?\n\nIf manifested on Delhivery, courier freight charges are immediately reversed to your Delhivery wallet.`
+    );
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch('/api/shipping/delhivery/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ waybill: order.trackingNumber }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to cancel shipment');
+      alert(data.message || 'Shipment cancelled on Delhivery One.');
+      fetchLiveOrders();
+    } catch (err: any) {
+      alert(err.message || 'Cancellation failed.');
+    }
+  };
+
   const columns: Column<OrderRecord>[] = [
     {
       key: 'orderNumber',
@@ -353,6 +375,17 @@ export default function ManagerOrdersPage() {
             >
               <Tag className="w-3.5 h-3.5" />
               <span>Label</span>
+            </GlassButton>
+          )}
+          {o.trackingNumber && o.orderStatus !== 'CANCELLED' && (
+            <GlassButton
+              variant="outline"
+              size="sm"
+              onClick={() => handleCancelShipment(o)}
+              className="gap-1 text-rose-400 hover:text-rose-300 hover:border-rose-500/30 text-xs"
+              title="Void / Cancel this Delhivery shipment and refund courier freight to wallet"
+            >
+              <span>Void</span>
             </GlassButton>
           )}
           <GlassButton
