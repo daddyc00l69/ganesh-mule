@@ -190,7 +190,7 @@ export async function checkDelhiveryServiceability(
         if (pinData) {
           const isPrepaid = pinData.pre_paid === 'Y';
           const cod = pinData.cod === 'Y';
-          const apiAir = pinData.express === 'Y' && airCheck.available;
+          const apiAir = (pinData.express === 'Y' || isPrepaid) && airCheck.available;
           return {
             pincode: cleanPin,
             serviceable: isPrepaid,
@@ -198,9 +198,9 @@ export async function checkDelhiveryServiceability(
             codAvailable: false, // Strict invariant: Ganesh Mule is strictly prepaid
             expectedDeliveryDays: settings.shippingMode === 'Express' ? 2 : 4,
             deliverySpeed: settings.shippingMode === 'Express' ? 'Delhivery One Air Express' : 'Delhivery One Surface',
-            city: pinData.district || 'India',
+            city: pinData.city || pinData.district || 'India',
             state: pinData.state_code || 'India',
-            district: pinData.district || 'District City',
+            district: pinData.district || pinData.city || 'District City',
             districtVerified: isPrepaid,
             hasAir: apiAir,
             hasSurface: true,
