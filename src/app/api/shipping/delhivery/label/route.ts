@@ -4,6 +4,7 @@ import { MOCK_ORDERS } from '@/lib/mock-data';
 import {
   calculateConsignmentWeightGrams,
   getDelhiveryOfficialPackingSlip,
+  createDelhiveryShipment,
 } from '@/lib/shipping/delhivery';
 import { OrderRecord } from '@/types';
 
@@ -125,8 +126,24 @@ export async function GET(req: NextRequest) {
     return new NextResponse('No order available to generate shipping label.', { status: 404 });
   }
 
-  const awb = order.delhiveryWaybill || order.trackingNumber || `143${Date.now().toString().slice(-8)}88`;
-  const isRealAwb = Boolean(awb && !awb.startsWith('143'));
+  let awb = order.delhiveryWaybill || order.trackingNumber || `143${Date.now().toString().slice(-8)}88`;
+  let isRealAwb = Boolean(awb && !awb.startsWith('143'));
+
+  // AUTO-BOOK LIVE MANIFEST ON DELHIVERY ONE IF PAID
+  if (!isRealAwb && order.paymentStatus === 'PAID') {
+    try {
+      const mode =
+        (order as any).shippingMode ||
+        (order.carrier?.toLowerCase().includes('air') ? 'Express' : 'Surface');
+      const shipment = await createDelhiveryShipment(order, { mode, forceRegenerate: true });
+      if (shipment.waybill && !shipment.waybill.startsWith('143')) {
+        awb = shipment.waybill;
+        isRealAwb = true;
+      }
+    } catch (e) {
+      console.warn('[Auto-Book Live Manifest in Label Route]', e);
+    }
+  }
 
   // 1. OFFICIAL DELHIVERY PDF DIRECT STREAMING:
   // If order has a real Delhivery waybill and HTML format is not explicitly requested:
@@ -493,11 +510,8 @@ export async function GET(req: NextRequest) {
     !isRealAwb
       ? `<div class="notice-banner">
           <div>
-            <strong>⚠️ Simulated Draft AWB (${awb}):</strong> This order has not yet been slotted live on Delhivery One.
+            <strong>⚠️ Simulated Draft AWB (${awb}):</strong> Consignment automatically queued for live courier pickup.
           </div>
-          <button class="book-btn" onclick="bookLiveShipment('${order.orderNumber}')">
-            ⚡ Book Live on Delhivery One
-          </button>
         </div>`
       : `<div class="notice-banner" style="background: #ecfdf5; border-color: #a7f3d0; color: #065f46;">
           <div>
@@ -655,30 +669,6 @@ export async function GET(req: NextRequest) {
     </div>
   </div>
 
-  <script>
-    async function bookLiveShipment(orderNumber) {
-      const btn = event.target;
-      const prevText = btn.innerText;
-      btn.innerText = 'Booking Live on Delhivery...';
-      btn.disabled = true;
-
-      try {
-        const res = await fetch('/api/shipping/delhivery/ship', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ orderNumber: orderNumber, forceRegenerate: true })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to book live shipment');
-        alert('✓ Real shipment manifested on Delhivery One! Assigned Live AWB: ' + data.shipment.waybill);
-        window.location.reload();
-      } catch (err) {
-        alert('Booking Error: ' + err.message);
-        btn.innerText = prevText;
-        btn.disabled = false;
-      }
-    }
-  </script>
 </body>
 </html>`;
 

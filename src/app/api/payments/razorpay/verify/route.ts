@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { verifyRazorpayPaymentSignature } from '@/lib/payments/razorpay';
 import { prisma, isDatabaseOnline } from '@/lib/db';
 import { MOCK_ORDERS } from '@/lib/mock-data';
-import { getLiveOrders, getLiveOrderById, updateLiveOrderStatus } from '@/lib/orders/store';
+import { getLiveOrders, getLiveOrderById, updateLiveOrderStatus, addLiveOrder } from '@/lib/orders/store';
 import { decrementProductStock } from '@/lib/inventory/store';
 import { sendEmail, ADMIN_NOTIFICATION_EMAIL } from '@/lib/email/resend';
 import { getOrderConfirmationEmailHtml, getNewOrderAdminAlertEmailHtml } from '@/lib/email/templates';
@@ -120,9 +120,79 @@ export async function POST(req: NextRequest) {
 
     // Always update in-memory live order registry as well
     const liveOrders = getLiveOrders();
-    const mockOrder = liveOrders.find(
+    let mockOrder = liveOrders.find(
       (o) => (orderNumber && o.orderNumber === orderNumber) || o.payments?.some((p) => p.razorpayOrderId === razorpayOrderId)
     );
+
+    if (!mockOrder && dbOnline) {
+      try {
+        const dbOrder = await prisma.order.findFirst({
+          where: {
+            OR: [
+              ...(orderNumber ? [{ orderNumber }] : []),
+              { payments: { some: { razorpayOrderId } } },
+            ],
+          },
+          include: { items: true, payments: true },
+        });
+
+        if (dbOrder) {
+          const loadedOrder: any = {
+            id: dbOrder.id,
+            orderNumber: dbOrder.orderNumber,
+            userId: dbOrder.userId,
+            customerName: dbOrder.customerName,
+            customerEmail: dbOrder.customerEmail,
+            customerPhone: dbOrder.customerPhone || '',
+            shippingAddress: (dbOrder.shippingAddress as any) || {
+              fullName: dbOrder.customerName,
+              phone: dbOrder.customerPhone || '',
+              street: 'Customer Delivery Address',
+              city: 'Mumbai',
+              state: 'Maharashtra',
+              postalCode: '400001',
+              country: 'India',
+            },
+            subtotal: dbOrder.subtotal,
+            shippingCost: dbOrder.shippingCost,
+            taxAmount: dbOrder.taxAmount,
+            discountAmount: dbOrder.discountAmount,
+            totalAmount: dbOrder.totalAmount,
+            orderStatus: 'PROCESSING',
+            paymentStatus: 'PAID',
+            carrier: dbOrder.carrier || 'Delhivery One (Surface)',
+            trackingNumber: dbOrder.trackingNumber || undefined,
+            delhiveryWaybill: dbOrder.trackingNumber || undefined,
+            items: dbOrder.items.map((it) => ({
+              id: it.id,
+              orderId: dbOrder.id,
+              productId: it.productId,
+              productName: it.productName,
+              sku: it.sku,
+              price: it.price,
+              quantity: it.quantity,
+              total: it.total,
+            })),
+            payments: dbOrder.payments.map((p) => ({
+              id: p.id,
+              provider: p.provider,
+              razorpayOrderId: p.razorpayOrderId || undefined,
+              razorpayPaymentId: p.razorpayPaymentId || undefined,
+              amount: p.amount,
+              currency: p.currency,
+              status: p.status,
+            })),
+            createdAt: dbOrder.createdAt.toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          mockOrder = loadedOrder;
+          addLiveOrder(loadedOrder);
+        }
+      } catch (dbFindErr) {
+        console.warn('[Verify DB Order Lookup Fallback Error]', dbFindErr);
+      }
+    }
+
     if (mockOrder) {
       mockOrder.paymentStatus = 'PAID';
       mockOrder.orderStatus = 'PROCESSING';
@@ -160,17 +230,19 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // Automatically dispatch courier shipment with Delhivery One (https://one.delhivery.com)
+      // AUTOMATIC LIVE COURIER BOOKING ON DELHIVERY ONE (100% Automated - No manual intervention)
       const delhiverySettings = getDelhiverySettings();
       if (delhiverySettings.autoShipping) {
         try {
+          const chosenMode: 'Express' | 'Surface' =
+            (mockOrder as any).shippingMode ||
+            (mockOrder.carrier?.toLowerCase().includes('air') ? 'Express' : 'Surface');
+
           const shipmentResult = await createDelhiveryShipment(mockOrder, {
-            mode:
-              (mockOrder as any).shippingMode ||
-              (mockOrder.carrier?.toLowerCase().includes('surface') ? 'Surface' : 'Express'),
+            mode: chosenMode,
             forceRegenerate: true,
           });
-          console.log(`[Delhivery Auto-Ship] Booked AWB ${shipmentResult.waybill} for Order #${mockOrder.orderNumber}`);
+          console.log(`[Delhivery Auto-Ship] Auto-booked Live AWB ${shipmentResult.waybill} for Order #${mockOrder.orderNumber}`);
 
           if (dbOnline) {
             try {
@@ -179,12 +251,14 @@ export async function POST(req: NextRequest) {
                 data: {
                   trackingNumber: shipmentResult.waybill,
                   carrier: shipmentResult.carrier,
+                  orderStatus: 'PROCESSING',
+                  paymentStatus: 'PAID',
                 },
               });
             } catch {}
           }
         } catch (shipErr) {
-          console.warn('[Delhivery Auto-Ship Exception]', shipErr);
+          console.error('[Delhivery Auto-Ship Critical Exception]', shipErr);
         }
       }
 

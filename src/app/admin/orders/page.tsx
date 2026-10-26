@@ -424,17 +424,6 @@ export default function AdminOrdersPage() {
       headerClassName: 'text-right',
       render: (order) => (
         <div className="flex items-center justify-end gap-1.5 flex-nowrap">
-          {(!order.trackingNumber || order.trackingNumber.startsWith('143')) && order.orderStatus !== 'CANCELLED' && (
-            <button
-              type="button"
-              onClick={() => handleBookLiveDelhivery(order)}
-              className="text-xs px-2.5 py-1 rounded bg-zinc-100 hover:bg-white text-zinc-900 font-semibold shadow-xs flex items-center gap-1 cursor-pointer transition-colors whitespace-nowrap"
-              title="Book real live shipment on Delhivery One directly with 1 click"
-            >
-              <Truck className="w-3.5 h-3.5" />
-              <span>Book Live</span>
-            </button>
-          )}
           {order.trackingNumber && (
             <button
               type="button"
@@ -983,20 +972,6 @@ export default function AdminOrdersPage() {
                 <span>Open Official Shipping Label</span>
               </GlassButton>
               <div className="flex items-center gap-2">
-                {(trackingDetails?.isCancelled || trackingModalOrder.orderStatus === 'CANCELLED') && (
-                  <GlassButton
-                    variant="primary"
-                    size="sm"
-                    onClick={() => {
-                      const ord = trackingModalOrder;
-                      setTrackingModalOrder(null);
-                      handleBookLiveDelhivery(ord);
-                    }}
-                    className="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
-                  >
-                    ⚡ Re-Book Live on Delhivery
-                  </GlassButton>
-                )}
                 <GlassButton variant="outline" size="sm" onClick={() => setTrackingModalOrder(null)}>
                   Close
                 </GlassButton>

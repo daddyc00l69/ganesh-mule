@@ -81,4 +81,163 @@ describe('Razorpay Cryptographic Payment & Webhook Verification', () => {
       })
     ).toBe(false);
   });
+
+  it('should auto-book Delhivery consignment upon successful verify route payment', async () => {
+    const { POST: verifyRoute } = await import('@/app/api/payments/razorpay/verify/route');
+    const { addLiveOrder, getLiveOrderById } = await import('@/lib/orders/store');
+    const { NextRequest } = await import('next/server');
+
+    const testOrderNumber = `SG-TEST-VERIFY-${Date.now()}`;
+    const testRzpOrderId = `order_test_${Date.now()}`;
+    const testRzpPaymentId = `pay_test_${Date.now()}`;
+
+    addLiveOrder({
+      id: `ord-${testOrderNumber}`,
+      orderNumber: testOrderNumber,
+      userId: 'usr-customer-1',
+      customerName: 'Kunal Sharma',
+      customerEmail: 'kunal@gmail.com',
+      shippingAddress: {
+        fullName: 'Kunal Sharma',
+        phone: '9820112233',
+        street: 'Lokhandwala Complex',
+        city: 'Mumbai',
+        state: 'Maharashtra',
+        postalCode: '400053',
+        country: 'India',
+      },
+      subtotal: 89900,
+      shippingCost: 0,
+      taxAmount: 4495,
+      discountAmount: 0,
+      totalAmount: 94395,
+      orderStatus: 'PENDING',
+      paymentStatus: 'CREATED',
+      items: [
+        {
+          id: 'item-1',
+          orderId: `ord-${testOrderNumber}`,
+          productId: 'prod-wild-forest-750g',
+          productName: 'Wild Forest Raw Honey (750g)',
+          sku: 'HNY-WLD-750G',
+          price: 89900,
+          quantity: 1,
+          total: 89900,
+        },
+      ],
+      payments: [
+        {
+          id: `pay-${Date.now()}`,
+          provider: 'RAZORPAY',
+          razorpayOrderId: testRzpOrderId,
+          status: 'PENDING',
+        },
+      ],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+
+    const req = new NextRequest('http://localhost:3000/api/payments/razorpay/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        razorpayOrderId: testRzpOrderId,
+        razorpayPaymentId: testRzpPaymentId,
+        razorpaySignature: 'simulated_test_sig',
+        orderNumber: testOrderNumber,
+      }),
+    });
+
+    const res = await verifyRoute(req);
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    expect(data.verified).toBe(true);
+    expect(data.waybill).toBeDefined();
+
+    const updated = getLiveOrderById(testOrderNumber);
+    expect(updated?.paymentStatus).toBe('PAID');
+    expect(updated?.orderStatus).toBe('PROCESSING');
+    expect(updated?.trackingNumber).toBeDefined();
+    expect(updated?.delhiveryWaybill).toBeDefined();
+  });
+
+  it('should auto-book Delhivery consignment upon razorpay order.paid webhook', async () => {
+    const { POST: webhookRoute } = await import('@/app/api/webhooks/razorpay/route');
+    const { addLiveOrder, getLiveOrderById } = await import('@/lib/orders/store');
+    const { NextRequest } = await import('next/server');
+
+    const testOrderNumber = `SG-TEST-HOOK-${Date.now()}`;
+    const testRzpOrderId = `order_hook_${Date.now()}`;
+    const testRzpPaymentId = `pay_hook_${Date.now()}`;
+
+    addLiveOrder({
+      id: `ord-${testOrderNumber}`,
+      orderNumber: testOrderNumber,
+      userId: 'usr-customer-2',
+      customerName: 'Priya Joshi',
+      customerEmail: 'priya@gmail.com',
+      shippingAddress: {
+        fullName: 'Priya Joshi',
+        phone: '9820556677',
+        street: 'Kalyani Nagar',
+        city: 'Pune',
+        state: 'Maharashtra',
+        postalCode: '411006',
+        country: 'India',
+      },
+      subtotal: 89900,
+      shippingCost: 0,
+      taxAmount: 4495,
+      discountAmount: 0,
+      totalAmount: 94395,
+      orderStatus: 'PENDING',
+      paymentStatus: 'CREATED',
+      items: [],
+      payments: [
+        {
+          id: `pay-${Date.now()}`,
+          provider: 'RAZORPAY',
+          razorpayOrderId: testRzpOrderId,
+          status: 'PENDING',
+        },
+      ],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+
+    const webhookBody = JSON.stringify({
+      event_id: `evt_${Date.now()}`,
+      event: 'order.paid',
+      payload: {
+        payment: {
+          entity: {
+            id: testRzpPaymentId,
+            order_id: testRzpOrderId,
+            amount: 94395,
+            currency: 'INR',
+            status: 'captured',
+          },
+        },
+      },
+    });
+
+    const req = new NextRequest('http://localhost:3000/api/webhooks/razorpay', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-razorpay-signature': 'simulated_test_sig',
+      },
+      body: webhookBody,
+    });
+
+    const res = await webhookRoute(req);
+    expect(res.status).toBe(200);
+
+    const updated = getLiveOrderById(testOrderNumber);
+    expect(updated?.paymentStatus).toBe('PAID');
+    expect(updated?.orderStatus).toBe('PROCESSING');
+    expect(updated?.trackingNumber).toBeDefined();
+    expect(updated?.delhiveryWaybill).toBeDefined();
+  });
 });

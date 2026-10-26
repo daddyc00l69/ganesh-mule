@@ -35,7 +35,7 @@ describe('Live Verification: Label, Tracking & Cancellation Synchronization', ()
       discountAmount: 0,
       totalAmount: 104953,
       orderStatus: 'CONFIRMED',
-      paymentStatus: 'COD_PENDING',
+      paymentStatus: 'PAID',
       trackingNumber: '71890010000070', // Cancelled on Delhivery
       delhiveryWaybill: '71890010000070',
       delhiveryStatus: 'Manifested',
@@ -65,7 +65,7 @@ describe('Live Verification: Label, Tracking & Cancellation Synchronization', ()
       discountAmount: 0,
       totalAmount: 94400,
       orderStatus: 'CONFIRMED',
-      paymentStatus: 'COD_PENDING',
+      paymentStatus: 'CREATED',
       trackingNumber: '14309778631486', // Draft AWB
       delhiveryWaybill: '14309778631486',
       delhiveryStatus: 'Ready for Courier Booking',
@@ -108,13 +108,13 @@ describe('Live Verification: Label, Tracking & Cancellation Synchronization', ()
     expect(labelRes.headers.get('content-disposition')).toContain('delhivery-official-label-71890010000070.pdf');
   });
 
-  it('should render HTML with Book Live option for unbooked SG-2026-6352', async () => {
-    const labelHtmlReq = new NextRequest('http://localhost:3000/api/shipping/delhivery/label?orderNumber=SG-2026-6352');
+  it('should render HTML with automated queue notice for draft SG-2026-6352', async () => {
+    const labelHtmlReq = new NextRequest('http://localhost:3000/api/shipping/delhivery/label?orderNumber=SG-2026-6352&format=html');
     const labelHtmlRes = await getLabel(labelHtmlReq);
     expect(labelHtmlRes.status).toBe(200);
     expect(labelHtmlRes.headers.get('content-type')).toContain('text/html');
     const htmlText = await labelHtmlRes.text();
     expect(htmlText).toContain('Draft AWB');
-    expect(htmlText).toContain('Book Live on Delhivery One');
+    expect(htmlText).toContain('Consignment automatically queued');
   });
 });

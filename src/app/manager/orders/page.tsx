@@ -494,14 +494,9 @@ export default function ManagerOrdersPage() {
                       Live AWB
                     </span>
                   ) : (
-                    <button
-                      type="button"
-                      onClick={() => handleBookLiveDelhivery(o)}
-                      className="text-[9px] px-1.5 py-0.2 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 cursor-pointer font-mono"
-                      title="Click to book live on Delhivery One"
-                    >
-                      ⚡ Book Live
-                    </button>
+                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-400 font-mono border border-zinc-700">
+                      Scheduled
+                    </span>
                   )}
                   <button
                     type="button"
@@ -517,13 +512,7 @@ export default function ManagerOrdersPage() {
                 </span>
               </div>
             ) : (
-              <button
-                type="button"
-                onClick={() => handleBookLiveDelhivery(o)}
-                className="text-[10px] h-6 px-2 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 font-medium cursor-pointer"
-              >
-                ⚡ Book Live AWB
-              </button>
+              <span className="text-xs text-zinc-500 font-mono italic">Awaiting Courier Dispatch</span>
             )}
             {(o as any).delhiveryRemarks && (
               <p className="text-[10px] text-zinc-400 font-medium leading-tight flex items-center gap-1 mt-0.5">
@@ -550,18 +539,6 @@ export default function ManagerOrdersPage() {
               title="Claim this order into your inbox"
             >
               Claim
-            </button>
-          )}
-          {(!o.trackingNumber || o.trackingNumber.startsWith('143')) && o.orderStatus !== 'CANCELLED' && (
-            <button
-              type="button"
-              disabled={isRefreshing}
-              onClick={() => handleBookLiveDelhivery(o)}
-              className="text-xs px-2.5 py-1 rounded bg-zinc-100 hover:bg-white text-zinc-900 font-semibold shadow-xs flex items-center gap-1 cursor-pointer transition-colors whitespace-nowrap"
-              title="Book real live shipment on Delhivery One directly"
-            >
-              <Truck className="w-3.5 h-3.5" />
-              <span>Book Live</span>
             </button>
           )}
           {o.trackingNumber && (
@@ -1100,20 +1077,6 @@ export default function ManagerOrdersPage() {
                 <span>Open Official Shipping Label</span>
               </GlassButton>
               <div className="flex items-center gap-2">
-                {(trackingDetails?.isCancelled || trackingModalOrder.orderStatus === 'CANCELLED') && (
-                  <GlassButton
-                    variant="primary"
-                    size="sm"
-                    onClick={() => {
-                      const ord = trackingModalOrder;
-                      setTrackingModalOrder(null);
-                      handleBookLiveDelhivery(ord);
-                    }}
-                    className="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
-                  >
-                    ⚡ Re-Book Live on Delhivery
-                  </GlassButton>
-                )}
                 <GlassButton variant="outline" size="sm" onClick={() => setTrackingModalOrder(null)}>
                   Close
                 </GlassButton>
