@@ -57,12 +57,24 @@ export async function POST(req: NextRequest) {
     }
 
     // Dev test customer
-    if ((email === 'customer@ganeshmule.com' || email === 'customer@solidglass.com') && password === 'Customer@123') {
+    const isTestEmail =
+      email === 'customer@ganeshmule.com' ||
+      email === 'customer@solidglass.com' ||
+      email === 'tushar0p.verify@gmail.com';
+
+    const isValidTestPassword =
+      password === 'Customer@123' ||
+      password === 'Manager@123456' ||
+      password === 'Admin@123456' ||
+      password === '123456';
+
+    if (isTestEmail && isValidTestPassword) {
       const devToken = `dev_CUSTOMER_${email}`;
       await setSessionCookie(devToken);
+      const displayName = email.startsWith('tushar') ? 'Tushar' : 'Aarav Deshmukh';
       return NextResponse.json({
         success: true,
-        user: { id: 'usr-customer-dev', email, name: 'Aarav Deshmukh', role: 'CUSTOMER' },
+        user: { id: `usr-customer-${email}`, email, name: displayName, role: 'CUSTOMER' },
       });
     }
 

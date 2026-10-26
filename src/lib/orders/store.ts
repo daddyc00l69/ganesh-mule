@@ -57,22 +57,33 @@ if (!globalStore.__LIVE_ORDERS__) {
 }
 
 export function getLiveOrders(): OrderRecord[] {
-  if (!globalStore.__LIVE_ORDERS__) {
-    globalStore.__LIVE_ORDERS__ = readOrdersFromDisk();
+  if (isTestEnv) {
+    if (!globalStore.__LIVE_ORDERS__) {
+      globalStore.__LIVE_ORDERS__ = [...MOCK_ORDERS];
+    }
+    return globalStore.__LIVE_ORDERS__;
   }
-  return globalStore.__LIVE_ORDERS__;
+  return reloadOrdersFromDisk();
 }
 
 export function reloadOrdersFromDisk(): OrderRecord[] {
+  if (isTestEnv) {
+    if (!globalStore.__LIVE_ORDERS__) {
+      globalStore.__LIVE_ORDERS__ = [...MOCK_ORDERS];
+    }
+    return globalStore.__LIVE_ORDERS__;
+  }
   const diskOrders = readOrdersFromDisk();
   if (!globalStore.__LIVE_ORDERS__) {
     globalStore.__LIVE_ORDERS__ = diskOrders;
   } else {
     for (const d of diskOrders) {
-      const exists = globalStore.__LIVE_ORDERS__.some(
+      const existing = globalStore.__LIVE_ORDERS__.find(
         (m) => m.id === d.id || m.orderNumber === d.orderNumber
       );
-      if (!exists) {
+      if (existing) {
+        Object.assign(existing, d);
+      } else {
         globalStore.__LIVE_ORDERS__.unshift(d);
       }
     }

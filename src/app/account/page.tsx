@@ -68,7 +68,7 @@ export default function CustomerAccountPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to dispatch passcode.');
       setOtpSent(true);
-      setLoginFeedback({ type: 'success', message: `6-digit passcode sent to ${inlineEmail.trim()}.` });
+      setLoginFeedback({ type: 'success', message: data.message || `6-digit passcode sent to ${inlineEmail.trim()}.` });
     } catch (err: any) {
       setLoginFeedback({ type: 'error', message: err.message || 'Unable to send passcode.' });
     } finally {

@@ -56,7 +56,7 @@ export default function CustomerLoginPage() {
       }
 
       setStep('ENTER_OTP');
-      setSuccessMessage(`A 6-digit verification code has been sent to ${email.trim()}`);
+      setSuccessMessage(data.message || `A 6-digit verification code has been sent to ${email.trim()}`);
       startCooldown();
     } catch (err: any) {
       setErrorMessage(err.message || 'Unable to send passcode. Please try again.');

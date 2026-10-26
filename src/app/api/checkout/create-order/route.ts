@@ -305,15 +305,12 @@ export async function POST(req: NextRequest) {
     };
     addLiveOrder(orderRecord);
 
-    // If COD order, trigger automatic Delhivery One dispatch immediately
+    // If COD order, trigger automatic Delhivery One dispatch immediately for live tracking & labels
     if (parsed.data.paymentMethod === 'COD') {
-      const delhiverySettings = getDelhiverySettings();
-      if (delhiverySettings.autoShipping) {
-        try {
-          await createDelhiveryShipment(orderRecord, { mode: chosenMode, isCod: true } as any);
-        } catch (shipErr) {
-          console.warn('[COD Delhivery Auto-Ship Notice]', shipErr);
-        }
+      try {
+        await createDelhiveryShipment(orderRecord, { mode: chosenMode, isCod: true } as any);
+      } catch (shipErr) {
+        console.warn('[COD Delhivery Auto-Ship Notice]', shipErr);
       }
     }
 
