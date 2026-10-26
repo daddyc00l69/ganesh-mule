@@ -240,14 +240,14 @@ function CheckoutContent() {
     }
   }, [searchParams, subtotal]);
 
-  // Gross package weight based on solid glass packaging (300g -> 600g, 750g -> 1280g, 1050g -> 1800g)
+  // Billable package weight based on Delhivery slabs (300g -> 500g, 750g -> 1000g, 1050g -> 1500g)
   const consignmentWeightGrams = items.reduce((acc, item) => {
     const name = (item.productName || (item as any).name || '').toLowerCase();
     const id = (item.productId || '').toLowerCase();
-    if (name.includes('1050') || id.includes('1050')) return acc + 1800 * item.quantity;
-    if (name.includes('750') || id.includes('750')) return acc + 1280 * item.quantity;
-    return acc + 600 * item.quantity;
-  }, 0) || 600;
+    if (name.includes('1050') || id.includes('1050')) return acc + 1500 * item.quantity;
+    if (name.includes('750') || id.includes('750')) return acc + 1000 * item.quantity;
+    return acc + 500 * item.quantity;
+  }, 0) || 500;
 
   const fetchDelhiveryFreight = async (pin: string, modeOverride?: 'Express' | 'Surface') => {
     if (!isValidIndianPin(pin)) return;
@@ -321,13 +321,16 @@ function CheckoutContent() {
     pgTotal,
     paymentGatewayPercent,
     prePgTotal,
+    bundledShippingBase,
+    bundledShippingGst,
+    bundledShippingTotal,
     productTaxable,
     productGst,
     productGstRate,
     totalTax,
     grandTotal: totalAmount,
   } = feeBreakdown;
-  const shippingCost = shippingTotal;
+  const shippingCost = bundledShippingTotal;
 
   const validateAndApplyCoupon = async (codeToTest?: string) => {
     const code = (codeToTest || couponInput).trim().toUpperCase();
@@ -962,30 +965,12 @@ function CheckoutContent() {
                     </div>
                   )}
 
-                  {/* 2. Payment Gateway (PG) */}
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="flex items-center gap-1 font-medium text-[#1d1d1f]">
-                        <span>2. Payment Gateway (PG)</span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-100 text-blue-900 font-semibold font-mono">18% GST</span>
-                      </div>
-                      <p className="text-[10px] text-[#86868b] mt-0.5">
-                        {pgTotal > 0
-                          ? `Base (${paymentGatewayPercent}% on Total ${formatCurrency(prePgTotal)}): ${formatCurrency(pgBase)} + 18% GST: ${formatCurrency(pgGst)}`
-                          : '0% Surcharge • 18% GST: ₹0.00 (Absorbed)'}
-                      </p>
-                    </div>
-                    <span className="font-semibold text-[#1d1d1f]">
-                      {pgTotal > 0 ? formatCurrency(pgTotal) : <span className="text-emerald-700 font-medium">FREE</span>}
-                    </span>
-                  </div>
-
-                  {/* 3. Shipping & Courier Freight (Delhivery One) */}
+                  {/* Shipping & Delivery (Delhivery One) */}
                   <div className="flex justify-between items-start gap-2.5">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="font-medium text-xs text-[#1d1d1f]">
-                          3. Shipping &amp; Courier Freight (Delhivery One)
+                          Shipping &amp; Delivery (Delhivery One)
                         </span>
                         <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-100 text-purple-900 font-semibold font-mono whitespace-nowrap">
                           18% GST
@@ -1002,7 +987,7 @@ function CheckoutContent() {
                             Doorstep courier delivery in {delhiveryRate.estimatedDays || 2}-3 business days
                           </p>
                           <p className="text-[10px] text-[#86868b]">
-                            Base: {formatCurrency(delhiveryRate.subtotalPaise)} + 18% GST: {formatCurrency(delhiveryRate.gstAmountPaise)}
+                            Base: {formatCurrency(bundledShippingBase)} + 18% GST: {formatCurrency(bundledShippingGst)}
                           </p>
                         </div>
                       ) : (
@@ -1012,8 +997,8 @@ function CheckoutContent() {
                             : isFreeShipping
                             ? 'Free Express Courier Delivery Applied'
                             : postalCode.length === 6 && isValidIndianPin(postalCode)
-                            ? `Base: ${formatCurrency(shippingBase)} + 18% GST: ${formatCurrency(shippingGst)}`
-                            : 'Calculated dynamically by Delhivery One based on PIN Code & weight'}
+                            ? `Base: ${formatCurrency(bundledShippingBase)} + 18% GST: ${formatCurrency(bundledShippingGst)}`
+                            : 'Calculated dynamically based on destination PIN & package weight'}
                         </p>
                       )}
                     </div>
@@ -1024,17 +1009,10 @@ function CheckoutContent() {
                         <span className="text-xs text-[#0071e3] font-medium flex items-center gap-1 whitespace-nowrap">
                           <Loader2 className="w-3 h-3 animate-spin" /> Calculating...
                         </span>
-                      ) : delhiveryRate ? (
+                      ) : delhiveryRate || (postalCode.length === 6 && isValidIndianPin(postalCode) && bundledShippingTotal > 0) ? (
                         <div>
                           <span className="font-semibold text-xs text-[#1d1d1f] font-mono whitespace-nowrap block">
-                            {formatCurrency(delhiveryRate.totalPaise)}
-                          </span>
-                          <span className="text-[9px] text-[#86868b] font-normal whitespace-nowrap block">(incl. 18% GST)</span>
-                        </div>
-                      ) : postalCode.length === 6 && isValidIndianPin(postalCode) && shippingTotal > 0 ? (
-                        <div>
-                          <span className="font-semibold text-xs text-[#1d1d1f] font-mono whitespace-nowrap block">
-                            {formatCurrency(shippingTotal)}
+                            {formatCurrency(bundledShippingTotal)}
                           </span>
                           <span className="text-[9px] text-[#86868b] font-normal whitespace-nowrap block">(incl. 18% GST)</span>
                         </div>
@@ -1044,24 +1022,6 @@ function CheckoutContent() {
                         </span>
                       )}
                     </div>
-                  </div>
-
-                  {/* 4. Platform Convenience Fee */}
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="flex items-center gap-1 font-medium text-[#1d1d1f]">
-                        <span>4. Platform Fee</span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-stone-100 text-stone-800 font-semibold font-mono">18% GST</span>
-                      </div>
-                      <p className="text-[10px] text-[#86868b] mt-0.5">
-                        {platformTotal > 0
-                          ? `Base: ${formatCurrency(platformBase)} + 18% GST: ${formatCurrency(platformGst)}`
-                          : 'Zero platform fee'}
-                      </p>
-                    </div>
-                    <span className="font-semibold text-[#1d1d1f]">
-                      {platformTotal > 0 ? formatCurrency(platformTotal) : <span className="text-[#86868b]">₹0.00</span>}
-                    </span>
                   </div>
 
                   {/* Combined GST */}
@@ -1753,30 +1713,12 @@ function CheckoutContent() {
                     </div>
                   )}
 
-                  {/* 2. Payment Gateway (PG) Charges */}
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="flex items-center gap-1.5 font-medium text-[#1d1d1f]">
-                        <span>2. Payment Gateway (PG)</span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-100 text-blue-900 font-semibold font-mono">18% GST</span>
-                      </div>
-                      <p className="text-[10px] text-[#86868b] mt-0.5">
-                        {pgTotal > 0
-                          ? `Base (${paymentGatewayPercent}% on Total ${formatCurrency(prePgTotal)}): ${formatCurrency(pgBase)} + 18% GST: ${formatCurrency(pgGst)}`
-                          : 'Standard Razorpay Processing • 0% Surcharge • 18% GST: ₹0.00'}
-                      </p>
-                    </div>
-                    <span className="font-semibold text-[#1d1d1f]">
-                      {pgTotal > 0 ? formatCurrency(pgTotal) : <span className="text-emerald-700 font-medium">FREE</span>}
-                    </span>
-                  </div>
-
-                  {/* 3. Shipping & Courier Freight (Delhivery One) */}
+                  {/* Shipping & Delivery (Delhivery One) */}
                   <div className="flex justify-between items-start gap-2.5">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="font-medium text-xs text-[#1d1d1f]">
-                          3. Shipping &amp; Courier Freight (Delhivery One)
+                          Shipping &amp; Delivery (Delhivery One)
                         </span>
                         <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-100 text-purple-900 font-semibold font-mono whitespace-nowrap">
                           18% GST
@@ -1793,7 +1735,7 @@ function CheckoutContent() {
                             Doorstep courier delivery in {delhiveryRate.estimatedDays || 2}-3 business days
                           </p>
                           <p className="text-[10px] text-[#86868b]">
-                            Base: {formatCurrency(delhiveryRate.subtotalPaise)} + 18% GST: {formatCurrency(delhiveryRate.gstAmountPaise)}
+                            Base: {formatCurrency(bundledShippingBase)} + 18% GST: {formatCurrency(bundledShippingGst)}
                           </p>
                         </div>
                       ) : (
@@ -1803,8 +1745,8 @@ function CheckoutContent() {
                             : isFreeShipping
                             ? 'Free Express Courier Delivery Applied'
                             : postalCode.length === 6 && isValidIndianPin(postalCode)
-                            ? `Base: ${formatCurrency(shippingBase)} + 18% GST: ${formatCurrency(shippingGst)}`
-                            : 'Calculated dynamically by Delhivery One based on PIN Code & weight'}
+                            ? `Base: ${formatCurrency(bundledShippingBase)} + 18% GST: ${formatCurrency(bundledShippingGst)}`
+                            : 'Calculated dynamically based on destination PIN & package weight'}
                         </p>
                       )}
                     </div>
@@ -1815,17 +1757,10 @@ function CheckoutContent() {
                         <span className="text-xs text-[#0071e3] font-medium flex items-center gap-1 whitespace-nowrap">
                           <Loader2 className="w-3 h-3 animate-spin" /> Calculating...
                         </span>
-                      ) : delhiveryRate ? (
+                      ) : delhiveryRate || (postalCode.length === 6 && isValidIndianPin(postalCode) && bundledShippingTotal > 0) ? (
                         <div>
                           <span className="font-semibold text-xs text-[#1d1d1f] font-mono whitespace-nowrap block">
-                            {formatCurrency(delhiveryRate.totalPaise)}
-                          </span>
-                          <span className="text-[9px] text-[#86868b] font-normal whitespace-nowrap block">(incl. 18% GST)</span>
-                        </div>
-                      ) : postalCode.length === 6 && isValidIndianPin(postalCode) && shippingTotal > 0 ? (
-                        <div>
-                          <span className="font-semibold text-xs text-[#1d1d1f] font-mono whitespace-nowrap block">
-                            {formatCurrency(shippingTotal)}
+                            {formatCurrency(bundledShippingTotal)}
                           </span>
                           <span className="text-[9px] text-[#86868b] font-normal whitespace-nowrap block">(incl. 18% GST)</span>
                         </div>
@@ -1835,24 +1770,6 @@ function CheckoutContent() {
                         </span>
                       )}
                     </div>
-                  </div>
-
-                  {/* 4. Platform Convenience Fee */}
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="flex items-center gap-1.5 font-medium text-[#1d1d1f]">
-                        <span>4. Platform Convenience Fee</span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-stone-100 text-stone-800 font-semibold font-mono">18% GST</span>
-                      </div>
-                      <p className="text-[10px] text-[#86868b] mt-0.5">
-                        {platformTotal > 0
-                          ? `Base: ${formatCurrency(platformBase)} + 18% GST: ${formatCurrency(platformGst)}`
-                          : 'Zero platform fee'}
-                      </p>
-                    </div>
-                    <span className="font-semibold text-[#1d1d1f]">
-                      {platformTotal > 0 ? formatCurrency(platformTotal) : <span className="text-[#86868b]">₹0.00</span>}
-                    </span>
                   </div>
 
                   {/* Statutory Tax Summary (Expandable Breakdown) */}
@@ -1880,16 +1797,8 @@ function CheckoutContent() {
                           <span className="font-mono font-medium text-[#1d1d1f]">{formatCurrency(productGst)}</span>
                         </div>
                         <div className="flex justify-between text-[#6e6e73]">
-                          <span>PG Gateway GST (18% on {formatCurrency(pgBase)}):</span>
-                          <span className="font-mono font-medium text-[#1d1d1f]">{formatCurrency(pgGst)}</span>
-                        </div>
-                        <div className="flex justify-between text-[#6e6e73]">
-                          <span>Courier Shipping GST (18% on {formatCurrency(shippingBase)}):</span>
-                          <span className="font-mono font-medium text-[#1d1d1f]">{formatCurrency(shippingGst)}</span>
-                        </div>
-                        <div className="flex justify-between text-[#6e6e73]">
-                          <span>Platform Service GST (18% on {formatCurrency(platformBase)}):</span>
-                          <span className="font-mono font-medium text-[#1d1d1f]">{formatCurrency(platformGst)}</span>
+                          <span>Delivery &amp; Logistics GST (18% on {formatCurrency(bundledShippingBase)}):</span>
+                          <span className="font-mono font-medium text-[#1d1d1f]">{formatCurrency(bundledShippingGst)}</span>
                         </div>
                         <div className="flex justify-between font-semibold text-[#1d1d1f] pt-1 border-t border-[#d2d2d7]">
                           <span>Total Combined GST (CGST + SGST):</span>

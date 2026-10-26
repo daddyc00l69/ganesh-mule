@@ -275,17 +275,35 @@ export function buildTaxInvoiceData(order: any): TaxInvoiceData {
 
   const discountAmount = order.discountAmount || 0;
 
-  // Shipping & Platform fee accounting
-  const shippingBase = order.feeBreakdown?.shippingBase ?? (order.shippingCost || 0);
-  const shippingGst = order.feeBreakdown?.shippingGst ?? Math.round((shippingBase * 0.18));
-  const shippingCost = shippingBase + shippingGst;
+  // Bundled Delivery accounting (Courier Freight + Developer Fee + PG Fee are bundled)
+  const shippingCost =
+    order.feeBreakdown?.bundledShippingTotal ??
+    (order.shippingCost ||
+      (order.delhiveryPricing?.pricing?.totalShippingCost
+        ? Math.round(order.delhiveryPricing.pricing.totalShippingCost * 100)
+        : 0));
+  const shippingBase =
+    order.feeBreakdown?.bundledShippingBase ??
+    order.shippingBase ??
+    (order.delhiveryPricing?.pricing?.subtotal
+      ? Math.round(order.delhiveryPricing.pricing.subtotal * 100)
+      : shippingCost > 0
+      ? Math.round((shippingCost * 100) / 118)
+      : 0);
+  const shippingGst =
+    order.feeBreakdown?.bundledShippingGst ??
+    order.shippingGst ??
+    (order.delhiveryPricing?.pricing?.gstAmount
+      ? Math.round(order.delhiveryPricing.pricing.gstAmount * 100)
+      : shippingCost - shippingBase);
 
-  const platformBase = order.feeBreakdown?.platformBase ?? (order.platformFee || 0);
-  const platformGst = order.feeBreakdown?.platformGst ?? Math.round((platformBase * 0.18));
-  const platformTotal = platformBase + platformGst;
+  // Platform and PG fees are completely hidden from customer & client invoice
+  const platformBase = 0;
+  const platformGst = 0;
+  const platformTotal = 0;
 
-  // Service Tax allocation (18% GST split 50/50 for Intra-State, or IGST)
-  const serviceTaxTotal = shippingGst + platformGst;
+  // Service Tax allocation (18% Delivery GST split 50/50 for Intra-State, or IGST)
+  const serviceTaxTotal = shippingGst;
   if (serviceTaxTotal > 0) {
     if (isIntraState) {
       const cgstService = Math.round(serviceTaxTotal / 2);
@@ -297,69 +315,36 @@ export function buildTaxInvoiceData(order: any): TaxInvoiceData {
     }
   }
 
-  const grandTotal = order.totalAmount || Math.max(0, runningSubtotal - discountAmount + shippingCost + platformTotal);
+  const grandTotal =
+    order.totalAmount ||
+    Math.max(0, runningSubtotal - discountAmount + shippingCost);
 
   let delhiveryLogistics: DelhiveryInvoiceLogistics | undefined = undefined;
   const dp = order.delhiveryPricing;
-  if (dp?.pricing) {
-    const basePaise = Math.round((dp.pricing.baseFreight || 0) * 100);
-    const lastMilePaise = Math.round((dp.pricing.lastMileCharge || 0) * 100);
-    const peakPaise = Math.round((dp.pricing.peakSurcharge || 0) * 100);
-    const handlingPaise = Math.round((dp.pricing.handlingFee || 0) * 100);
-    const fuelPaise = Math.round((dp.pricing.fuelSurcharge || 0) * 100);
-    const taxablePaise = Math.round((dp.pricing.subtotal || 0) * 100);
-    const gstPaise = Math.round((dp.pricing.gstAmount || 0) * 100);
-    const cgstPaise = dp.pricing.cgst ? Math.round(dp.pricing.cgst * 100) : isIntraState ? Math.round(gstPaise / 2) : 0;
-    const sgstPaise = dp.pricing.sgst ? Math.round(dp.pricing.sgst * 100) : isIntraState ? (gstPaise - cgstPaise) : 0;
-    const igstPaise = dp.pricing.igst ? Math.round(dp.pricing.igst * 100) : !isIntraState ? gstPaise : 0;
-    const totalPaise = Math.round((dp.pricing.totalShippingCost || 0) * 100);
+  if (dp?.pricing || shippingCost > 0) {
+    const cgstPaise = isIntraState ? Math.round(shippingGst / 2) : 0;
+    const sgstPaise = isIntraState ? shippingGst - cgstPaise : 0;
+    const igstPaise = !isIntraState ? shippingGst : 0;
 
     delhiveryLogistics = {
-      carrier: order.carrier || dp.provider || 'Delhivery One',
+      carrier: order.carrier || dp?.provider || 'Delhivery One',
       waybill: order.delhiveryWaybill || order.trackingNumber,
-      zone: dp.zone || order.shippingZone || 'Zone B',
-      destinationPin: order.shippingAddress?.postalCode || dp.destinationPincode || '400001',
-      weightGrams: dp.weightGrams || 1280,
-      baseFreightPaise: basePaise,
-      lastMilePaise,
-      peakSurchargePaise: peakPaise,
-      handlingFeePaise: handlingPaise,
-      fuelSurchargePaise: fuelPaise,
-      taxableFreightPaise: taxablePaise,
+      zone: dp?.zone || order.shippingZone || 'Zone B',
+      destinationPin: order.shippingAddress?.postalCode || dp?.destinationPincode || '400001',
+      weightGrams: dp?.weightGrams || 1000,
+      baseFreightPaise: dp?.pricing?.baseFreight ? Math.round(dp.pricing.baseFreight * 100) : shippingBase,
+      lastMilePaise: dp?.pricing?.lastMileCharge ? Math.round(dp.pricing.lastMileCharge * 100) : 0,
+      peakSurchargePaise: dp?.pricing?.peakSurcharge ? Math.round(dp.pricing.peakSurcharge * 100) : 0,
+      handlingFeePaise: dp?.pricing?.handlingFee ? Math.round(dp.pricing.handlingFee * 100) : 0,
+      fuelSurchargePaise: dp?.pricing?.fuelSurcharge ? Math.round(dp.pricing.fuelSurcharge * 100) : 0,
+      taxableFreightPaise: shippingBase,
       gstRate: 18,
-      gstAmountPaise: gstPaise,
+      gstAmountPaise: shippingGst,
       cgstPaise,
       sgstPaise,
       igstPaise,
-      totalFreightPaise: totalPaise,
-      rateSource: dp.rateSource || 'DELHIVERY_API_LIVE',
-    };
-  } else if (shippingBase > 0 || shippingCost > 0) {
-    const basePaise = shippingBase || Math.round(shippingCost / 1.18);
-    const gstPaise = shippingGst || (shippingCost - basePaise);
-    const cgstPaise = isIntraState ? Math.round(gstPaise / 2) : 0;
-    const sgstPaise = isIntraState ? (gstPaise - cgstPaise) : 0;
-    const igstPaise = !isIntraState ? gstPaise : 0;
-
-    delhiveryLogistics = {
-      carrier: order.carrier || 'Delhivery One',
-      waybill: order.delhiveryWaybill || order.trackingNumber,
-      zone: order.shippingZone || 'Zone B (Intra-State)',
-      destinationPin: order.shippingAddress?.postalCode || '400001',
-      weightGrams: 1280,
-      baseFreightPaise: basePaise,
-      lastMilePaise: 0,
-      peakSurchargePaise: 0,
-      handlingFeePaise: 0,
-      fuelSurchargePaise: 0,
-      taxableFreightPaise: basePaise,
-      gstRate: 18,
-      gstAmountPaise: gstPaise,
-      cgstPaise,
-      sgstPaise,
-      igstPaise,
-      totalFreightPaise: basePaise + gstPaise,
-      rateSource: 'DELHIVERY_STANDARD_TARIFF',
+      totalFreightPaise: shippingCost,
+      rateSource: dp?.rateSource || 'DELHIVERY_VERIFIED_DISPATCH',
     };
   }
 

@@ -97,7 +97,7 @@ export function saveDelhiverySettings(updates: Partial<DelhiverySettings>): Delh
  * Calculate gross package weight based on solid glass jars and shock-proof packaging
  */
 export function calculateConsignmentWeightGrams(items: OrderRecord['items']): number {
-  if (!items || items.length === 0) return 600;
+  if (!items || items.length === 0) return 500;
 
   let totalGrams = 0;
   for (const item of items) {
@@ -106,18 +106,18 @@ export function calculateConsignmentWeightGrams(items: OrderRecord['items']): nu
     const qty = item.quantity || 1;
 
     if (name.includes('1050') || sku.includes('1050')) {
-      // 1050g honey + 650g heavy glass jar + 100g padding = 1800g
-      totalGrams += 1800 * qty;
+      // 1050g honey package -> 1500g Delhivery 1.5kg billable slab
+      totalGrams += 1500 * qty;
     } else if (name.includes('750') || sku.includes('750')) {
-      // 750g honey + 450g glass jar + 80g padding = 1280g
-      totalGrams += 1280 * qty;
+      // 750g honey package -> 1000g Delhivery 1.0kg billable slab
+      totalGrams += 1000 * qty;
     } else {
-      // 300g honey + 250g glass jar + 50g padding = 600g
-      totalGrams += 600 * qty;
+      // 300g honey package -> 500g Delhivery 0.5kg billable slab
+      totalGrams += 500 * qty;
     }
   }
 
-  return totalGrams;
+  return totalGrams || 500;
 }
 
 /**

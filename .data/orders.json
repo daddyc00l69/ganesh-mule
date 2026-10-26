@@ -26,9 +26,9 @@
     "paymentStatus": "COD_PENDING",
     "paymentMethod": "COD",
     "assignedManagerName": "Operations Manager",
-    "trackingNumber": "71890010000103",
+    "trackingNumber": "71890010000114",
     "carrier": "Delhivery One (Air Express)",
-    "delhiveryWaybill": "71890010000103",
+    "delhiveryWaybill": "71890010000114",
     "delhiveryStatus": "Cancelled on Delhivery (Shipment not received from client)",
     "delhiveryEstimatedDelivery": "2026-10-30",
     "delhiveryLabelUrl": "/api/shipping/delhivery/label?orderNumber=SG-2026-6352",
@@ -45,7 +45,7 @@
       }
     ],
     "createdAt": "2026-10-26T10:53:48.282Z",
-    "updatedAt": "2026-10-26T13:13:29.918Z"
+    "updatedAt": "2026-10-26T13:27:35.949Z"
   },
   {
     "id": "ord-live-1793007981624",

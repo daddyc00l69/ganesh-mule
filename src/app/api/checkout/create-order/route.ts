@@ -180,9 +180,9 @@ export async function POST(req: NextRequest) {
       delhiveryShippingBasePaise,
       delhiveryShippingTotalPaise
     );
-    const shippingCost = feeBreakdown.shippingTotal; // base + 18% GST (or 0 if free)
-    const platformFee = feeBreakdown.platformTotal; // base + 18% GST
-    const taxAmount = feeBreakdown.totalTax; // products 5% + shipping 18% + platform 18%
+    const shippingCost = feeBreakdown.bundledShippingTotal; // Bundled delivery: Courier + Developer ₹30 + PG fee
+    const platformFee = feeBreakdown.platformBase; // developer base fee (₹25.42)
+    const taxAmount = feeBreakdown.totalTax; // products 5% + shipping & delivery 18%
     const totalAmount = feeBreakdown.grandTotal;
 
     const orderNumber = `SG-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -270,15 +270,20 @@ export async function POST(req: NextRequest) {
       customerPhone: customer.phone,
       shippingAddress: address,
       subtotal,
-      shippingCost: feeBreakdown.shippingTotal,
-      shippingBase: feeBreakdown.shippingBase,
-      shippingGst: feeBreakdown.shippingGst,
+      shippingCost: feeBreakdown.bundledShippingTotal,
+      shippingBase: feeBreakdown.bundledShippingBase,
+      shippingGst: feeBreakdown.bundledShippingGst,
+      delhiveryCourierFreight: feeBreakdown.shippingTotal,
       carrier: chosenMode === 'Surface' ? 'Delhivery One (Surface)' : 'Delhivery One (Air Express)',
       shippingMode: chosenMode,
       shippingZone: delhiveryPricing.zone,
       delhiveryStatus: 'Payment Pending',
       platformFee: feeBreakdown.platformBase,
       platformFeeGst: feeBreakdown.platformGst,
+      platformTotal: feeBreakdown.platformTotal,
+      pgBase: feeBreakdown.pgBase,
+      pgGst: feeBreakdown.pgGst,
+      pgTotal: feeBreakdown.pgTotal,
       taxAmount: feeBreakdown.totalTax,
       discountAmount,
       couponCode: appliedCouponCode,

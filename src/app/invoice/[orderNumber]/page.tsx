@@ -490,35 +490,28 @@ export default function InvoicePage() {
                     <div className="flex justify-between items-center text-stone-900 font-semibold font-sans">
                       <span className="flex items-center gap-1">
                         <Truck className="w-3 h-3 text-amber-700" />
-                        <span>Delhivery One Courier Freight:</span>
+                        <span>Delhivery One Verified Logistics:</span>
                       </span>
                       <span>{invoice.delhiveryLogistics.zone}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>• Base Freight (Docket):</span>
-                      <span>{formatCurrency(invoice.delhiveryLogistics.baseFreightPaise)}</span>
-                    </div>
-                    {(invoice.delhiveryLogistics.lastMilePaise > 0 || invoice.delhiveryLogistics.peakSurchargePaise > 0) && (
+                    {invoice.delhiveryLogistics.waybill && (
                       <div className="flex justify-between">
-                        <span>• Last-Mile &amp; Peak Surcharges:</span>
-                        <span>{formatCurrency(invoice.delhiveryLogistics.lastMilePaise + invoice.delhiveryLogistics.peakSurchargePaise)}</span>
+                        <span>• Delhivery AWB:</span>
+                        <span className="font-bold text-stone-900">{invoice.delhiveryLogistics.waybill}</span>
                       </div>
                     )}
                     <div className="flex justify-between">
-                      <span>• Courier GST (18% SAC 9965):</span>
+                      <span>• Taxable Logistics Base (SAC 9965):</span>
+                      <span>{formatCurrency(invoice.delhiveryLogistics.baseFreightPaise)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>• Logistics GST (18% SAC 9965):</span>
                       <span>{formatCurrency(invoice.delhiveryLogistics.gstAmountPaise)}</span>
                     </div>
                     <div className="flex justify-between font-bold text-stone-900 pt-0.5 border-t border-stone-200">
-                      <span>Total Delhivery Freight:</span>
+                      <span>Total Delivery &amp; Freight:</span>
                       <span>{formatCurrency(invoice.delhiveryLogistics.totalFreightPaise)}</span>
                     </div>
-                  </div>
-                )}
-
-                {(invoice.platformBase ?? 0) > 0 && (
-                  <div className="flex justify-between items-center text-stone-600">
-                    <span>Platform Fee (SAC 9971):</span>
-                    <span>{formatCurrency(invoice.platformBase || 0)} + 18% GST</span>
                   </div>
                 )}
 

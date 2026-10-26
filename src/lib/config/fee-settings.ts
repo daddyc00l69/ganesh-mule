@@ -32,20 +32,20 @@ export const DEFAULT_FEE_SETTINGS: FeeSettings = {
   shippingBaseFee: 7000, // ₹70.00
   shippingGstRate: 18, // 18% GST -> ₹12.60, Total ₹82.60
   freeShippingThreshold: 0, // Disabled by default per store policy
-  freeShippingEnabled: false, // Strictly ₹70.00 base + 18% GST (₹82.60 total)
+  freeShippingEnabled: false, // Strictly courier base + 18% GST
 
-  platformBaseFee: 2000, // ₹20.00
-  platformGstRate: 18, // 18% GST -> ₹3.60, Total ₹23.60
-  platformFeeEnabled: true,
+  platformBaseFee: 2542, // ₹25.42 base -> 18% GST ₹4.58 -> Total ₹30.00 (Developer Platform Fee)
+  platformGstRate: 18, // 18% GST
+  platformFeeEnabled: true, // Bundled into delivery
 
   paymentGatewayPercent: 2.0, // 2%
-  paymentGatewayGstRate: 18, // 18% GST on gateway fee
-  paymentGatewayFeeEnabled: false,
+  paymentGatewayGstRate: 18, // 18% GST on PG fee
+  paymentGatewayFeeEnabled: true, // 2% PG on total order amount
 
-  feeMode: 'FLAT_20',
+  feeMode: 'BOTH',
 
   updatedAt: new Date().toISOString(),
-  updatedBy: 'System Manager (Vikram Mehta)',
+  updatedBy: 'Developer Platform Setup',
 };
 
 // Global in-memory singleton for runtime persistence
@@ -96,6 +96,11 @@ export interface FeeCalculationResult {
   productGst: number;
   productGstRate: number; // 5%
   totalTax: number;
+
+  // Bundled Shipping & Delivery (Courier Shipping + Developer Platform Fee + Payment Gateway Fee)
+  bundledShippingBase: number;
+  bundledShippingGst: number;
+  bundledShippingTotal: number;
 
   // Grand total payable
   grandTotal: number;
@@ -175,24 +180,16 @@ export function calculateOrderFees(
   }
   const pgTotal = pgBase + pgGst;
 
-  // Backward compatibility: If feeMode is PERCENT_2 without flat platform fee,
-  // ensure platformBase/platformTotal reflects the PG fee for legacy consumers
-  let effectivePlatformBase = platformBase;
-  let effectivePlatformGst = platformGst;
-  let effectivePlatformTotal = platformTotal;
-  if (settings.feeMode === 'PERCENT_2' && platformBase === 0) {
-    effectivePlatformBase = pgBase;
-    effectivePlatformGst = pgGst;
-    effectivePlatformTotal = pgTotal;
-  }
-
   // 4. Product GST (5% for pure natural honey)
   const productGstRate = 5;
   const productTaxable = Math.round((discountedSubtotal * 100) / (100 + productGstRate));
   const productGst = discountedSubtotal - productTaxable;
 
   const totalTax = productGst + shippingGst + platformGst + pgGst;
-  const grandTotal = prePgTotal + pgTotal;
+  const bundledShippingBase = shippingBase + platformBase + pgBase;
+  const bundledShippingGst = shippingGst + platformGst + pgGst;
+  const bundledShippingTotal = shippingTotal + platformTotal + pgTotal;
+  const grandTotal = discountedSubtotal + bundledShippingTotal;
 
   return {
     subtotal: subtotalPaise,
@@ -203,16 +200,19 @@ export function calculateOrderFees(
     shippingGstRate,
     shippingTotal,
     isFreeShipping,
-    platformBase: effectivePlatformBase,
-    platformGst: effectivePlatformGst,
+    platformBase,
+    platformGst,
     platformGstRate,
-    platformTotal: effectivePlatformTotal,
+    platformTotal,
     pgBase,
     pgGst,
     pgGstRate,
     pgTotal,
     paymentGatewayPercent: pgPercent,
     prePgTotal,
+    bundledShippingBase,
+    bundledShippingGst,
+    bundledShippingTotal,
     productTaxable,
     productGst,
     productGstRate,

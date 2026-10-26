@@ -46,9 +46,9 @@ describe('Delhivery One Automatic Shipping Integration (https://one.delhivery.co
         total: 44900,
       },
     ]);
-    expect(single300).toBe(600);
+    expect(single300).toBe(500); // 300g jar -> 500g billable slab
 
-    // 750g honey -> 1280g gross
+    // 750g honey -> 1000g billable slab
     const single750 = calculateConsignmentWeightGrams([
       {
         id: '2',
@@ -61,9 +61,9 @@ describe('Delhivery One Automatic Shipping Integration (https://one.delhivery.co
         total: 89900,
       },
     ]);
-    expect(single750).toBe(1280);
+    expect(single750).toBe(1000);
 
-    // 1050g honey -> 1800g gross
+    // 1050g honey -> 1500g billable slab
     const single1050 = calculateConsignmentWeightGrams([
       {
         id: '3',
@@ -76,9 +76,9 @@ describe('Delhivery One Automatic Shipping Integration (https://one.delhivery.co
         total: 119900,
       },
     ]);
-    expect(single1050).toBe(1800);
+    expect(single1050).toBe(1500);
 
-    // Multi-item order: 2x 300g + 1x 1050g
+    // Multi-item order: 2x 300g (1000g) + 1x 1050g (1500g)
     const multi = calculateConsignmentWeightGrams([
       {
         id: '4',
@@ -101,7 +101,7 @@ describe('Delhivery One Automatic Shipping Integration (https://one.delhivery.co
         total: 119900,
       },
     ]);
-    expect(multi).toBe(1200 + 1800);
+    expect(multi).toBe(1000 + 1500);
   });
 
   it('should verify Indian pincode serviceability and express transit SLA', async () => {

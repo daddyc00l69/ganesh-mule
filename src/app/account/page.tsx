@@ -518,19 +518,11 @@ export default function CustomerAccountPage() {
                           </div>
                         )}
                         <div className="flex justify-between">
-                          <span>Express Courier Shipping (Insured Air):</span>
+                          <span>Shipping &amp; Delivery (Delhivery One):</span>
                           <span className="text-[#1d1d1f] font-medium">
-                            {formatCurrency(order.shippingCost || 7000)} + 18% GST ({formatCurrency(order.shippingGst || 1260)})
+                            {formatCurrency(order.shippingCost || 7000)} (incl. 18% GST)
                           </span>
                         </div>
-                        {order.platformFee && (
-                          <div className="flex justify-between">
-                            <span>Convenience &amp; Platform Fee:</span>
-                            <span className="text-[#1d1d1f] font-medium">
-                              {formatCurrency(order.platformFee)} + 18% GST ({formatCurrency(order.platformFeeGst || 360)})
-                            </span>
-                          </div>
-                        )}
                         <div className="flex justify-between text-sm font-bold text-[#1d1d1f] pt-2 border-t border-[#d2d2d7]/50">
                           <span>Total Paid:</span>
                           <span className="font-mono text-amber-700">{formatCurrency(order.totalAmount)}</span>
