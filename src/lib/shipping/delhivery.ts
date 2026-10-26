@@ -32,6 +32,8 @@ export const DEFAULT_DELHIVERY_SETTINGS: DelhiverySettings = {
   insuredPackaging: true,
 };
 
+const isTestEnv = process.env.NODE_ENV === 'test' || Boolean(process.env.VITEST);
+
 // In-memory + file-backed settings store
 const SETTINGS_FILE_PATH = path.join(process.cwd(), '.data', 'delhivery-settings.json');
 
@@ -42,6 +44,12 @@ const globalStore = globalThis as unknown as {
 export function getDelhiverySettings(): DelhiverySettings {
   if (globalStore.__DELHIVERY_SETTINGS__) {
     return globalStore.__DELHIVERY_SETTINGS__;
+  }
+
+  if (isTestEnv) {
+    const testFallback: DelhiverySettings = { ...DEFAULT_DELHIVERY_SETTINGS, environment: 'staging' };
+    globalStore.__DELHIVERY_SETTINGS__ = testFallback;
+    return testFallback;
   }
 
   try {
@@ -67,6 +75,10 @@ export function saveDelhiverySettings(updates: Partial<DelhiverySettings>): Delh
   const current = getDelhiverySettings();
   const updated: DelhiverySettings = { ...current, ...updates };
   globalStore.__DELHIVERY_SETTINGS__ = updated;
+
+  if (isTestEnv) {
+    return updated;
+  }
 
   try {
     const dir = path.dirname(SETTINGS_FILE_PATH);
