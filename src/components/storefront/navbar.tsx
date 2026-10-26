@@ -30,7 +30,7 @@ export const StorefrontNavbar: React.FC = () => {
       {/* Apple Store Top Banner Notice */}
       <div className="bg-[#f5f5f7] border-b border-[#e5e5e7] text-[#1d1d1f] text-[11px] sm:text-[12px] py-2 px-4 text-center font-normal tracking-tight">
         <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 sm:gap-4 flex-wrap">
-          <span className="font-medium text-[#1d1d1f]">Insured National Express Glass Delivery across India • Flat ₹70 + 18% GST</span>
+          <span className="font-medium text-[#1d1d1f]">Insured Doorstep Courier Delivery Across India (Delhivery One) • 100% Solid Glass Safe Transit Guarantee</span>
           <Link href="/shop" className="text-[#0066cc] hover:underline inline-flex items-center gap-0.5 font-medium">
             <span>Shop pure honey</span>
             <ArrowRight className="w-3 h-3" />

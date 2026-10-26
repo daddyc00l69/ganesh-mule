@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { StoreProvider } from '@/components/storefront/store-provider';
 import { useCart } from '@/lib/cart/cart-context';
@@ -24,24 +25,23 @@ import {
   Sparkles,
   TicketPercent,
   FileText,
-  Printer,
   MapPin,
-  Building,
-  Home,
-  Navigation,
-  Globe,
   Clock,
   Loader2,
   RefreshCw,
   Trash2,
   CreditCard,
-  Banknote,
+  Plane,
+  Package,
+  BadgeCheck,
+  ExternalLink,
+  Shield,
+  ArrowRight,
 } from 'lucide-react';
 import {
   INDIAN_STATES,
   guessCityStateFromPin,
   isValidIndianPin,
-  isValidIndianMobile,
 } from '@/lib/constants/india';
 import {
   FeeSettings,
@@ -57,6 +57,45 @@ interface AppliedCouponState {
   value: number;
   discountAmount: number; // in paise
   assignedToManagerName?: string;
+}
+
+interface SpeedQuote {
+  mode: 'Surface' | 'Express';
+  title: string;
+  subtitle: string;
+  badge: string;
+  badgeColor: string;
+  carrier: string;
+  estimatedDays: number;
+  estimatedDeliveryDate: string;
+  courierBasePaise: number;
+  courierGstPaise: number;
+  courierTotalPaise: number;
+  bundledDeliveryTotal: number;
+  bundledDeliveryBase: number;
+  bundledDeliveryGst: number;
+  available: boolean;
+  restrictionReason?: string | null;
+  zoneName: string;
+  zoneCode: string;
+  billableWeightGrams: number;
+  rateSource: string;
+}
+
+function formatEstimatedDeliveryDate(days: number): string {
+  const target = new Date();
+  let added = 0;
+  while (added < days) {
+    target.setDate(target.getDate() + 1);
+    // Skip Sunday (0) for transit calculation
+    if (target.getDay() !== 0) {
+      added++;
+    }
+  }
+  const dayName = target.toLocaleDateString('en-IN', { weekday: 'short' });
+  const dayNum = target.getDate();
+  const monthName = target.toLocaleDateString('en-IN', { month: 'short' });
+  return `${dayName}, ${dayNum} ${monthName}`;
 }
 
 function CheckoutContent() {
@@ -78,24 +117,30 @@ function CheckoutContent() {
   const [feeSettings, setFeeSettings] = useState<FeeSettings>(DEFAULT_FEE_SETTINGS);
   const [showGstBreakdown, setShowGstBreakdown] = useState(false);
 
-  // Customer & Contact Details (clean inputs, zero prefill)
+  // Customer & Contact Details
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState(''); // 10-digit Indian Mobile
 
-  // Indian Structured Delivery Address (Country default: India)
+  // Indian Structured Delivery Address
   const [country, setCountry] = useState('India');
   const [flatBuilding, setFlatBuilding] = useState('');
   const [areaStreet, setAreaStreet] = useState('');
   const [landmark, setLandmark] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [city, setCity] = useState('');
-  const [state, setState] = useState('');
+  const [state, setState] = useState('Maharashtra');
   const [pinAutoDetected, setPinAutoDetected] = useState<string | null>(null);
   const [pinLoading, setPinLoading] = useState(false);
   const [pinError, setPinError] = useState<string | null>(null);
   const [availableTowns, setAvailableTowns] = useState<string[]>([]);
   const pincodeAbortRef = useRef<AbortController | null>(null);
+
+  // Dual Delhivery Speed Quotes (Surface vs Air Express side-by-side)
+  const [speedQuotes, setSpeedQuotes] = useState<{
+    surface: SpeedQuote | null;
+    express: SpeedQuote | null;
+  }>({ surface: null, express: null });
 
   // Delhivery Dynamic Freight & Logistics Calculation States
   const [delhiveryRate, setDelhiveryRate] = useState<{
@@ -133,21 +178,6 @@ function CheckoutContent() {
   }>>([]);
   const [isLoadingOffers, setIsLoadingOffers] = useState(false);
 
-  const fetchPublicOffers = async () => {
-    setIsLoadingOffers(true);
-    try {
-      const res = await fetch('/api/coupons?publicOnly=true');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.coupons && Array.isArray(data.coupons)) {
-          setPublicOffers(data.coupons);
-          setShowPublicOffers(true);
-        }
-      }
-    } catch {}
-    setIsLoadingOffers(false);
-  };
-
   // Mobile Order Summary Toggle
   const [isOrderSummaryOpen, setIsOrderSummaryOpen] = useState(false);
 
@@ -163,6 +193,25 @@ function CheckoutContent() {
     couponCode?: string;
   } | null>(null);
 
+  // Billable package weight based on Delhivery slabs (300g -> 500g, 750g -> 1000g, 1050g -> 1500g)
+  const consignmentWeightGrams = items.reduce((acc, item) => {
+    const name = (item.productName || (item as any).name || '').toLowerCase();
+    const id = (item.productId || '').toLowerCase();
+    if (name.includes('1050') || id.includes('1050')) return acc + 1500 * item.quantity;
+    if (name.includes('750') || id.includes('750')) return acc + 1000 * item.quantity;
+    return acc + 500 * item.quantity;
+  }, 0) || 500;
+
+  // Pre-load Razorpay checkout SDK in background on page mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if ((window as any).Razorpay) return;
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
+
   // Automatically purge cart on completed order
   useEffect(() => {
     if (completedOrder) {
@@ -175,16 +224,6 @@ function CheckoutContent() {
       } catch {}
     }
   }, [completedOrder, clearCart]);
-
-  // Pre-load Razorpay checkout SDK instantaneously in background on page mount
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if ((window as any).Razorpay) return;
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.async = true;
-    document.body.appendChild(script);
-  }, []);
 
   // Load authenticated customer details if session is active
   useEffect(() => {
@@ -240,55 +279,157 @@ function CheckoutContent() {
     }
   }, [searchParams, subtotal]);
 
-  // Billable package weight based on Delhivery slabs (300g -> 500g, 750g -> 1000g, 1050g -> 1500g)
-  const consignmentWeightGrams = items.reduce((acc, item) => {
-    const name = (item.productName || (item as any).name || '').toLowerCase();
-    const id = (item.productId || '').toLowerCase();
-    if (name.includes('1050') || id.includes('1050')) return acc + 1500 * item.quantity;
-    if (name.includes('750') || id.includes('750')) return acc + 1000 * item.quantity;
-    return acc + 500 * item.quantity;
-  }, 0) || 500;
-
-  const fetchDelhiveryFreight = async (pin: string, modeOverride?: 'Express' | 'Surface') => {
+  // Pincode-dependent Delhivery Freight & Speed Calculation
+  const fetchDelhiverySpeedQuotes = async (pin: string, activeModePreference?: 'Express' | 'Surface') => {
     if (!isValidIndianPin(pin)) return;
     setIsCalculatingFreight(true);
-    const activeMode = modeOverride || shippingMode;
+
     try {
-      const res = await fetch(
-        `/api/shipping/delhivery/cost?destinationPin=${pin}&weightGrams=${consignmentWeightGrams}&mode=${activeMode}`
-      );
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && data.pricing) {
-          setDelhiveryRate({
-            baseFreightPaise: Math.round(data.pricing.baseFreight * 100),
-            additionalWeightPaise: Math.round(data.pricing.additionalWeightCharge * 100),
-            insuredGlassHandlingPaise: Math.round(data.pricing.insuredGlassHandlingFee * 100),
-            subtotalPaise: Math.round(data.pricing.subtotal * 100),
-            gstAmountPaise: Math.round(data.pricing.gstAmount * 100),
-            totalPaise: data.pricing.totalShippingCostPaise,
-            zoneName: data.zone,
-            zoneCode: data.zoneCode,
-            estimatedDays: data.estimatedDays,
-            carrier: activeMode === 'Surface' ? 'Delhivery One Surface' : 'Delhivery One Air Express',
-            billableWeightGrams: data.billableWeightGrams,
-            serviceable: true,
-            rateSource: data.rateSource,
-          });
+      const [surfaceRes, expressRes] = await Promise.all([
+        fetch(`/api/shipping/delhivery/cost?destinationPin=${pin}&weightGrams=${consignmentWeightGrams}&mode=Surface`),
+        fetch(`/api/shipping/delhivery/cost?destinationPin=${pin}&weightGrams=${consignmentWeightGrams}&mode=Express`),
+      ]);
+
+      let surfaceQuote: SpeedQuote | null = null;
+      let expressQuote: SpeedQuote | null = null;
+      const currentDiscount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+
+      if (surfaceRes.ok) {
+        const sData = await surfaceRes.json();
+        if (sData.success && sData.pricing) {
+          const courierBase = Math.round(sData.pricing.subtotal * 100);
+          const courierTotal = sData.pricing.totalShippingCostPaise;
+          const fees = calculateOrderFees(subtotal, currentDiscount, feeSettings, courierBase, courierTotal);
+          surfaceQuote = {
+            mode: 'Surface',
+            title: 'Surface Standard',
+            subtitle: 'Heavy solid glass shockproof road logistics',
+            badge: 'Ground Express',
+            badgeColor: 'amber',
+            carrier: 'Delhivery One Surface',
+            estimatedDays: sData.estimatedDays || 3,
+            estimatedDeliveryDate: formatEstimatedDeliveryDate(sData.estimatedDays || 3),
+            courierBasePaise: courierBase,
+            courierGstPaise: Math.round(sData.pricing.gstAmount * 100),
+            courierTotalPaise: courierTotal,
+            bundledDeliveryTotal: fees.bundledShippingTotal,
+            bundledDeliveryBase: fees.bundledShippingBase,
+            bundledDeliveryGst: fees.bundledShippingGst,
+            available: true,
+            zoneName: sData.zone || 'National Zone',
+            zoneCode: sData.zoneCode || 'C',
+            billableWeightGrams: sData.billableWeightGrams || consignmentWeightGrams,
+            rateSource: sData.rateSource || 'delhivery_api',
+          };
+        }
+      }
+
+      if (expressRes.ok) {
+        const eData = await expressRes.json();
+        if (eData.success && eData.pricing) {
+          const courierBase = Math.round(eData.pricing.subtotal * 100);
+          const courierTotal = eData.pricing.totalShippingCostPaise;
+          const fees = calculateOrderFees(subtotal, currentDiscount, feeSettings, courierBase, courierTotal);
+          const isAirAllowed = !eData.airRestricted && airAvailable;
+          expressQuote = {
+            mode: 'Express',
+            title: 'Air Express Priority',
+            subtitle: 'Fastest door-to-door domestic air transit',
+            badge: '⚡ Fastest Air',
+            badgeColor: 'emerald',
+            carrier: 'Delhivery One Air Express',
+            estimatedDays: eData.estimatedDays || 1,
+            estimatedDeliveryDate: formatEstimatedDeliveryDate(eData.estimatedDays || 1),
+            courierBasePaise: courierBase,
+            courierGstPaise: Math.round(eData.pricing.gstAmount * 100),
+            courierTotalPaise: courierTotal,
+            bundledDeliveryTotal: fees.bundledShippingTotal,
+            bundledDeliveryBase: fees.bundledShippingBase,
+            bundledDeliveryGst: fees.bundledShippingGst,
+            available: isAirAllowed,
+            restrictionReason: eData.airRestrictionReason || (isAirAllowed ? null : `Liquid air cargo restricted for PIN ${pin}.`),
+            zoneName: eData.zone || 'National Zone',
+            zoneCode: eData.zoneCode || 'C',
+            billableWeightGrams: eData.billableWeightGrams || consignmentWeightGrams,
+            rateSource: eData.rateSource || 'delhivery_api',
+          };
+        }
+      }
+
+      setSpeedQuotes({ surface: surfaceQuote, express: expressQuote });
+
+      // Determine which speed quote is active
+      const targetMode = activeModePreference || shippingMode;
+      const chosen = (targetMode === 'Express' && expressQuote?.available) ? expressQuote : surfaceQuote;
+
+      if (chosen) {
+        setDelhiveryRate({
+          baseFreightPaise: chosen.courierBasePaise,
+          additionalWeightPaise: 0,
+          insuredGlassHandlingPaise: 0,
+          subtotalPaise: chosen.courierBasePaise,
+          gstAmountPaise: chosen.courierGstPaise,
+          totalPaise: chosen.courierTotalPaise,
+          zoneName: chosen.zoneName,
+          zoneCode: chosen.zoneCode,
+          estimatedDays: chosen.estimatedDays,
+          carrier: chosen.carrier,
+          billableWeightGrams: chosen.billableWeightGrams,
+          serviceable: true,
+          rateSource: chosen.rateSource,
+        });
+
+        if (targetMode === 'Express' && !expressQuote?.available) {
+          setShippingMode('Surface');
         }
       }
     } catch (err) {
-      console.warn('Delhivery freight calculation error:', err);
+      console.warn('Delhivery speed calculation error:', err);
     } finally {
       setIsCalculatingFreight(false);
     }
   };
 
+  // Re-fetch quotes when PIN, consignment weight, or discount changes
   useEffect(() => {
     if (postalCode.length === 6 && isValidIndianPin(postalCode)) {
-      fetchDelhiveryFreight(postalCode, shippingMode);
+      fetchDelhiverySpeedQuotes(postalCode, shippingMode);
     }
-  }, [postalCode, consignmentWeightGrams, shippingMode]);
+  }, [postalCode, consignmentWeightGrams, subtotal, appliedCoupon]);
+
+  // Handle speed switch with instant UI responsiveness
+  const handleSelectSpeedMode = (mode: 'Surface' | 'Express') => {
+    if (mode === 'Express' && speedQuotes.express && !speedQuotes.express.available) {
+      setErrorMessage(
+        speedQuotes.express.restrictionReason ||
+        `Air cargo is restricted for PIN ${postalCode}. Surface transit is active.`
+      );
+      return;
+    }
+
+    setShippingMode(mode);
+    const targetQuote = mode === 'Express' ? speedQuotes.express : speedQuotes.surface;
+
+    if (targetQuote) {
+      setDelhiveryRate({
+        baseFreightPaise: targetQuote.courierBasePaise,
+        additionalWeightPaise: 0,
+        insuredGlassHandlingPaise: 0,
+        subtotalPaise: targetQuote.courierBasePaise,
+        gstAmountPaise: targetQuote.courierGstPaise,
+        totalPaise: targetQuote.courierTotalPaise,
+        zoneName: targetQuote.zoneName,
+        zoneCode: targetQuote.zoneCode,
+        estimatedDays: targetQuote.estimatedDays,
+        carrier: targetQuote.carrier,
+        billableWeightGrams: targetQuote.billableWeightGrams,
+        serviceable: true,
+        rateSource: targetQuote.rateSource,
+      });
+    } else if (postalCode.length === 6 && isValidIndianPin(postalCode)) {
+      fetchDelhiverySpeedQuotes(postalCode, mode);
+    }
+  };
 
   // Dynamic calculations with statutory GST and manager-controlled fees
   const totalQuantity = items.reduce((acc, item) => acc + item.quantity, 0);
@@ -304,34 +445,23 @@ function CheckoutContent() {
       : 0,
     delhiveryRate ? delhiveryRate.totalPaise : undefined
   );
+
   const {
     discountedSubtotal,
     shippingBase,
     shippingGst,
-    shippingGstRate,
     shippingTotal,
     isFreeShipping,
-    platformBase,
-    platformGst,
-    platformGstRate,
-    platformTotal,
-    pgBase,
-    pgGst,
-    pgGstRate,
-    pgTotal,
-    paymentGatewayPercent,
-    prePgTotal,
     bundledShippingBase,
     bundledShippingGst,
     bundledShippingTotal,
     productTaxable,
     productGst,
-    productGstRate,
     totalTax,
     grandTotal: totalAmount,
   } = feeBreakdown;
-  const shippingCost = bundledShippingTotal;
 
+  // Coupon handling
   const validateAndApplyCoupon = async (codeToTest?: string) => {
     const code = (codeToTest || couponInput).trim().toUpperCase();
     if (!code) {
@@ -378,6 +508,22 @@ function CheckoutContent() {
     setCouponError(null);
   };
 
+  const fetchPublicOffers = async () => {
+    setIsLoadingOffers(true);
+    try {
+      const res = await fetch('/api/coupons?publicOnly=true');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.coupons && Array.isArray(data.coupons)) {
+          setPublicOffers(data.coupons);
+          setShowPublicOffers(true);
+        }
+      }
+    } catch {}
+    setIsLoadingOffers(false);
+  };
+
+  // PIN resolution handler with live Delhivery verification
   const fetchPinDetails = async (pin: string) => {
     if (pincodeAbortRef.current) {
       pincodeAbortRef.current.abort();
@@ -444,7 +590,6 @@ function CheckoutContent() {
     }
   };
 
-  // PIN Code input handler with auto-detection of Town/City & State
   const handlePincodeChange = (val: string) => {
     const clean = val.replace(/\D/g, '').slice(0, 6);
     setPostalCode(clean);
@@ -458,6 +603,8 @@ function CheckoutContent() {
       setDistrictVerified(null);
       setPinError(null);
       setAvailableTowns([]);
+      setSpeedQuotes({ surface: null, express: null });
+      setDelhiveryRate(null);
       return;
     }
 
@@ -477,12 +624,11 @@ function CheckoutContent() {
       // 2. Authoritative live resolution (fetches all post offices & exact district)
       fetchPinDetails(clean);
 
-      // 3. Live Delhivery Freight calculation with 18% GST
-      fetchDelhiveryFreight(clean, shippingMode);
+      // 3. Live Delhivery Speed Quotes calculation for Surface & Air
+      fetchDelhiverySpeedQuotes(clean, shippingMode);
     }
   };
 
-  // Indian mobile number input handler (preserves 10 digits cleanly)
   const handlePhoneChange = (val: string) => {
     const digits = val.replace(/\D/g, '');
     const clean = digits.length > 10 && digits.startsWith('91') ? digits.slice(2) : digits;
@@ -496,13 +642,28 @@ function CheckoutContent() {
       return;
     }
 
+    if (!fullName.trim()) {
+      setErrorMessage('Please enter the customer full name for shipping label generation.');
+      return;
+    }
+
     if (phone.length < 10) {
       setErrorMessage('Please enter a valid 10-digit Indian mobile number for courier delivery updates.');
       return;
     }
 
+    if (!email.trim() || !email.includes('@')) {
+      setErrorMessage('Please enter a valid email address to receive your official GST Tax Invoice.');
+      return;
+    }
+
     if (!isValidIndianPin(postalCode)) {
-      setErrorMessage('Please enter a valid 6-digit Indian PIN Code (e.g. 400053).');
+      setErrorMessage('Please enter a valid 6-digit Indian PIN Code to calculate Delhivery courier rates.');
+      return;
+    }
+
+    if (!flatBuilding.trim() || !areaStreet.trim()) {
+      setErrorMessage('Please provide your complete street address (Flat/Building & Area/Road).');
       return;
     }
 
@@ -521,7 +682,6 @@ function CheckoutContent() {
     const formattedPhone = phone.length === 10 ? `+91 ${phone.slice(0, 5)} ${phone.slice(5)}` : phone;
 
     try {
-      // 1. Create Order on backend with couponCode and structured address (Fast: ~150ms)
       const res = await fetch('/api/checkout/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -553,7 +713,7 @@ function CheckoutContent() {
 
       const { razorpayOrderId, orderNumber, amount, currency, keyId } = orderData;
 
-      // 2. Direct Instant Test Mode (Lightning-fast 0.2s order confirmation for test cards / demo)
+      // Direct Instant Test Mode (for staging verification without active bank gateway)
       if (isDirectTest || keyId.includes('placeholder')) {
         setProcessingStep('Instant test payment confirmation...');
         const verifyRes = await fetch('/api/payments/razorpay/verify', {
@@ -582,7 +742,7 @@ function CheckoutContent() {
         }
       }
 
-      // 3. Mount Razorpay Modal with preloaded SDK
+      // Mount Razorpay Modal with preloaded SDK
       setProcessingStep('Opening Razorpay Gateway...');
       if (typeof window !== 'undefined' && !(window as any).Razorpay) {
         await new Promise<boolean>((resolve) => {
@@ -612,7 +772,7 @@ function CheckoutContent() {
         },
         handler: async function (response: any) {
           try {
-            setProcessingStep('Verifying signature & generating invoice...');
+            setProcessingStep('Verifying payment & generating tax invoice...');
             const verifyRes = await fetch('/api/payments/razorpay/verify', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -657,7 +817,6 @@ function CheckoutContent() {
 
       const razorpayInstance = new (window as any).Razorpay(options);
 
-      // Listen for payment failure to record failure and trigger recovery email
       razorpayInstance.on('payment.failed', function (resp: any) {
         setIsProcessing(false);
         setProcessingStep(null);
@@ -687,22 +846,24 @@ function CheckoutContent() {
   if (items.length === 0 && !completedOrder) {
     return (
       <StoreProvider>
-        <div className="bg-[#f5f5f7] min-h-screen py-20 px-4 flex items-center justify-center">
-          <div className="max-w-md w-full bg-white rounded-[24px] border border-[#d2d2d7]/50 p-8 text-center space-y-4 shadow-sm">
-            <div className="w-16 h-16 rounded-full bg-[#f5f5f7] flex items-center justify-center mx-auto text-[#86868b]">
-              <ShoppingBag className="w-8 h-8" />
+        <div className="bg-[#FAF8F5] min-h-screen py-24 px-4 flex items-center justify-center text-stone-900">
+          <div className="max-w-md w-full bg-white rounded-3xl border border-stone-200/90 p-8 sm:p-10 text-center space-y-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+            <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200/60 flex items-center justify-center mx-auto text-amber-700">
+              <ShoppingBag className="w-8 h-8 stroke-[1.75]" />
             </div>
-            <h1 className="text-2xl font-semibold text-[#1d1d1f]">Your Bag is empty.</h1>
-            <p className="text-xs text-[#6e6e73] leading-relaxed max-w-xs mx-auto">
-              Please choose from our cold-extracted wild forest harvests bottled in heavy solid glass jars before checking out.
-            </p>
+            <div className="space-y-2">
+              <h1 className="text-2xl font-serif font-bold text-stone-950">Your Bag is Empty</h1>
+              <p className="text-xs sm:text-sm text-stone-600 leading-relaxed max-w-xs mx-auto">
+                Explore our cold-extracted wild forest harvests bottled exclusively in heavy solid glass jars.
+              </p>
+            </div>
             <div className="pt-2">
               <Link
                 href="/shop"
-                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full text-xs sm:text-sm font-medium bg-[#0071e3] hover:bg-[#0077ed] text-white shadow-sm transition-all active:scale-95 cursor-pointer"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs sm:text-sm font-semibold bg-amber-600 hover:bg-amber-700 active:scale-95 text-white shadow-md shadow-amber-600/20 transition-all cursor-pointer"
               >
-                <span>Continue Shopping</span>
-                <Droplets className="w-3.5 h-3.5" />
+                <span>Browse Raw Honey Reserves</span>
+                <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
           </div>
@@ -715,57 +876,58 @@ function CheckoutContent() {
   if (completedOrder) {
     return (
       <StoreProvider>
-        <div className="bg-[#f5f5f7] min-h-screen py-16 px-4 sm:px-6">
+        <div className="bg-[#FAF8F5] min-h-screen py-16 px-4 sm:px-6 text-stone-900">
           <div className="max-w-xl mx-auto text-center space-y-6">
-            <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto shadow-sm">
-              <CheckCircle2 className="w-8 h-8" />
+            <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center mx-auto shadow-sm">
+              <CheckCircle2 className="w-9 h-9 stroke-[2]" />
             </div>
 
-            <div className="space-y-1.5">
-              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-800">
-                Payment Verified • Insured Packing
+            <div className="space-y-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-emerald-100/80 text-emerald-900 border border-emerald-300">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
+                Payment Verified • Delhivery Insured Booking
               </span>
-              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-[#1d1d1f]">
-                Thank you for your order.
+              <h1 className="text-3xl font-serif font-bold tracking-tight text-stone-950">
+                Thank You for Your Order.
               </h1>
-              <p className="text-xs sm:text-sm text-[#6e6e73] max-w-sm mx-auto">
+              <p className="text-xs sm:text-sm text-stone-600 max-w-md mx-auto leading-relaxed">
                 Your solid glass jars are being cushioned in custom shock-absorbing kraft packaging at our Western Ghats dispatch hub.
               </p>
             </div>
 
-            <div className="bg-white rounded-[24px] border border-[#d2d2d7]/50 p-6 text-left space-y-3.5 shadow-sm">
-              <div className="flex justify-between items-center pb-3 border-b border-[#d2d2d7]/40 text-xs">
-                <span className="text-[#6e6e73]">Order Number:</span>
-                <span className="font-mono font-semibold text-[#1d1d1f] text-sm">
+            <div className="bg-white rounded-3xl border border-stone-200/90 p-6 sm:p-7 text-left space-y-3.5 shadow-sm">
+              <div className="flex justify-between items-center pb-3 border-b border-stone-100 text-xs">
+                <span className="text-stone-500">Order Number</span>
+                <span className="font-mono font-bold text-stone-900 text-sm">
                   {completedOrder.orderNumber}
                 </span>
               </div>
-              <div className="flex justify-between items-center pb-3 border-b border-[#d2d2d7]/40 text-xs">
-                <span className="text-[#6e6e73]">Razorpay Payment ID:</span>
-                <span className="font-mono text-[#6e6e73]">
+              <div className="flex justify-between items-center pb-3 border-b border-stone-100 text-xs">
+                <span className="text-stone-500">Razorpay Payment ID</span>
+                <span className="font-mono text-stone-600 text-[11px]">
                   {completedOrder.paymentId}
                 </span>
               </div>
               {completedOrder.couponCode && (
-                <div className="flex justify-between items-center pb-3 border-b border-[#d2d2d7]/40 text-xs">
+                <div className="flex justify-between items-center pb-3 border-b border-stone-100 text-xs">
                   <span className="text-emerald-700 font-medium flex items-center gap-1">
                     <Tag className="w-3.5 h-3.5" />
-                    Coupon Applied ({completedOrder.couponCode}):
+                    Coupon Applied ({completedOrder.couponCode})
                   </span>
                   <span className="font-semibold text-emerald-700">
                     -{formatCurrency(completedOrder.discountAmount || 0)}
                   </span>
                 </div>
               )}
-              <div className="flex justify-between items-center pb-3 border-b border-[#d2d2d7]/40 text-xs">
-                <span className="text-[#6e6e73]">Estimated Dispatch:</span>
-                <span className="font-medium text-emerald-700">
-                  12:30 AM Reconciled • 1:00 PM Express Courier Pickup
+              <div className="flex justify-between items-center pb-3 border-b border-stone-100 text-xs">
+                <span className="text-stone-500">Dispatched Via</span>
+                <span className="font-semibold text-amber-800">
+                  {shippingMode === 'Express' ? 'Delhivery One Air Express' : 'Delhivery One Surface'}
                 </span>
               </div>
               <div className="flex justify-between items-center text-xs pt-1">
-                <span className="text-[#6e6e73]">Total Paid:</span>
-                <span className="font-semibold text-[#1d1d1f] text-base">
+                <span className="text-stone-600 font-medium">Total Paid</span>
+                <span className="font-bold text-stone-950 text-base sm:text-lg">
                   {formatCurrency(completedOrder.amount)}
                 </span>
               </div>
@@ -775,20 +937,20 @@ function CheckoutContent() {
               <Link
                 href={`/invoice/${completedOrder.orderNumber}`}
                 target="_blank"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs shadow-sm transition-all active:scale-95 cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-stone-900 hover:bg-stone-800 text-white font-medium text-xs shadow-sm transition-all active:scale-95 cursor-pointer"
               >
-                <FileText className="w-3.5 h-3.5" />
-                <span>View & Download Tax Invoice (PDF)</span>
+                <FileText className="w-4 h-4 text-amber-400" />
+                <span>View Official Tax Invoice (PDF)</span>
               </Link>
               <Link
                 href="/account"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white font-medium text-xs shadow-sm transition-all active:scale-95 cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs shadow-sm transition-all active:scale-95 cursor-pointer"
               >
                 <span>Track in My Orders</span>
               </Link>
               <Link
                 href="/shop"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-white border border-[#d2d2d7] text-[#1d1d1f] hover:bg-[#f5f5f7] font-medium text-xs transition-all cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-white border border-stone-300 text-stone-800 hover:bg-stone-50 font-medium text-xs transition-all cursor-pointer"
               >
                 <span>Continue Shopping</span>
               </Link>
@@ -801,56 +963,78 @@ function CheckoutContent() {
 
   return (
     <StoreProvider>
-      <div className="bg-[#f5f5f7] min-h-screen pb-36 lg:pb-20 text-[#1d1d1f]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-6">
-          {/* Top Navigation */}
-          <div className="flex items-center justify-between">
+      <div className="bg-[#FAF8F5] min-h-screen pb-36 lg:pb-24 text-stone-900 selection:bg-amber-200">
+        
+        {/* Top Progress & Guarantee Header */}
+        <div className="border-b border-stone-200/80 bg-white/70 backdrop-blur-md sticky top-0 z-20">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
             <Link
               href="/shop"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-[#1d1d1f] hover:text-[#0071e3] bg-white border border-[#d2d2d7] px-3.5 py-1.5 rounded-full transition-colors shadow-2xs"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-700 hover:text-amber-700 transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Continue Shopping</span>
+              <span>Back to Shop</span>
             </Link>
-          </div>
 
-          {/* Heading */}
-          <div>
-            <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-[#1d1d1f]">
-              Checkout.
-            </h1>
-            <p className="text-xs text-[#6e6e73] mt-1">
-              Secure 256-bit Razorpay encryption • 100% Solid glass breakage guarantee
-            </p>
+            {/* Stepper Breadcrumbs */}
+            <div className="hidden sm:flex items-center gap-2 text-xs">
+              <div className="flex items-center gap-1.5 text-emerald-700 font-semibold">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>1. Bag</span>
+              </div>
+              <span className="text-stone-300">/</span>
+              <div className="flex items-center gap-1.5 text-amber-900 font-bold bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+                <MapPin className="w-3.5 h-3.5 text-amber-700" />
+                <span>2. Address &amp; Delhivery Speed</span>
+              </div>
+              <span className="text-stone-300">/</span>
+              <div className="flex items-center gap-1.5 text-stone-400">
+                <Lock className="w-3.5 h-3.5" />
+                <span>3. 100% Prepaid Payment</span>
+              </div>
+            </div>
 
-            {/* Strict Policy & Warehouse Schedule Badges */}
-            <div className="flex items-center gap-2 flex-wrap pt-3">
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+            <div className="flex items-center gap-2">
+              <span className="hidden md:inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                100% Prepaid Orders Only (No COD)
-              </span>
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-                <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
-                Sealed Consumables Non-Refundable (Free Breakage Replacement)
-              </span>
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-800 border border-blue-200">
-                <Clock className="w-3.5 h-3.5 text-blue-600" />
-                IST Warehouse Schedule: 1:00 PM &amp; 4:00 PM Daily Cutoff
+                100% Solid Glass Guarantee
               </span>
             </div>
+          </div>
+        </div>
+
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+          {/* Heading and Quality Pillars */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800 bg-amber-100/70 border border-amber-200/80 px-2.5 py-0.5 rounded-full">
+                Western Ghats Direct Dispatch
+              </span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-stone-600 bg-stone-100 border border-stone-200 px-2.5 py-0.5 rounded-full">
+                Delhivery One Automated Courier
+              </span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-serif font-bold text-stone-950 tracking-tight">
+              Checkout &amp; Shipment Speed.
+            </h1>
+            <p className="text-xs sm:text-sm text-stone-600 max-w-2xl leading-relaxed">
+              Real-time Delhivery One transit speeds and rates calculated based on your 6-digit delivery PIN code.
+              Every jar is secured with tamper-proof NMR seal and shock-absorbing kraft protection.
+            </p>
           </div>
 
           {/* Error Banner */}
           {errorMessage && (
-            <div className="p-4 rounded-[16px] bg-[#fff2f2] text-[#c91818] text-xs flex items-center justify-between border border-[#ffc4c4] animate-in fade-in">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 text-[#c91818]" />
-                <span>{errorMessage}</span>
+            <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center justify-between gap-3 animate-in fade-in">
+              <div className="flex items-center gap-2.5">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                <span className="font-medium">{errorMessage}</span>
               </div>
               <button
                 type="button"
                 onClick={() => setErrorMessage(null)}
-                className="text-xs font-medium underline cursor-pointer"
+                className="text-xs font-semibold underline text-rose-900 hover:text-rose-950 cursor-pointer"
               >
                 Dismiss
               </button>
@@ -858,36 +1042,38 @@ function CheckoutContent() {
           )}
 
           {/* Mobile Collapsible Order Summary Ribbon */}
-          <div className="lg:hidden bg-white rounded-[20px] border border-[#d2d2d7]/50 shadow-sm overflow-hidden">
+          <div className="lg:hidden bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
             <button
               type="button"
               onClick={() => setIsOrderSummaryOpen(!isOrderSummaryOpen)}
               className="w-full p-4 flex items-center justify-between text-left text-xs font-medium cursor-pointer"
             >
               <div className="flex items-center gap-2">
-                <Droplets className="w-4 h-4 text-[#0071e3]" />
-                <span className="text-[#1d1d1f]">
-                  Order Summary ({totalQuantity} {totalQuantity === 1 ? 'item' : 'items'})
+                <Droplets className="w-4 h-4 text-amber-600" />
+                <span className="font-semibold text-stone-900">
+                  Order Summary ({totalQuantity} {totalQuantity === 1 ? 'jar' : 'jars'})
                 </span>
-                <span className="text-[#86868b]">•</span>
-                <span className="font-semibold text-[#1d1d1f]">
+                <span className="text-stone-300">•</span>
+                <span className="font-bold text-amber-900">
                   {formatCurrency(totalAmount)}
                 </span>
               </div>
-              <div className="flex items-center gap-1 text-[#0071e3] text-xs">
-                <span>{isOrderSummaryOpen ? 'Hide' : 'Details'}</span>
+              <div className="flex items-center gap-1 text-amber-700 font-semibold text-xs">
+                <span>{isOrderSummaryOpen ? 'Hide' : 'Review'}</span>
                 {isOrderSummaryOpen ? (
-                  <ChevronUp className="w-3.5 h-3.5" />
+                  <ChevronUp className="w-4 h-4" />
                 ) : (
-                  <ChevronDown className="w-3.5 h-3.5" />
+                  <ChevronDown className="w-4 h-4" />
                 )}
               </div>
             </button>
 
             {isOrderSummaryOpen && (
-              <div className="px-5 pb-5 pt-2 border-t border-[#d2d2d7]/30 space-y-3 text-xs bg-[#f5f5f7]/60">
-                <div className="flex items-center justify-between pb-1 border-b border-[#d2d2d7]/30">
-                  <span className="text-[11px] font-medium text-[#6e6e73]">Selected Harvests</span>
+              <div className="px-5 pb-5 pt-2 border-t border-stone-100 space-y-3 text-xs bg-stone-50/50">
+                <div className="flex items-center justify-between pb-1 border-b border-stone-200/60">
+                  <span className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">
+                    Selected Harvests ({items.length})
+                  </span>
                   <button
                     type="button"
                     onClick={() => clearCart()}
@@ -896,45 +1082,42 @@ function CheckoutContent() {
                     <Trash2 className="w-3 h-3" /> Clear Bag
                   </button>
                 </div>
-                <div className="divide-y divide-[#d2d2d7]/30 max-h-52 overflow-y-auto">
+                <div className="divide-y divide-stone-100 max-h-56 overflow-y-auto">
                   {items.map((item) => (
-                    <div key={item.productId} className="py-2.5 flex items-center justify-between gap-2">
-                      <div className="pr-1 flex-1 min-w-0">
-                        <p className="font-medium text-[#1d1d1f] line-clamp-1">{item.productName}</p>
+                    <div key={item.productId} className="py-2.5 flex items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-stone-900 line-clamp-1">{item.productName}</p>
                         <div className="flex items-center gap-2 mt-1">
-                          <div className="flex items-center border border-[#d2d2d7] rounded-full overflow-hidden bg-white">
+                          <div className="flex items-center border border-stone-200 rounded-full bg-white shadow-2xs">
                             <button
                               type="button"
                               onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                              className="px-2 py-0.5 text-[#1d1d1f] hover:bg-[#e8e8ed] transition-colors"
-                              title="Decrease"
+                              className="px-2 py-0.5 text-stone-700 hover:text-amber-700 font-bold"
                             >
                               -
                             </button>
-                            <span className="px-1.5 text-[11px] font-semibold text-[#1d1d1f]">
+                            <span className="px-2 text-[11px] font-bold text-stone-900">
                               {item.quantity}
                             </span>
                             <button
                               type="button"
                               onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                              className="px-2 py-0.5 text-[#1d1d1f] hover:bg-[#e8e8ed] transition-colors"
-                              title="Increase"
+                              className="px-2 py-0.5 text-stone-700 hover:text-amber-700 font-bold"
                             >
                               +
                             </button>
                           </div>
-                          <span className="text-[11px] text-[#86868b]">× {formatCurrency(item.price)}</span>
+                          <span className="text-[11px] text-stone-500 font-medium">× {formatCurrency(item.price)}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className="font-semibold text-[#1d1d1f]">
+                        <span className="font-semibold text-stone-900">
                           {formatCurrency(item.price * item.quantity)}
                         </span>
                         <button
                           type="button"
                           onClick={() => removeFromCart(item.productId)}
-                          className="text-[#86868b] hover:text-rose-600 p-1 transition-colors cursor-pointer"
-                          title="Remove item"
+                          className="text-stone-400 hover:text-rose-600 p-1 cursor-pointer"
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>
@@ -942,116 +1125,30 @@ function CheckoutContent() {
                     </div>
                   ))}
                 </div>
-
-                <div className="pt-2.5 border-t border-[#d2d2d7]/40 space-y-2.5 text-xs text-[#6e6e73]">
-                  {/* 1. Item Subtotal */}
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="flex items-center gap-1 font-medium text-[#1d1d1f]">
-                        <span>1. Items Total</span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 font-semibold font-mono">5% GST</span>
-                      </div>
-                      <p className="text-[10px] text-[#86868b] mt-0.5">
-                        Base: {formatCurrency(productTaxable)} + 5% GST: {formatCurrency(productGst)}
-                      </p>
-                    </div>
-                    <span className="font-semibold text-[#1d1d1f]">{formatCurrency(subtotal)}</span>
-                  </div>
-
-                  {appliedCoupon && (
-                    <div className="flex justify-between text-emerald-700 font-medium pl-2 border-l-2 border-emerald-500 text-[11px]">
-                      <span>Coupon Discount ({appliedCoupon.code})</span>
-                      <span>-{formatCurrency(discountAmount)}</span>
-                    </div>
-                  )}
-
-                  {/* Shipping & Delivery (Delhivery One) */}
-                  <div className="flex justify-between items-start gap-2.5">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-medium text-xs text-[#1d1d1f]">
-                          Shipping &amp; Delivery (Delhivery One)
-                        </span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-100 text-purple-900 font-semibold font-mono whitespace-nowrap">
-                          18% GST
-                        </span>
-                        {delhiveryRate && (
-                          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 font-semibold tracking-wide whitespace-nowrap">
-                            Serviceable
-                          </span>
-                        )}
-                      </div>
-                      {delhiveryRate ? (
-                        <div className="mt-0.5 space-y-0.5">
-                          <p className="text-[10px] text-[#0071e3] font-medium leading-tight">
-                            Doorstep courier delivery in {delhiveryRate.estimatedDays || 2}-3 business days
-                          </p>
-                          <p className="text-[10px] text-[#86868b]">
-                            Base: {formatCurrency(bundledShippingBase)} + 18% GST: {formatCurrency(bundledShippingGst)}
-                          </p>
-                        </div>
-                      ) : (
-                        <p className="text-[10px] text-[#86868b] mt-0.5 leading-relaxed">
-                          {isCalculatingFreight
-                            ? 'Calculating live freight with Delhivery One API...'
-                            : isFreeShipping
-                            ? 'Free Express Courier Delivery Applied'
-                            : postalCode.length === 6 && isValidIndianPin(postalCode)
-                            ? `Base: ${formatCurrency(bundledShippingBase)} + 18% GST: ${formatCurrency(bundledShippingGst)}`
-                            : 'Calculated dynamically based on destination PIN & package weight'}
-                        </p>
-                      )}
-                    </div>
-                    <div className="shrink-0 text-right pt-0.5">
-                      {isFreeShipping ? (
-                        <span className="text-emerald-700 font-semibold text-xs whitespace-nowrap">FREE</span>
-                      ) : isCalculatingFreight ? (
-                        <span className="text-xs text-[#0071e3] font-medium flex items-center gap-1 whitespace-nowrap">
-                          <Loader2 className="w-3 h-3 animate-spin" /> Calculating...
-                        </span>
-                      ) : delhiveryRate || (postalCode.length === 6 && isValidIndianPin(postalCode) && bundledShippingTotal > 0) ? (
-                        <div>
-                          <span className="font-semibold text-xs text-[#1d1d1f] font-mono whitespace-nowrap block">
-                            {formatCurrency(bundledShippingTotal)}
-                          </span>
-                          <span className="text-[9px] text-[#86868b] font-normal whitespace-nowrap block">(incl. 18% GST)</span>
-                        </div>
-                      ) : (
-                        <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-[#f5f5f7] border border-[#d2d2d7] text-[#86868b] font-medium whitespace-nowrap">
-                          Enter PIN
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Combined GST */}
-                  <div className="flex justify-between items-center pt-1.5 border-t border-[#d2d2d7]/50 text-[11px]">
-                    <span className="font-medium text-[#1d1d1f]">Combined Statutory GST (CGST + SGST)</span>
-                    <span className="font-semibold text-emerald-800">{formatCurrency(totalTax)}</span>
-                  </div>
-                </div>
               </div>
             )}
           </div>
 
-          {/* Main Checkout Grid */}
+          {/* Main Checkout Form Grid */}
           <form onSubmit={handleInitiatePayment} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            {/* Left 2 Columns: Fast Address & Contact Details */}
-            <div className="lg:col-span-2 space-y-5">
-              {/* Contact Information */}
-              <div className="bg-white rounded-[20px] border border-[#d2d2d7]/50 p-6 sm:p-7 space-y-4 shadow-sm">
-                <div className="flex items-center justify-between border-b border-[#d2d2d7]/30 pb-3">
-                  <h2 className="text-xs font-semibold text-[#1d1d1f] uppercase tracking-wider">
-                    1. Contact &amp; Updates
+
+            {/* Left 2 Columns: Fast Address & Delhivery Speed Selection */}
+            <div className="lg:col-span-2 space-y-6">
+
+              {/* 1. Contact Information */}
+              <div className="bg-white rounded-3xl border border-stone-200/90 p-6 sm:p-7 space-y-4 shadow-sm">
+                <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+                  <h2 className="text-xs font-bold text-stone-900 uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-amber-100 text-amber-900 flex items-center justify-center text-[10px] font-bold">1</span>
+                    <span>Contact Details</span>
                   </h2>
-                  <span className="text-[11px] text-[#86868b]">Courier SMS &amp; Invoice Delivery</span>
+                  <span className="text-[11px] text-stone-500 font-medium">SMS Courier Tracking &amp; PDF Invoice</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Customer Name */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-[#1d1d1f] flex items-center justify-between">
+                    <label className="text-xs font-semibold text-stone-800 flex items-center justify-between">
                       <span>Customer Full Name <span className="text-rose-500">*</span></span>
                     </label>
                     <input
@@ -1059,21 +1156,21 @@ function CheckoutContent() {
                       required
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      placeholder="Receiver's full name"
-                      className="w-full h-11 px-3.5 text-xs rounded-[12px] border border-[#d2d2d7] bg-[#f5f5f7]/50 text-[#1d1d1f] focus:outline-none focus:bg-white focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all"
+                      placeholder="e.g. Vikramaditya Sharma"
+                      className="w-full h-11 px-3.5 text-xs rounded-xl border border-stone-200 bg-stone-50/60 text-stone-900 focus:outline-none focus:bg-white focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 transition-all font-medium"
                     />
                   </div>
 
                   {/* Mobile Number */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-[#1d1d1f] flex items-center justify-between">
+                    <label className="text-xs font-semibold text-stone-800 flex items-center justify-between">
                       <span>Mobile Number <span className="text-rose-500">*</span></span>
-                      <span className={`text-[10px] font-mono ${phone.length === 10 ? 'text-emerald-600 font-semibold' : 'text-[#86868b]'}`}>
+                      <span className={`text-[10px] font-mono ${phone.length === 10 ? 'text-emerald-700 font-bold' : 'text-stone-400'}`}>
                         {phone.length}/10 digits
                       </span>
                     </label>
                     <div className="relative flex items-center">
-                      <span className="absolute left-3 text-xs font-semibold text-[#1d1d1f] flex items-center gap-1 border-r border-[#d2d2d7] pr-2 pointer-events-none select-none">
+                      <span className="absolute left-3 text-xs font-bold text-stone-900 flex items-center gap-1 border-r border-stone-200 pr-2 pointer-events-none select-none">
                         <span>🇮🇳</span>
                         <span>+91</span>
                       </span>
@@ -1083,62 +1180,62 @@ function CheckoutContent() {
                         value={phone}
                         onChange={(e) => handlePhoneChange(e.target.value)}
                         placeholder="98200 00000"
-                        className="w-full h-11 pl-20 pr-3.5 text-xs rounded-[12px] border border-[#d2d2d7] bg-[#f5f5f7]/50 text-[#1d1d1f] focus:outline-none focus:bg-white focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-mono"
+                        className="w-full h-11 pl-20 pr-3.5 text-xs rounded-xl border border-stone-200 bg-stone-50/60 text-stone-900 focus:outline-none focus:bg-white focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 transition-all font-mono font-medium"
                       />
                     </div>
                   </div>
 
                   {/* Email ID */}
                   <div className="space-y-1.5 sm:col-span-2">
-                    <label className="text-xs font-medium text-[#1d1d1f] flex items-center justify-between">
-                      <span>Email ID <span className="text-rose-500">*</span></span>
-                      <span className="text-[10px] text-[#86868b]">For GST Tax Invoice PDF</span>
+                    <label className="text-xs font-semibold text-stone-800 flex items-center justify-between">
+                      <span>Email Address <span className="text-rose-500">*</span></span>
+                      <span className="text-[10px] text-stone-500 font-medium">To receive official GST PDF tax invoice</span>
                     </label>
                     <input
                       type="email"
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="name@example.com"
-                      className="w-full h-11 px-3.5 text-xs rounded-[12px] border border-[#d2d2d7] bg-[#f5f5f7]/50 text-[#1d1d1f] focus:outline-none focus:bg-white focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all"
+                      placeholder="vikram@example.com"
+                      className="w-full h-11 px-3.5 text-xs rounded-xl border border-stone-200 bg-stone-50/60 text-stone-900 focus:outline-none focus:bg-white focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 transition-all font-medium"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Delivery Destination */}
-              <div className="bg-white rounded-[20px] border border-[#d2d2d7]/50 p-6 sm:p-7 space-y-4 shadow-sm">
-                <div className="flex items-center justify-between border-b border-[#d2d2d7]/30 pb-3">
-                  <h2 className="text-xs font-semibold text-[#1d1d1f] uppercase tracking-wider flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-[#0071e3]" />
-                    <span>2. Delivery Destination</span>
+              {/* 2. Delivery Destination */}
+              <div className="bg-white rounded-3xl border border-stone-200/90 p-6 sm:p-7 space-y-4 shadow-sm">
+                <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+                  <h2 className="text-xs font-bold text-stone-900 uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-amber-100 text-amber-900 flex items-center justify-center text-[10px] font-bold">2</span>
+                    <span>Delivery Destination</span>
                   </h2>
-                  <span className="text-[11px] text-[#86868b]">All India Doorstep Delivery</span>
+                  <span className="text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full font-semibold">
+                    All-India Insured Doorstep Delivery
+                  </span>
                 </div>
 
                 <div className="space-y-4">
                   {/* Country (Default: India) */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-[#1d1d1f] flex items-center justify-between">
+                    <label className="text-xs font-semibold text-stone-800 flex items-center justify-between">
                       <span>Country / Territory</span>
-                      <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-1">
+                      <span className="text-[10px] text-emerald-700 font-bold flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3" /> Default: India
                       </span>
                     </label>
-                    <div className="relative">
-                      <select
-                        value={country}
-                        onChange={(e) => setCountry(e.target.value)}
-                        className="w-full h-11 px-3.5 text-xs rounded-[12px] border border-[#d2d2d7] bg-[#f5f5f7]/60 text-[#1d1d1f] font-medium focus:outline-none focus:bg-white focus:border-[#0071e3] transition-all cursor-pointer"
-                      >
-                        <option value="India">India 🇮🇳 (National Insured Air Freight)</option>
-                      </select>
-                    </div>
+                    <select
+                      value={country}
+                      onChange={(e) => setCountry(e.target.value)}
+                      className="w-full h-11 px-3.5 text-xs rounded-xl border border-stone-200 bg-stone-50/80 text-stone-900 font-medium focus:outline-none focus:bg-white focus:border-amber-600 transition-all cursor-pointer"
+                    >
+                      <option value="India">India 🇮🇳 (National Insured Courier Delivery)</option>
+                    </select>
                   </div>
 
                   {/* Flat / House No / Building / Apartment */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-[#1d1d1f]">
+                    <label className="text-xs font-semibold text-stone-800">
                       <span>Flat, House No., Building, Apartment <span className="text-rose-500">*</span></span>
                     </label>
                     <input
@@ -1146,49 +1243,49 @@ function CheckoutContent() {
                       required
                       value={flatBuilding}
                       onChange={(e) => setFlatBuilding(e.target.value)}
-                      placeholder="e.g. Flat 402, 4th Floor, Oberoi Sky Heights"
-                      className="w-full h-11 px-3.5 text-xs rounded-[12px] border border-[#d2d2d7] bg-[#f5f5f7]/50 text-[#1d1d1f] focus:outline-none focus:bg-white focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all"
+                      placeholder="e.g. Flat 402, 4th Floor, Oberoi Splendor"
+                      className="w-full h-11 px-3.5 text-xs rounded-xl border border-stone-200 bg-stone-50/60 text-stone-900 focus:outline-none focus:bg-white focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 transition-all font-medium"
                     />
                   </div>
 
                   {/* Area / Street / Sector / Village */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-[#1d1d1f]">
-                      <span>Area, Street, Sector, Village <span className="text-rose-500">*</span></span>
+                    <label className="text-xs font-semibold text-stone-800">
+                      <span>Area, Street, Sector, Road <span className="text-rose-500">*</span></span>
                     </label>
                     <input
                       type="text"
                       required
                       value={areaStreet}
                       onChange={(e) => setAreaStreet(e.target.value)}
-                      placeholder="e.g. Lokhandwala Complex, 2nd Cross Road, Andheri West"
-                      className="w-full h-11 px-3.5 text-xs rounded-[12px] border border-[#d2d2d7] bg-[#f5f5f7]/50 text-[#1d1d1f] focus:outline-none focus:bg-white focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all"
+                      placeholder="e.g. JVLR Road, Andheri East"
+                      className="w-full h-11 px-3.5 text-xs rounded-xl border border-stone-200 bg-stone-50/60 text-stone-900 focus:outline-none focus:bg-white focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 transition-all font-medium"
                     />
                   </div>
 
                   {/* Landmark */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-[#1d1d1f] flex items-center justify-between">
+                    <label className="text-xs font-semibold text-stone-800 flex items-center justify-between">
                       <span>Landmark</span>
-                      <span className="text-[10px] text-[#86868b] font-normal">Optional</span>
+                      <span className="text-[10px] text-stone-400 font-normal">Optional</span>
                     </label>
                     <input
                       type="text"
                       value={landmark}
                       onChange={(e) => setLandmark(e.target.value)}
-                      placeholder="e.g. Near Apollo Pharmacy / Opposite High Point Restaurant"
-                      className="w-full h-11 px-3.5 text-xs rounded-[12px] border border-[#d2d2d7] bg-[#f5f5f7]/50 text-[#1d1d1f] focus:outline-none focus:bg-white focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all"
+                      placeholder="e.g. Near Seepz Main Gate / Opposite High Point Restaurant"
+                      className="w-full h-11 px-3.5 text-xs rounded-xl border border-stone-200 bg-stone-50/60 text-stone-900 focus:outline-none focus:bg-white focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 transition-all font-medium"
                     />
                   </div>
 
-                  {/* 3 Column Grid: PIN Code, Town/City, State Dropdown */}
+                  {/* 3 Column Grid: PIN Code, Town/City, State */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {/* PIN Code */}
                     <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-[#1d1d1f] flex items-center justify-between">
+                      <label className="text-xs font-semibold text-stone-800 flex items-center justify-between">
                         <span>PIN Code <span className="text-rose-500">*</span></span>
                         {postalCode.length === 6 && isValidIndianPin(postalCode) && (
-                          <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-0.5">
+                          <span className="text-[10px] text-emerald-700 font-bold flex items-center gap-0.5">
                             <Check className="w-3 h-3" /> Valid
                           </span>
                         )}
@@ -1200,43 +1297,42 @@ function CheckoutContent() {
                           maxLength={6}
                           value={postalCode}
                           onChange={(e) => handlePincodeChange(e.target.value)}
-                          placeholder="e.g. 400053"
-                          className="w-full h-11 px-3.5 pr-8 text-xs rounded-[12px] border border-[#d2d2d7] bg-[#f5f5f7]/50 text-[#1d1d1f] focus:outline-none focus:bg-white focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-mono"
+                          placeholder="e.g. 400093"
+                          className="w-full h-11 px-3.5 pr-8 text-xs rounded-xl border border-stone-200 bg-stone-50/60 text-stone-900 focus:outline-none focus:bg-white focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 transition-all font-mono font-bold"
                         />
                         {pinLoading && (
                           <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#0071e3]" />
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-600" />
                           </div>
                         )}
                       </div>
                       {pinAutoDetected ? (
-                        <div className="text-[10px] text-emerald-700 font-medium flex items-center justify-between pt-0.5">
-                          <span className="truncate">Auto: {pinAutoDetected}</span>
+                        <div className="text-[10px] text-emerald-800 font-semibold flex items-center justify-between pt-0.5">
+                          <span className="truncate">✓ Auto: {pinAutoDetected}</span>
                           <button
                             type="button"
                             onClick={() => fetchPinDetails(postalCode)}
-                            className="text-[9px] text-[#0071e3] hover:underline cursor-pointer shrink-0 ml-1 flex items-center gap-0.5"
+                            className="text-[9px] text-amber-700 hover:underline cursor-pointer shrink-0 ml-1 flex items-center gap-0.5"
                           >
                             <RefreshCw className="w-2.5 h-2.5" /> Re-check
                           </button>
                         </div>
                       ) : postalCode.length > 0 && postalCode.length < 6 ? (
-                        <p className="text-[10px] text-[#86868b]">Enter 6 digits for auto-fill</p>
+                        <p className="text-[10px] text-amber-700">Enter 6 digits for courier calculation</p>
                       ) : pinError ? (
                         <p className="text-[10px] text-amber-600">{pinError}</p>
                       ) : null}
 
-                      {/* Explicit Delhivery District Verification */}
                       {district && (
                         <div className="mt-1 flex items-center flex-wrap gap-1.5 text-[10px]">
-                          <span className="text-[#6e6e73]">District:</span>
-                          <span className="text-[#1d1d1f] font-semibold">{district}</span>
+                          <span className="text-stone-500">District:</span>
+                          <span className="text-stone-900 font-bold">{district}</span>
                           {districtVerified ? (
-                            <span className="inline-flex items-center gap-0.5 text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.2 rounded-full text-[9px]">
-                              <Check className="w-2.5 h-2.5" /> Verified by Delhivery: YES
+                            <span className="inline-flex items-center gap-0.5 text-emerald-800 font-bold bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded-full text-[9px]">
+                              <Check className="w-2.5 h-2.5 text-emerald-600" /> Verified by Delhivery: YES
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-0.5 text-rose-700 font-semibold bg-rose-50 border border-rose-200/80 px-1.5 py-0.2 rounded-full text-[9px]">
+                            <span className="inline-flex items-center gap-0.5 text-rose-700 font-bold bg-rose-50 border border-rose-200 px-1.5 py-0.2 rounded-full text-[9px]">
                               ✕ Verified by Delhivery: NO
                             </span>
                           )}
@@ -1246,10 +1342,10 @@ function CheckoutContent() {
 
                     {/* Town / City */}
                     <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-[#1d1d1f] flex items-center justify-between">
+                      <label className="text-xs font-semibold text-stone-800 flex items-center justify-between">
                         <span>Town / City <span className="text-rose-500">*</span></span>
                         {availableTowns.length > 0 && (
-                          <span className="text-[10px] text-[#86868b]">
+                          <span className="text-[10px] text-stone-500">
                             {availableTowns.length} {availableTowns.length === 1 ? 'locality' : 'localities'}
                           </span>
                         )}
@@ -1263,7 +1359,7 @@ function CheckoutContent() {
                           setPinAutoDetected(`${e.target.value}${e.target.value && state ? ', ' : ''}${state}`);
                         }}
                         placeholder="Town or City"
-                        className="w-full h-11 px-3.5 text-xs rounded-[12px] border border-[#d2d2d7] bg-[#f5f5f7]/50 text-[#1d1d1f] focus:outline-none focus:bg-white focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all"
+                        className="w-full h-11 px-3.5 text-xs rounded-xl border border-stone-200 bg-stone-50/60 text-stone-900 focus:outline-none focus:bg-white focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 transition-all font-medium"
                       />
                       {availableTowns.length > 0 && (
                         <div className="flex flex-wrap gap-1 pt-0.5 max-h-16 overflow-y-auto">
@@ -1277,8 +1373,8 @@ function CheckoutContent() {
                               }}
                               className={`text-[9px] px-1.5 py-0.5 rounded-md transition-colors cursor-pointer border ${
                                 city === t
-                                  ? 'bg-[#0071e3] text-white border-[#0071e3]'
-                                  : 'bg-[#f5f5f7] hover:bg-[#e8e8ed] text-[#1d1d1f] border-[#d2d2d7]/60'
+                                  ? 'bg-amber-600 text-white border-amber-600 font-semibold'
+                                  : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border-stone-200'
                               }`}
                             >
                               {t}
@@ -1290,7 +1386,7 @@ function CheckoutContent() {
 
                     {/* State: Dropdown containing all 28 States and 8 Union Territories */}
                     <div className="space-y-1.5">
-                      <label className="text-xs font-medium text-[#1d1d1f]">
+                      <label className="text-xs font-semibold text-stone-800">
                         <span>State <span className="text-rose-500">*</span></span>
                       </label>
                       <select
@@ -1300,7 +1396,7 @@ function CheckoutContent() {
                           setState(e.target.value);
                           setPinAutoDetected(`${city}${city && e.target.value ? ', ' : ''}${e.target.value}`);
                         }}
-                        className="w-full h-11 px-3.5 text-xs rounded-[12px] border border-[#d2d2d7] bg-[#f5f5f7]/50 text-[#1d1d1f] focus:outline-none focus:bg-white focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all cursor-pointer"
+                        className="w-full h-11 px-3.5 text-xs rounded-xl border border-stone-200 bg-stone-50/60 text-stone-900 focus:outline-none focus:bg-white focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 transition-all cursor-pointer font-medium"
                       >
                         <optgroup label="States (28)">
                           {INDIAN_STATES.filter((s) => s.type === 'STATE').map((s) => (
@@ -1319,184 +1415,340 @@ function CheckoutContent() {
                       </select>
                     </div>
                   </div>
+                </div>
+              </div>
 
-                  {/* AIR VS. SURFACE SHIPPING MODE SELECTOR */}
-                  <div className="pt-3 border-t border-[#d2d2d7]/40 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-[#1d1d1f] flex items-center gap-1.5">
-                        <Truck className="w-3.5 h-3.5 text-[#0071e3]" />
-                        <span>Select Shipment Speed (Delhivery One)</span>
-                      </label>
-                      {postalCode.length === 6 && (
-                        <span className={`text-[10px] font-semibold ${airAvailable ? 'text-emerald-700' : 'text-amber-700'}`}>
-                          {airAvailable ? 'Air & Surface Available' : 'Surface Only for this PIN'}
+              {/* 3. SELECT SHIPMENT SPEED (DELHIVERY ONE) — DEPENDENT ON PINCODE */}
+              <div className="bg-white rounded-3xl border border-stone-200/90 p-6 sm:p-7 space-y-4 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-100 pb-3">
+                  <div>
+                    <h2 className="text-xs font-bold text-stone-900 uppercase tracking-wider flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-full bg-amber-100 text-amber-900 flex items-center justify-center text-[10px] font-bold">3</span>
+                      <span>Select Shipment Speed (Delhivery One)</span>
+                    </h2>
+                    <p className="text-[11px] text-stone-500 mt-0.5">
+                      Transit speeds &amp; live rates depend on your 6-digit delivery PIN code
+                    </p>
+                  </div>
+
+                  {postalCode.length === 6 && isValidIndianPin(postalCode) && (
+                    <div className="flex items-center gap-1.5 self-start sm:self-auto">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-900 border border-amber-200">
+                        <Truck className="w-3 h-3 text-amber-600" />
+                        PIN: {postalCode}
+                      </span>
+                      {speedQuotes.express?.available ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-900 border border-emerald-200">
+                          <Check className="w-3 h-3 text-emerald-600" />
+                          Air &amp; Surface Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-stone-100 text-stone-800 border border-stone-200">
+                          Surface Mode Enabled
                         </span>
                       )}
                     </div>
+                  )}
+                </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      {/* Air Express Card */}
+                {/* PIN Prompt Guidance (When PIN not yet entered) */}
+                {(!postalCode || postalCode.length < 6 || !isValidIndianPin(postalCode)) ? (
+                  <div className="rounded-2xl border border-dashed border-amber-300 bg-amber-50/50 p-5 text-center space-y-3">
+                    <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center mx-auto shadow-2xs">
+                      <MapPin className="w-5 h-5 text-amber-700" />
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="text-xs font-bold text-amber-950 uppercase tracking-wider">
+                        Enter 6-Digit Delivery PIN to Compare Delhivery Speeds
+                      </h3>
+                      <p className="text-xs text-amber-900/80 max-w-md mx-auto leading-relaxed">
+                        Delhivery One Surface (Road Logistics) and Air Express (Priority Flight) live rates, transit timelines, and delivery dates will unlock automatically for your destination zone.
+                      </p>
+                    </div>
+
+                    {/* Teaser Preview Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-left opacity-75">
+                      <div className="p-3.5 rounded-xl border border-stone-200 bg-white">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 font-bold text-xs text-stone-800">
+                            <Truck className="w-4 h-4 text-amber-700" />
+                            <span>Surface Standard</span>
+                          </div>
+                          <span className="text-[9px] bg-stone-100 text-stone-600 font-semibold px-2 py-0.5 rounded-full">
+                            3-5 Days
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-stone-500 mt-1">Ground freight for solid glass jars</p>
+                        <span className="text-[10px] text-amber-700 font-semibold block mt-2">Enter PIN to view rate</span>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl border border-stone-200 bg-white">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 font-bold text-xs text-stone-800">
+                            <Plane className="w-4 h-4 text-emerald-700" />
+                            <span>Air Express Priority</span>
+                          </div>
+                          <span className="text-[9px] bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded-full">
+                            1-2 Days
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-stone-500 mt-1">Fastest door-to-door domestic air transit</p>
+                        <span className="text-[10px] text-amber-700 font-semibold block mt-2">Enter PIN to view rate</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Interactive Delhivery One Speed Option Cards */
+                  <div className="space-y-3">
+                    {isCalculatingFreight && (
+                      <div className="flex items-center justify-center gap-2 p-3 rounded-xl bg-amber-50/70 border border-amber-200 text-xs text-amber-900 font-medium animate-pulse">
+                        <Loader2 className="w-4 h-4 animate-spin text-amber-700" />
+                        <span>Querying Delhivery One rate calculation API for PIN {postalCode}...</span>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      
+                      {/* 1. Surface Standard Card */}
                       <button
                         type="button"
-                        disabled={!airAvailable}
-                        onClick={() => {
-                          if (airAvailable) {
-                            setShippingMode('Express');
-                            if (postalCode.length === 6 && isValidIndianPin(postalCode)) {
-                              fetchDelhiveryFreight(postalCode, 'Express');
-                            }
-                          }
-                        }}
-                        className={`p-3 rounded-[16px] text-left transition-all border relative flex flex-col justify-between ${
-                          !airAvailable
-                            ? 'bg-[#f5f5f7]/60 border-[#d2d2d7]/50 opacity-60 cursor-not-allowed'
-                            : shippingMode === 'Express'
-                            ? 'bg-[#0071e3]/5 border-[#0071e3] ring-2 ring-[#0071e3]/20 shadow-xs cursor-pointer'
-                            : 'bg-white hover:bg-[#f5f5f7] border-[#d2d2d7]/70 cursor-pointer'
+                        onClick={() => handleSelectSpeedMode('Surface')}
+                        className={`p-4 rounded-2xl text-left transition-all border-2 relative flex flex-col justify-between cursor-pointer ${
+                          shippingMode === 'Surface'
+                            ? 'bg-amber-50/40 border-amber-600 ring-2 ring-amber-500/20 shadow-sm'
+                            : 'bg-white hover:bg-stone-50 border-stone-200'
                         }`}
                       >
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-bold text-[#1d1d1f]">Air Express Priority</span>
-                              <span className="text-[9px] px-1.5 py-0.2 rounded-full font-semibold bg-amber-500/15 text-amber-900 border border-amber-500/30">
-                                ⚡ Fastest
+                        <div className="space-y-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                                shippingMode === 'Surface' ? 'bg-amber-600 text-white' : 'bg-stone-100 text-stone-700'
+                              }`}>
+                                <Truck className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <h3 className="text-xs font-bold text-stone-950">Surface Standard</h3>
+                                <p className="text-[10px] text-stone-500">Delhivery Ground Road Logistics</p>
+                              </div>
+                            </div>
+
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                              shippingMode === 'Surface'
+                                ? 'border-amber-600 bg-amber-600 text-white'
+                                : 'border-stone-300 bg-white'
+                            }`}>
+                              {shippingMode === 'Surface' && <Check className="w-3 h-3 stroke-[3]" />}
+                            </div>
+                          </div>
+
+                          <div className="space-y-1 pt-1">
+                            <div className="flex items-baseline justify-between">
+                              <span className="text-[11px] font-semibold text-stone-700">Estimated Delivery:</span>
+                              <span className="text-xs font-bold text-stone-900 font-mono">
+                                {speedQuotes.surface?.estimatedDeliveryDate || '3-5 Business Days'}
                               </span>
                             </div>
-                            <p className="text-[11px] text-[#6e6e73] mt-0.5">
-                              1-2 business days door-to-door air freight
-                            </p>
-                          </div>
-                          <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
-                            shippingMode === 'Express' && airAvailable
-                              ? 'border-[#0071e3] bg-[#0071e3] text-white'
-                              : 'border-[#d2d2d7] bg-white'
-                          }`}>
-                            {shippingMode === 'Express' && airAvailable && <Check className="w-2.5 h-2.5" />}
+                            <div className="flex items-center justify-between text-[11px]">
+                              <span className="text-stone-500">Transit Speed:</span>
+                              <span className="font-semibold text-stone-800">
+                                {speedQuotes.surface?.estimatedDays || 3}-5 business days
+                              </span>
+                            </div>
                           </div>
                         </div>
 
-                        {!airAvailable ? (
-                          <p className="text-[9px] text-amber-700 font-medium mt-2 bg-amber-50 p-1.5 rounded-lg border border-amber-200/60">
-                            {airRestrictionReason || `Air courier unserviceable for PIN ${postalCode || ''}. Surface transport enabled.`}
-                          </p>
+                        <div className="pt-3 mt-3 border-t border-stone-100 flex items-center justify-between">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                            <Shield className="w-3 h-3 text-emerald-600" />
+                            Insured Glass Transit
+                          </span>
+                          <span className="text-sm font-bold text-stone-950 font-mono">
+                            {speedQuotes.surface
+                              ? formatCurrency(speedQuotes.surface.bundledDeliveryTotal)
+                              : isCalculatingFreight
+                              ? '...'
+                              : formatCurrency(bundledShippingTotal)}
+                          </span>
+                        </div>
+                      </button>
+
+                      {/* 2. Air Express Priority Card */}
+                      <button
+                        type="button"
+                        disabled={speedQuotes.express !== null && !speedQuotes.express.available}
+                        onClick={() => handleSelectSpeedMode('Express')}
+                        className={`p-4 rounded-2xl text-left transition-all border-2 relative flex flex-col justify-between ${
+                          speedQuotes.express && !speedQuotes.express.available
+                            ? 'bg-stone-50 border-stone-200 opacity-60 cursor-not-allowed'
+                            : shippingMode === 'Express'
+                            ? 'bg-amber-50/40 border-amber-600 ring-2 ring-amber-500/20 shadow-sm cursor-pointer'
+                            : 'bg-white hover:bg-stone-50 border-stone-200 cursor-pointer'
+                        }`}
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+                                shippingMode === 'Express' ? 'bg-amber-600 text-white' : 'bg-stone-100 text-stone-700'
+                              }`}>
+                                <Plane className="w-4 h-4" />
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-1.5">
+                                  <h3 className="text-xs font-bold text-stone-950">Air Express Priority</h3>
+                                  <span className="text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                                    ⚡ Fastest
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-stone-500">Delhivery Priority Aviation Freight</p>
+                              </div>
+                            </div>
+
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                              shippingMode === 'Express'
+                                ? 'border-amber-600 bg-amber-600 text-white'
+                                : 'border-stone-300 bg-white'
+                            }`}>
+                              {shippingMode === 'Express' && <Check className="w-3 h-3 stroke-[3]" />}
+                            </div>
+                          </div>
+
+                          <div className="space-y-1 pt-1">
+                            <div className="flex items-baseline justify-between">
+                              <span className="text-[11px] font-semibold text-stone-700">Estimated Delivery:</span>
+                              <span className="text-xs font-bold text-emerald-800 font-mono">
+                                {speedQuotes.express?.estimatedDeliveryDate || '1-2 Business Days'}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between text-[11px]">
+                              <span className="text-stone-500">Transit Speed:</span>
+                              <span className="font-semibold text-emerald-800">
+                                {speedQuotes.express?.estimatedDays || 1}-2 business days
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {speedQuotes.express && !speedQuotes.express.available ? (
+                          <div className="pt-2 mt-2 border-t border-stone-100">
+                            <p className="text-[10px] text-amber-800 font-medium bg-amber-50 p-1.5 rounded-lg border border-amber-200">
+                              {speedQuotes.express.restrictionReason || `Air transport restricted for liquid glass consignments to PIN ${postalCode}. Surface transit is active.`}
+                            </p>
+                          </div>
                         ) : (
-                          <div className="flex items-center justify-between text-[10px] text-emerald-700 font-semibold mt-2 pt-1.5 border-t border-[#d2d2d7]/30">
-                            <span>✓ Air Serviceable by Delhivery</span>
-                            <span className="text-[#1d1d1f]">Priority Dispatch</span>
+                          <div className="pt-3 mt-3 border-t border-stone-100 flex items-center justify-between">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-900 bg-amber-100/70 border border-amber-200 px-2 py-0.5 rounded-full">
+                              <Zap className="w-3 h-3 text-amber-700" />
+                              Priority Dispatch
+                            </span>
+                            <span className="text-sm font-bold text-stone-950 font-mono">
+                              {speedQuotes.express
+                                ? formatCurrency(speedQuotes.express.bundledDeliveryTotal)
+                                : isCalculatingFreight
+                                ? '...'
+                                : formatCurrency(bundledShippingTotal)}
+                            </span>
                           </div>
                         )}
                       </button>
+                    </div>
+                  </div>
+                )}
 
-                      {/* Surface Standard Card */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShippingMode('Surface');
-                          if (postalCode.length === 6 && isValidIndianPin(postalCode)) {
-                            fetchDelhiveryFreight(postalCode, 'Surface');
-                          }
-                        }}
-                        className={`p-3 rounded-[16px] text-left transition-all border relative flex flex-col justify-between ${
-                          shippingMode === 'Surface'
-                            ? 'bg-[#0071e3]/5 border-[#0071e3] ring-2 ring-[#0071e3]/20 shadow-xs cursor-pointer'
-                            : 'bg-white hover:bg-[#f5f5f7] border-[#d2d2d7]/70 cursor-pointer'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-bold text-[#1d1d1f]">Surface Standard</span>
-                              <span className="text-[9px] px-1.5 py-0.2 rounded-full font-semibold bg-blue-500/15 text-blue-900 border border-blue-500/30">
-                                🚛 Ground
-                              </span>
-                            </div>
-                            <p className="text-[11px] text-[#6e6e73] mt-0.5">
-                              3-5 business days door-to-door road freight
-                            </p>
-                          </div>
-                          <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
-                            shippingMode === 'Surface'
-                              ? 'border-[#0071e3] bg-[#0071e3] text-white'
-                              : 'border-[#d2d2d7] bg-white'
-                          }`}>
-                            {shippingMode === 'Surface' && <Check className="w-2.5 h-2.5" />}
-                          </div>
-                        </div>
+                {/* Live Airway Bill (AWB) & Shipping Destination Confirmation */}
+                <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/90 text-xs space-y-2">
+                  <div className="flex items-center justify-between text-[10px] uppercase font-bold text-stone-500 tracking-wider">
+                    <span className="flex items-center gap-1.5">
+                      <Truck className="w-3.5 h-3.5 text-amber-700" />
+                      Delhivery One Airway Bill (AWB) Preview
+                    </span>
+                    <span className="text-emerald-800 font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                      Insured Glass Safe
+                    </span>
+                  </div>
 
-                        <div className="flex items-center justify-between text-[10px] text-emerald-700 font-semibold mt-2 pt-1.5 border-t border-[#d2d2d7]/30">
-                          <span>✓ Available for all Indian PINs</span>
-                          <span className="text-[#1d1d1f]">Standard Ground</span>
-                        </div>
-                      </button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <div>
+                      <p className="text-[10px] text-stone-500 uppercase font-semibold">Consignee (Receiver)</p>
+                      <p className="font-bold text-stone-900 text-xs">
+                        {fullName || 'Vikramaditya Sharma'}
+                      </p>
+                      <p className="text-stone-600 font-mono text-[11px]">
+                        {phone.length === 10 ? `+91 ${phone.slice(0, 5)} ${phone.slice(5)}` : '+91 98200 00000'}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-[10px] text-stone-500 uppercase font-semibold">Destination Address</p>
+                      <p className="text-stone-700 leading-relaxed text-[11px]">
+                        {flatBuilding || 'Flat / House No.'}, {areaStreet || 'Road / Street'}
+                        {landmark ? `, Near ${landmark}` : ''}
+                        <br />
+                        {city || 'Town/City'}, {state} - <span className="font-mono font-bold">{postalCode || '400093'}</span>
+                      </p>
                     </div>
                   </div>
 
-                  {/* Live Shipping Label Preview Card */}
-                  <div className="p-3.5 rounded-[16px] bg-[#f5f5f7]/70 border border-[#d2d2d7]/60 text-xs space-y-1.5">
-                    <div className="flex items-center justify-between text-[10px] uppercase font-semibold text-[#86868b] tracking-wider">
-                      <span className="flex items-center gap-1">
-                        <Truck className="w-3 h-3 text-[#0071e3]" />
-                        Shipping Label &amp; GST Invoice Destination
+                  {delhiveryRate && (
+                    <div className="pt-2 border-t border-stone-200/60 flex items-center justify-between text-[10px] text-stone-600">
+                      <span>
+                        Courier: <strong className="text-stone-950 font-bold">{delhiveryRate.carrier}</strong> ({delhiveryRate.zoneName})
                       </span>
-                      <span className="text-emerald-700 font-bold">Insured Glass Transit</span>
+                      <span className="font-mono font-bold text-stone-900">
+                        {delhiveryRate.billableWeightGrams}g Consignment Weight
+                      </span>
                     </div>
-                    <p className="font-semibold text-[#1d1d1f]">
-                      {fullName || 'Customer Name'} • {phone.length === 10 ? `+91 ${phone.slice(0, 5)} ${phone.slice(5)}` : phone || '+91 98200 00000'}
-                    </p>
-                    <p className="text-[#6e6e73] leading-relaxed text-[11px]">
-                      {flatBuilding || 'Flat / Building'}, {areaStreet || 'Area / Street'}
-                      {landmark ? `, Near ${landmark}` : ''}
-                      <br />
-                      {city || 'Town/City'}, {state || 'State'} - <span className="font-mono">{postalCode || '400000'}</span>, {country}
-                    </p>
-                    {delhiveryRate && (
-                      <div className="pt-1.5 border-t border-[#d2d2d7]/50 flex items-center justify-between text-[10px] text-[#6e6e73]">
-                        <span>Carrier: <strong className="text-[#1d1d1f]">{delhiveryRate.carrier}</strong> ({delhiveryRate.zoneName})</span>
-                        <span className="font-mono font-medium text-[#1d1d1f]">{delhiveryRate.billableWeightGrams}g Billable</span>
-                      </div>
-                    )}
+                  )}
+                </div>
+
+                {/* 4. Payment Method: Strictly 100% Prepaid */}
+                <div className="space-y-2 pt-2 border-t border-stone-100">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-stone-900 uppercase tracking-wider flex items-center gap-1.5">
+                      <CreditCard className="w-3.5 h-3.5 text-amber-700" />
+                      <span>Payment Method</span>
+                    </label>
+                    <span className="text-[10px] text-emerald-900 bg-emerald-100/70 border border-emerald-300 px-2.5 py-0.5 rounded-full font-bold">
+                      100% Prepaid Online
+                    </span>
                   </div>
 
-                  {/* Payment Method - Strictly 100% Prepaid */}
-                  <div className="space-y-2 pt-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-semibold text-[#1d1d1f] flex items-center gap-1.5">
-                        <CreditCard className="w-3.5 h-3.5 text-[#0071e3]" />
-                        <span>Payment Method</span>
-                      </label>
-                      <span className="text-[10px] text-emerald-800 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full font-medium">
-                        100% Prepaid Online
-                      </span>
+                  <div className="p-4 rounded-2xl border-2 border-amber-600/60 bg-amber-50/30 flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-stone-950">
+                          Instant Online Payment (Razorpay Encrypted)
+                        </span>
+                        <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">
+                          ✓ 256-Bit SSL
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-stone-600 leading-relaxed">
+                        Instant checkout via UPI (Google Pay, PhonePe, Paytm, BHIM), Credit/Debit Cards &amp; NetBanking.
+                        No Cash on Delivery (COD) to safeguard tamper-evident sealed glass consignments.
+                      </p>
+                      <div className="flex items-center gap-2 pt-1 flex-wrap text-[10px] font-semibold text-stone-500">
+                        <span className="bg-white border border-stone-200 px-2 py-0.5 rounded-md">Google Pay</span>
+                        <span className="bg-white border border-stone-200 px-2 py-0.5 rounded-md">PhonePe</span>
+                        <span className="bg-white border border-stone-200 px-2 py-0.5 rounded-md">Paytm</span>
+                        <span className="bg-white border border-stone-200 px-2 py-0.5 rounded-md">Visa / Mastercard / RuPay</span>
+                      </div>
                     </div>
-
-                    <div className="p-3.5 rounded-[16px] border border-[#0071e3]/40 bg-[#0071e3]/5 flex items-start justify-between gap-3">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-[#1d1d1f]">Instant Online Payment (Razorpay)</span>
-                          <span className="text-[9px] px-1.5 py-0.2 rounded-full font-semibold bg-emerald-600/10 text-emerald-700 border border-emerald-500/30">
-                            Secured
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-[#6e6e73] mt-1 leading-relaxed">
-                          Supports UPI (Google Pay, PhonePe, Paytm), Credit / Debit Cards &amp; NetBanking.
-                        </p>
-                      </div>
-                      <div className="w-4 h-4 rounded-full border border-[#0071e3] bg-[#0071e3] text-white flex items-center justify-center shrink-0 mt-0.5">
-                        <Check className="w-2.5 h-2.5" />
-                      </div>
+                    <div className="w-5 h-5 rounded-full border-2 border-amber-600 bg-amber-600 text-white flex items-center justify-center shrink-0 mt-0.5">
+                      <Check className="w-3 h-3 stroke-[3]" />
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Right Desktop Sidebar: Order Summary, Coupons & Pay */}
+            {/* Right Desktop Sidebar: Sticky Order Summary, Coupons & Razorpay Pay */}
             <div className="space-y-4">
-              <div className="bg-white rounded-[20px] border border-[#d2d2d7]/50 p-6 space-y-4 shadow-sm">
-                <div className="hidden lg:flex items-center justify-between pb-3 border-b border-[#d2d2d7]/30">
-                  <h3 className="text-xs font-semibold text-[#1d1d1f] uppercase tracking-wider">
-                    Order Summary ({items.length} {items.length === 1 ? 'item' : 'items'})
+              <div className="bg-white rounded-3xl border border-stone-200/90 p-6 space-y-4 shadow-sm lg:sticky lg:top-20">
+                <div className="flex items-center justify-between pb-3 border-b border-stone-100">
+                  <h3 className="text-xs font-bold text-stone-900 uppercase tracking-wider">
+                    Order Summary ({items.length} {items.length === 1 ? 'jar' : 'jars'})
                   </h3>
                   <button
                     type="button"
@@ -1509,45 +1761,48 @@ function CheckoutContent() {
                   </button>
                 </div>
 
-                {/* Items List (Desktop view) */}
-                <div className="hidden lg:block divide-y divide-[#d2d2d7]/30 max-h-52 overflow-y-auto pr-1">
+                {/* Items List */}
+                <div className="divide-y divide-stone-100 max-h-56 overflow-y-auto pr-1">
                   {items.map((item) => (
-                    <div key={item.productId} className="py-2.5 flex items-center justify-between text-xs gap-2">
+                    <div key={item.productId} className="py-2.5 flex items-center justify-between text-xs gap-3">
                       <div className="pr-1 flex-1 min-w-0">
-                        <p className="font-medium text-[#1d1d1f] line-clamp-1">{item.productName}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="flex items-center border border-[#d2d2d7] rounded-full overflow-hidden bg-[#f5f5f7]">
+                        <p className="font-semibold text-stone-900 line-clamp-1">{item.productName}</p>
+                        <p className="text-[10px] text-stone-500 font-mono">
+                          {item.weight || (item.productName.includes('1050') ? '1050g Glass Jar' : item.productName.includes('750') ? '750g Glass Jar' : '300g Glass Jar')}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <div className="flex items-center border border-stone-200 rounded-full bg-stone-50 shadow-2xs">
                             <button
                               type="button"
                               onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                              className="px-2 py-0.5 text-[#1d1d1f] hover:bg-[#e8e8ed] transition-colors"
+                              className="px-2 py-0.5 text-stone-700 hover:text-amber-700 font-bold"
                               title="Decrease"
                             >
                               -
                             </button>
-                            <span className="px-1.5 text-[11px] font-semibold text-[#1d1d1f]">
+                            <span className="px-1.5 text-[11px] font-bold text-stone-900">
                               {item.quantity}
                             </span>
                             <button
                               type="button"
                               onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                              className="px-2 py-0.5 text-[#1d1d1f] hover:bg-[#e8e8ed] transition-colors"
+                              className="px-2 py-0.5 text-stone-700 hover:text-amber-700 font-bold"
                               title="Increase"
                             >
                               +
                             </button>
                           </div>
-                          <span className="text-[11px] text-[#86868b]">× {formatCurrency(item.price)}</span>
+                          <span className="text-[11px] text-stone-500 font-medium">× {formatCurrency(item.price)}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className="font-semibold text-[#1d1d1f]">
+                        <span className="font-bold text-stone-950 font-mono">
                           {formatCurrency(item.price * item.quantity)}
                         </span>
                         <button
                           type="button"
                           onClick={() => removeFromCart(item.productId)}
-                          className="text-[#86868b] hover:text-rose-600 p-1 transition-colors cursor-pointer"
+                          className="text-stone-400 hover:text-rose-600 p-1 cursor-pointer"
                           title="Remove item"
                         >
                           <X className="w-3.5 h-3.5" />
@@ -1558,32 +1813,32 @@ function CheckoutContent() {
                 </div>
 
                 {/* DISCOUNT COUPON ENTRY BOX */}
-                <div className="pt-3 border-t border-[#d2d2d7]/30 space-y-2.5">
+                <div className="pt-3 border-t border-stone-100 space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-medium text-[#1d1d1f] flex items-center gap-1.5">
-                      <TicketPercent className="w-3.5 h-3.5 text-[#0071e3]" />
+                    <label className="text-xs font-bold text-stone-800 flex items-center gap-1.5">
+                      <TicketPercent className="w-3.5 h-3.5 text-amber-700" />
                       <span>Discount Coupon</span>
                     </label>
                     {appliedCoupon && (
-                      <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-semibold">
-                        Applied
+                      <span className="text-[10px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full font-bold border border-emerald-200">
+                        Active
                       </span>
                     )}
                   </div>
 
                   {appliedCoupon ? (
-                    <div className="p-3 rounded-[14px] bg-emerald-50 border border-emerald-200/80 flex items-center justify-between text-xs">
+                    <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between text-xs">
                       <div className="space-y-0.5">
-                        <div className="flex items-center gap-1.5 font-semibold text-emerald-900">
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        <div className="flex items-center gap-1.5 font-bold text-emerald-950">
+                          <Check className="w-3.5 h-3.5 text-emerald-700" />
                           <span>{appliedCoupon.code}</span>
-                          <span className="text-[11px] font-normal text-emerald-700">
+                          <span className="text-[11px] font-normal text-emerald-800">
                             (-{formatCurrency(appliedCoupon.discountAmount)})
                           </span>
                         </div>
                         {appliedCoupon.assignedToManagerName && (
                           <p className="text-[10px] text-emerald-700">
-                            Provided by Manager {appliedCoupon.assignedToManagerName}
+                            Assigned by Manager {appliedCoupon.assignedToManagerName}
                           </p>
                         )}
                       </div>
@@ -1604,25 +1859,25 @@ function CheckoutContent() {
                           value={couponInput}
                           onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
                           placeholder="e.g. VIKRAM15"
-                          className="flex-1 h-9 px-3 text-xs uppercase font-mono rounded-[10px] border border-[#d2d2d7] bg-[#f5f5f7]/50 text-[#1d1d1f] focus:outline-none focus:bg-white focus:border-[#0071e3]"
+                          className="flex-1 h-9 px-3 text-xs uppercase font-mono font-bold rounded-xl border border-stone-200 bg-stone-50/70 text-stone-900 focus:outline-none focus:bg-white focus:border-amber-600"
                         />
                         <button
                           type="button"
                           disabled={couponLoading || !couponInput.trim()}
                           onClick={() => validateAndApplyCoupon()}
-                          className="px-3.5 h-9 rounded-[10px] bg-[#1d1d1f] hover:bg-black text-white text-xs font-medium cursor-pointer disabled:opacity-40 transition-all"
+                          className="px-4 h-9 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-semibold cursor-pointer disabled:opacity-40 transition-all"
                         >
                           {couponLoading ? 'Checking...' : 'Apply'}
                         </button>
                       </div>
 
-                      {/* Refresh / View Available Offers Button */}
-                      <div className="pt-1">
+                      {/* Public Offers Accordion */}
+                      <div className="pt-0.5">
                         <button
                           type="button"
                           onClick={fetchPublicOffers}
                           disabled={isLoadingOffers}
-                          className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#0071e3] hover:text-[#0077ed] transition-colors cursor-pointer py-0.5"
+                          className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 hover:text-amber-900 transition-colors cursor-pointer py-0.5"
                         >
                           <RefreshCw className={`w-3 h-3 ${isLoadingOffers ? 'animate-spin' : ''}`} />
                           <span>
@@ -1633,27 +1888,27 @@ function CheckoutContent() {
                         {showPublicOffers && (
                           <div className="mt-2 space-y-1.5 animate-in fade-in">
                             {publicOffers.length === 0 ? (
-                              <p className="text-[11px] text-[#86868b] italic">
+                              <p className="text-[11px] text-stone-500 italic">
                                 No public offers active right now. Enter your promo code above.
                               </p>
                             ) : (
                               publicOffers.map((offer) => (
                                 <div
                                   key={offer.code}
-                                  className="p-2.5 rounded-xl bg-[#f5f5f7] border border-[#d2d2d7]/80 flex items-center justify-between text-xs transition-all hover:border-[#0071e3]/40"
+                                  className="p-2.5 rounded-xl bg-stone-50 border border-stone-200 flex items-center justify-between text-xs transition-all hover:border-amber-400"
                                 >
                                   <div className="space-y-0.5 pr-2">
                                     <div className="flex items-center gap-1.5">
-                                      <span className="font-mono font-bold text-[#1d1d1f] tracking-wider text-xs">
+                                      <span className="font-mono font-bold text-stone-950 text-xs">
                                         {offer.code}
                                       </span>
-                                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 font-medium">
+                                      <span className="text-[10px] px-1.5 py-0.2 rounded font-bold bg-amber-100 text-amber-900">
                                         {offer.discountType === 'PERCENTAGE'
                                           ? `${offer.value}% OFF`
                                           : `₹${offer.value / 100} OFF`}
                                       </span>
                                     </div>
-                                    <p className="text-[10px] text-[#6e6e73] leading-snug">
+                                    <p className="text-[10px] text-stone-500 leading-snug">
                                       {offer.description}
                                     </p>
                                   </div>
@@ -1663,7 +1918,7 @@ function CheckoutContent() {
                                       setCouponInput(offer.code);
                                       validateAndApplyCoupon(offer.code);
                                     }}
-                                    className="px-2.5 py-1 text-[11px] font-medium rounded-full bg-white hover:bg-[#1d1d1f] hover:text-white border border-[#d2d2d7] text-[#1d1d1f] transition-all cursor-pointer shrink-0 shadow-2xs"
+                                    className="px-2.5 py-1 text-[11px] font-semibold rounded-full bg-white hover:bg-stone-900 hover:text-white border border-stone-300 text-stone-900 transition-all cursor-pointer shrink-0 shadow-2xs"
                                   >
                                     Apply
                                   </button>
@@ -1677,95 +1932,95 @@ function CheckoutContent() {
                   )}
 
                   {couponError && (
-                    <p className="text-[11px] text-rose-600 flex items-center gap-1">
+                    <p className="text-[11px] text-rose-600 font-medium flex items-center gap-1">
                       <AlertCircle className="w-3 h-3 shrink-0" />
                       <span>{couponError}</span>
                     </p>
                   )}
                   {couponSuccessMsg && !couponError && (
-                    <p className="text-[11px] text-emerald-700 flex items-center gap-1">
+                    <p className="text-[11px] text-emerald-700 font-medium flex items-center gap-1">
                       <Sparkles className="w-3 h-3 shrink-0" />
                       <span>{couponSuccessMsg}</span>
                     </p>
                   )}
                 </div>
 
-                {/* Calculation Details & Transparent Statutory Breakdown */}
-                <div className="pt-2 border-t border-[#d2d2d7]/30 space-y-2.5 text-xs text-[#6e6e73]">
+                {/* Calculation Details & Statutory Breakdown */}
+                <div className="pt-2 border-t border-stone-100 space-y-2.5 text-xs text-stone-600">
                   {/* 1. Items Subtotal */}
                   <div className="flex justify-between items-start">
                     <div>
-                      <div className="flex items-center gap-1.5 font-medium text-[#1d1d1f]">
-                        <span>1. Items Total</span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 font-semibold font-mono">5% GST</span>
+                      <div className="flex items-center gap-1.5 font-semibold text-stone-900">
+                        <span>Items Total</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 font-bold font-mono">5% GST</span>
                       </div>
-                      <p className="text-[10px] text-[#86868b] mt-0.5">
+                      <p className="text-[10px] text-stone-400 mt-0.5">
                         Base: {formatCurrency(productTaxable)} + 5% GST: {formatCurrency(productGst)}
                       </p>
                     </div>
-                    <span className="font-semibold text-[#1d1d1f]">{formatCurrency(subtotal)}</span>
+                    <span className="font-bold text-stone-950 font-mono">{formatCurrency(subtotal)}</span>
                   </div>
 
                   {appliedCoupon && (
-                    <div className="flex justify-between text-emerald-700 font-semibold pl-2 border-l-2 border-emerald-500 text-[11px]">
+                    <div className="flex justify-between text-emerald-800 font-bold pl-2 border-l-2 border-emerald-500 text-[11px]">
                       <span>Coupon Discount ({appliedCoupon.code})</span>
                       <span>-{formatCurrency(discountAmount)}</span>
                     </div>
                   )}
 
-                  {/* Shipping & Delivery (Delhivery One) */}
+                  {/* 2. Single Bundled Delivery Line Item */}
                   <div className="flex justify-between items-start gap-2.5">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="font-medium text-xs text-[#1d1d1f]">
+                        <span className="font-semibold text-xs text-stone-900">
                           Shipping &amp; Delivery (Delhivery One)
                         </span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-100 text-purple-900 font-semibold font-mono whitespace-nowrap">
+                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-stone-100 text-stone-700 font-bold font-mono whitespace-nowrap border border-stone-200">
                           18% GST
                         </span>
                         {delhiveryRate && (
-                          <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 font-semibold tracking-wide whitespace-nowrap">
-                            Serviceable
+                          <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-800 font-bold whitespace-nowrap border border-emerald-200">
+                            {shippingMode === 'Express' ? 'Air Express' : 'Surface'}
                           </span>
                         )}
                       </div>
                       {delhiveryRate ? (
                         <div className="mt-0.5 space-y-0.5">
-                          <p className="text-[10px] text-[#0071e3] font-medium leading-tight">
-                            Doorstep courier delivery in {delhiveryRate.estimatedDays || 2}-3 business days
+                          <p className="text-[10px] text-amber-800 font-semibold leading-tight">
+                            Estimated Delivery: {delhiveryRate.estimatedDays || 2}-3 business days
                           </p>
-                          <p className="text-[10px] text-[#86868b]">
+                          <p className="text-[10px] text-stone-400 font-mono">
                             Base: {formatCurrency(bundledShippingBase)} + 18% GST: {formatCurrency(bundledShippingGst)}
                           </p>
                         </div>
                       ) : (
-                        <p className="text-[10px] text-[#86868b] mt-0.5 leading-relaxed">
+                        <p className="text-[10px] text-stone-400 mt-0.5 leading-relaxed">
                           {isCalculatingFreight
                             ? 'Calculating live freight with Delhivery One API...'
                             : isFreeShipping
                             ? 'Free Express Courier Delivery Applied'
                             : postalCode.length === 6 && isValidIndianPin(postalCode)
                             ? `Base: ${formatCurrency(bundledShippingBase)} + 18% GST: ${formatCurrency(bundledShippingGst)}`
-                            : 'Calculated dynamically based on destination PIN & package weight'}
+                            : 'Enter 6-digit PIN code to calculate exact delivery charges'}
                         </p>
                       )}
                     </div>
                     <div className="shrink-0 text-right pt-0.5">
                       {isFreeShipping ? (
-                        <span className="text-emerald-700 font-semibold text-xs whitespace-nowrap">FREE</span>
+                        <span className="text-emerald-700 font-bold text-xs whitespace-nowrap">FREE</span>
                       ) : isCalculatingFreight ? (
-                        <span className="text-xs text-[#0071e3] font-medium flex items-center gap-1 whitespace-nowrap">
+                        <span className="text-xs text-amber-700 font-semibold flex items-center gap-1 whitespace-nowrap">
                           <Loader2 className="w-3 h-3 animate-spin" /> Calculating...
                         </span>
                       ) : delhiveryRate || (postalCode.length === 6 && isValidIndianPin(postalCode) && bundledShippingTotal > 0) ? (
                         <div>
-                          <span className="font-semibold text-xs text-[#1d1d1f] font-mono whitespace-nowrap block">
+                          <span className="font-bold text-xs text-stone-950 font-mono whitespace-nowrap block">
                             {formatCurrency(bundledShippingTotal)}
                           </span>
-                          <span className="text-[9px] text-[#86868b] font-normal whitespace-nowrap block">(incl. 18% GST)</span>
+                          <span className="text-[9px] text-stone-400 font-normal whitespace-nowrap block">(incl. 18% GST)</span>
                         </div>
                       ) : (
-                        <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-[#f5f5f7] border border-[#d2d2d7] text-[#86868b] font-medium whitespace-nowrap">
+                        <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-stone-100 border border-stone-200 text-stone-600 font-semibold whitespace-nowrap">
                           Enter PIN
                         </span>
                       )}
@@ -1773,11 +2028,11 @@ function CheckoutContent() {
                   </div>
 
                   {/* Statutory Tax Summary (Expandable Breakdown) */}
-                  <div className="pt-2 border-t border-[#d2d2d7]/30">
+                  <div className="pt-2 border-t border-stone-100">
                     <button
                       type="button"
                       onClick={() => setShowGstBreakdown(!showGstBreakdown)}
-                      className="w-full flex items-center justify-between text-left text-[11px] font-medium text-[#0071e3] hover:underline cursor-pointer py-0.5"
+                      className="w-full flex items-center justify-between text-left text-[11px] font-semibold text-amber-800 hover:text-amber-950 cursor-pointer py-0.5"
                     >
                       <span className="flex items-center gap-1">
                         <FileText className="w-3.5 h-3.5" />
@@ -1791,16 +2046,16 @@ function CheckoutContent() {
                     </button>
 
                     {showGstBreakdown && (
-                      <div className="mt-2 p-2.5 rounded-xl bg-[#f5f5f7] border border-[#d2d2d7]/60 text-[10px] space-y-1.5 animate-in fade-in">
-                        <div className="flex justify-between text-[#6e6e73]">
+                      <div className="mt-2 p-3 rounded-xl bg-stone-50 border border-stone-200 text-[10px] space-y-1.5 animate-in fade-in">
+                        <div className="flex justify-between text-stone-600">
                           <span>Raw Honey GST (5% on {formatCurrency(productTaxable)}):</span>
-                          <span className="font-mono font-medium text-[#1d1d1f]">{formatCurrency(productGst)}</span>
+                          <span className="font-mono font-semibold text-stone-900">{formatCurrency(productGst)}</span>
                         </div>
-                        <div className="flex justify-between text-[#6e6e73]">
+                        <div className="flex justify-between text-stone-600">
                           <span>Delivery &amp; Logistics GST (18% on {formatCurrency(bundledShippingBase)}):</span>
-                          <span className="font-mono font-medium text-[#1d1d1f]">{formatCurrency(bundledShippingGst)}</span>
+                          <span className="font-mono font-semibold text-stone-900">{formatCurrency(bundledShippingGst)}</span>
                         </div>
-                        <div className="flex justify-between font-semibold text-[#1d1d1f] pt-1 border-t border-[#d2d2d7]">
+                        <div className="flex justify-between font-bold text-stone-900 pt-1 border-t border-stone-200">
                           <span>Total Combined GST (CGST + SGST):</span>
                           <span className="font-mono text-emerald-800">{formatCurrency(totalTax)}</span>
                         </div>
@@ -1808,50 +2063,48 @@ function CheckoutContent() {
                     )}
                   </div>
 
-                  <div className="flex justify-between text-base font-semibold text-[#1d1d1f] pt-3 border-t border-[#d2d2d7]/50">
+                  <div className="flex justify-between items-baseline text-base font-bold text-stone-950 pt-3 border-t border-stone-200">
                     <div>
-                      <span>Total Amount</span>
-                      <p className="text-[10px] font-normal text-[#86868b]">All taxes, shipping &amp; fees included</p>
+                      <span className="font-serif text-lg">Total Amount</span>
+                      <p className="text-[10px] font-normal text-stone-500">All taxes, shipping &amp; handling included</p>
                     </div>
-                    <span className="text-lg font-bold text-[#1d1d1f]">{formatCurrency(totalAmount)}</span>
+                    <span className="text-xl font-bold text-amber-950 font-mono">{formatCurrency(totalAmount)}</span>
                   </div>
                 </div>
 
-                {/* Desktop Pay Buttons */}
+                {/* Desktop Pay Button */}
                 <div className="hidden lg:block pt-2 space-y-2.5">
                   <button
                     type="button"
                     onClick={(e) => handleInitiatePayment(e, false)}
                     disabled={isProcessing}
-                    className="w-full py-3.5 px-6 rounded-full text-white font-medium text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-60 bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4]"
+                    className="w-full py-4 px-6 rounded-full text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-600/20 transition-all cursor-pointer disabled:opacity-60 bg-amber-600 hover:bg-amber-700 active:bg-amber-800"
                   >
-                    <Lock className="w-4 h-4" />
+                    <Lock className="w-4 h-4 text-amber-200" />
                     <span>
                       {isProcessing
                         ? processingStep || 'Processing...'
                         : `Pay ${formatCurrency(totalAmount)} with Razorpay`}
                     </span>
                   </button>
-                </div>
 
-                <div className="flex items-center justify-center gap-1.5 text-[11px] text-[#86868b] pt-1 text-center">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>
-                    UPI, Cards &amp; NetBanking Protected by Razorpay (100% Prepaid)
-                  </span>
+                  <div className="flex items-center justify-center gap-1.5 text-[11px] text-stone-500 text-center">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>100% Prepaid • 256-Bit SSL Encrypted Razorpay</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Sticky Mobile Bottom Bar: Fast, One-Thumb Checkout */}
-            <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-white/90 backdrop-blur-md border-t border-[#d2d2d7]/50 shadow-xl z-30">
+            {/* Sticky Mobile Bottom Bar */}
+            <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-white/95 backdrop-blur-md border-t border-stone-200 shadow-xl z-30">
               <div className="max-w-md mx-auto flex items-center justify-between gap-3">
                 <div className="shrink-0">
-                  <span className="text-[10px] text-[#86868b] uppercase tracking-wider block font-medium">
-                    Total
+                  <span className="text-[10px] text-stone-500 uppercase tracking-wider block font-semibold">
+                    Grand Total
                   </span>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-base sm:text-lg font-semibold text-[#1d1d1f]">
+                    <span className="text-lg font-bold text-stone-950 font-mono">
                       {formatCurrency(totalAmount)}
                     </span>
                   </div>
@@ -1862,9 +2115,9 @@ function CheckoutContent() {
                     type="button"
                     onClick={(e) => handleInitiatePayment(e, false)}
                     disabled={isProcessing}
-                    className="w-full max-w-[260px] py-3 px-5 rounded-full text-white font-medium text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer disabled:opacity-60 bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4]"
+                    className="w-full max-w-[260px] py-3.5 px-5 rounded-full text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md shadow-amber-600/20 transition-all cursor-pointer disabled:opacity-60 bg-amber-600 hover:bg-amber-700 active:bg-amber-800"
                   >
-                    <Lock className="w-3.5 h-3.5 shrink-0" />
+                    <Lock className="w-3.5 h-3.5 shrink-0 text-amber-200" />
                     <span>
                       {isProcessing
                         ? processingStep || 'Processing...'
@@ -1886,10 +2139,10 @@ export default function CheckoutPage() {
   return (
     <Suspense
       fallback={
-        <div className="bg-[#f5f5f7] min-h-screen flex items-center justify-center p-8">
+        <div className="bg-[#FAF8F5] min-h-screen flex items-center justify-center p-8">
           <div className="text-center space-y-3">
-            <div className="w-8 h-8 border-2 border-[#0071e3] border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-xs text-[#6e6e73] font-medium">Preparing Secure Checkout...</p>
+            <div className="w-8 h-8 border-2 border-amber-600 border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-xs text-stone-600 font-semibold">Preparing Secure Checkout...</p>
           </div>
         </div>
       }
