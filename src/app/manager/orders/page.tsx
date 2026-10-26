@@ -316,6 +316,11 @@ export default function ManagerOrdersPage() {
           ) : (
             <span className="text-xs text-muted-foreground/60 italic">Unassigned</span>
           )}
+          {(o as any).delhiveryRemarks && (
+            <p className="text-[10px] text-amber-400 font-medium leading-tight flex items-center gap-1 mt-0.5">
+              <span>⚠️ Delhivery One: Wallet balance needed to manifest on portal</span>
+            </p>
+          )}
         </div>
       ),
     },
