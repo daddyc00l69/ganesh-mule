@@ -231,6 +231,43 @@ export default function ManagerOrdersPage() {
     }
   };
 
+  const handleBookLiveDelhivery = async (order: OrderRecord) => {
+    setIsRefreshing(true);
+    try {
+      const res = await fetch('/api/shipping/delhivery/ship', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderNumber: order.orderNumber,
+          mode: order.carrier?.toLowerCase().includes('surface') ? 'Surface' : 'Express',
+          forceRegenerate: true,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to book live Delhivery shipment');
+      if (data?.shipment?.waybill) {
+        setOrders((prev) =>
+          prev.map((o) =>
+            o.id === order.id
+              ? {
+                  ...o,
+                  trackingNumber: data.shipment.waybill,
+                  carrier: data.shipment.carrier,
+                  delhiveryWaybill: data.shipment.waybill,
+                  delhiveryStatus: 'Manifested / Slotted for Pickup',
+                }
+              : o
+          )
+        );
+        setTransitionSuccess(`✓ Live Delhivery shipment booked! AWB: ${data.shipment.waybill} (${data.shipment.carrier})`);
+      }
+    } catch (err: any) {
+      alert(err.message || 'Live booking error');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   const columns: Column<OrderRecord>[] = [
     {
       key: 'orderNumber',
@@ -316,26 +353,50 @@ export default function ManagerOrdersPage() {
       header: 'Delhivery Shipment Tracking',
       render: (o) => {
         const rawCarrier = (o.carrier || 'Delhivery One').trim();
+        const isLiveAwb = o.trackingNumber?.startsWith('718');
         return (
           <div className="space-y-0.5 min-w-[160px]">
             {o.trackingNumber ? (
               <div className="flex flex-col gap-0.5">
-                <a
-                  href={`https://www.delhivery.com/track/package/${o.trackingNumber}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-mono text-xs font-semibold text-brand hover:underline inline-flex items-center gap-1"
-                  title="Track package live on Delhivery One"
-                >
-                  <span>{o.trackingNumber}</span>
-                  <ExternalLink className="w-3 h-3 opacity-70" />
-                </a>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <a
+                    href={`https://www.delhivery.com/track/package/${o.trackingNumber}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-mono text-xs font-semibold text-brand hover:underline inline-flex items-center gap-1"
+                    title="Track package live on Delhivery One"
+                  >
+                    <span>{o.trackingNumber}</span>
+                    <ExternalLink className="w-3 h-3 opacity-70" />
+                  </a>
+                  {isLiveAwb ? (
+                    <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                      Live AWB
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleBookLiveDelhivery(o)}
+                      className="text-[9px] px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30 hover:bg-amber-500/30 cursor-pointer"
+                      title="Click to book live on Delhivery One"
+                    >
+                      ⚡ Book Live
+                    </button>
+                  )}
+                </div>
                 <span className="text-[10px] text-muted-foreground">
                   {rawCarrier.includes('(') ? rawCarrier : `(${rawCarrier})`}
                 </span>
               </div>
             ) : (
-              <span className="text-xs text-muted-foreground/60 italic">Unassigned</span>
+              <GlassButton
+                variant="outline"
+                size="sm"
+                onClick={() => handleBookLiveDelhivery(o)}
+                className="text-[10px] h-6 px-2 text-amber-400 border-amber-500/30 hover:bg-amber-500/10"
+              >
+                ⚡ Book Live AWB
+              </GlassButton>
             )}
             {(o as any).delhiveryRemarks && (
               <p className="text-[10px] text-amber-400 font-medium leading-tight flex items-center gap-1 mt-0.5">
@@ -658,6 +719,7 @@ export default function ManagerOrdersPage() {
                           body: JSON.stringify({
                             orderNumber: activeOrder.orderNumber,
                             mode: carrier.toLowerCase().includes('surface') ? 'Surface' : 'Express',
+                            forceRegenerate: true,
                           }),
                         });
                         const data = await res.json();

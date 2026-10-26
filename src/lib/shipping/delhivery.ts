@@ -284,8 +284,12 @@ export async function createDelhiveryShipment(
 
   const carrierName = mode === 'Surface' ? 'Delhivery One (Surface)' : 'Delhivery One (Air Express)';
 
-  // If order already has an AWB and regeneration not requested, return existing
-  if (order.delhiveryWaybill && !options?.forceRegenerate) {
+  // If order already has a real live AWB and regeneration not requested, return existing.
+  // Note: Simulated fallback AWBs (starting with '143') always proceed to live booking when API key is present.
+  const isSimulatedFallback = Boolean(order.delhiveryWaybill?.startsWith('143'));
+  const hasLiveApiKey = Boolean(settings.apiKey && !settings.apiKey.includes('placeholder'));
+
+  if (order.delhiveryWaybill && !options?.forceRegenerate && (!isSimulatedFallback || !hasLiveApiKey)) {
     return {
       success: true,
       waybill: order.delhiveryWaybill,
