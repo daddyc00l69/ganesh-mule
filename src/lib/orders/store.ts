@@ -43,8 +43,18 @@ function readOrdersFromDisk(): OrderRecord[] {
                 if (!orderMap.has(key)) {
                   orderMap.set(key, o);
                 } else {
-                  // Merge fields if existing
-                  orderMap.set(key, { ...orderMap.get(key), ...o });
+                  // Merge fields if existing, preserving live cancellations and real AWBs
+                  const prev = orderMap.get(key)!;
+                  const merged = { ...prev, ...o };
+                  if (prev.orderStatus === 'CANCELLED' && o.orderStatus !== 'CANCELLED') {
+                    merged.orderStatus = 'CANCELLED';
+                    merged.delhiveryStatus = prev.delhiveryStatus || o.delhiveryStatus;
+                  }
+                  if (prev.trackingNumber && !prev.trackingNumber.startsWith('143') && o.trackingNumber?.startsWith('143')) {
+                    merged.trackingNumber = prev.trackingNumber;
+                    merged.delhiveryWaybill = prev.delhiveryWaybill || prev.trackingNumber;
+                  }
+                  orderMap.set(key, merged);
                 }
               }
             }
@@ -168,6 +178,17 @@ export function addLiveOrder(order: OrderRecord): OrderRecord {
   );
 
   if (existingIdx >= 0) {
+    // Preserve live Delhivery cancellation and real live AWB
+    if (orders[existingIdx].orderStatus === 'CANCELLED' && order.orderStatus !== 'CANCELLED') {
+      order.orderStatus = 'CANCELLED';
+      if (orders[existingIdx].delhiveryStatus) {
+        order.delhiveryStatus = orders[existingIdx].delhiveryStatus;
+      }
+    }
+    if (orders[existingIdx].trackingNumber && !orders[existingIdx].trackingNumber?.startsWith('143')) {
+      order.trackingNumber = orders[existingIdx].trackingNumber;
+      order.delhiveryWaybill = orders[existingIdx].delhiveryWaybill || orders[existingIdx].trackingNumber;
+    }
     Object.assign(orders[existingIdx], order);
     order = orders[existingIdx];
   } else {

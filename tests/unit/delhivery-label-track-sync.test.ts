@@ -45,8 +45,8 @@ describe('Live Verification: Label, Tracking & Cancellation Synchronization', ()
     };
 
     const draftOrder: OrderRecord = {
-      id: 'ord-draft-6352',
-      orderNumber: 'SG-2026-6352',
+      id: 'ord-draft-9999',
+      orderNumber: 'SG-UNBOOKED-9999',
       userId: 'usr-customer-2',
       customerName: 'Aarav Mehta',
       customerEmail: 'aarav@gmail.com',
@@ -108,8 +108,8 @@ describe('Live Verification: Label, Tracking & Cancellation Synchronization', ()
     expect(labelRes.headers.get('content-disposition')).toContain('delhivery-official-label-71890010000070.pdf');
   });
 
-  it('should render HTML with automated queue notice for draft SG-2026-6352', async () => {
-    const labelHtmlReq = new NextRequest('http://localhost:3000/api/shipping/delhivery/label?orderNumber=SG-2026-6352&format=html');
+  it('should render HTML with automated queue notice for draft SG-UNBOOKED-9999', async () => {
+    const labelHtmlReq = new NextRequest('http://localhost:3000/api/shipping/delhivery/label?orderNumber=SG-UNBOOKED-9999&format=html');
     const labelHtmlRes = await getLabel(labelHtmlReq);
     expect(labelHtmlRes.status).toBe(200);
     expect(labelHtmlRes.headers.get('content-type')).toContain('text/html');

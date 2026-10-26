@@ -163,16 +163,23 @@ export async function POST(req: NextRequest) {
 
     // Dynamic Delhivery Freight calculation based on destination PIN and gross glass jar consignment weight
     const totalConsignmentWeightGrams = calculateConsignmentWeightGrams(verifiedLineItems as any);
-    const chosenMode = parsed.data.shippingMode || 'Express';
+    const chosenMode = parsed.data.shippingMode || getDelhiverySettings().shippingMode || 'Surface';
     const delhiveryPricing = await calculateDelhiveryShippingCost({
       destinationPincode: address.postalCode,
       weightGrams: totalConsignmentWeightGrams,
       mode: chosenMode,
     });
     const delhiveryShippingBasePaise = Math.round(delhiveryPricing.pricing.subtotal * 100);
+    const delhiveryShippingTotalPaise = delhiveryPricing.pricing.totalShippingCostPaise;
 
     // Server-side calculation of shipping, platform fees, and statutory GST
-    const feeBreakdown = calculateOrderFees(subtotal, discountAmount, undefined, delhiveryShippingBasePaise);
+    const feeBreakdown = calculateOrderFees(
+      subtotal,
+      discountAmount,
+      undefined,
+      delhiveryShippingBasePaise,
+      delhiveryShippingTotalPaise
+    );
     const shippingCost = feeBreakdown.shippingTotal; // base + 18% GST (or 0 if free)
     const platformFee = feeBreakdown.platformTotal; // base + 18% GST
     const taxAmount = feeBreakdown.totalTax; // products 5% + shipping 18% + platform 18%
@@ -263,7 +270,8 @@ export async function POST(req: NextRequest) {
       customerPhone: customer.phone,
       shippingAddress: address,
       subtotal,
-      shippingCost: feeBreakdown.shippingBase,
+      shippingCost: feeBreakdown.shippingTotal,
+      shippingBase: feeBreakdown.shippingBase,
       shippingGst: feeBreakdown.shippingGst,
       carrier: chosenMode === 'Surface' ? 'Delhivery One (Surface)' : 'Delhivery One (Air Express)',
       shippingMode: chosenMode,

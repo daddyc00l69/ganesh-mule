@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getLiveOrders, reloadOrdersFromDisk, addLiveOrder } from '@/lib/orders/store';
 import { prisma, isDatabaseOnline } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth/server';
+import { syncAllActiveDelhiveryOrders } from '@/lib/shipping/delhivery';
+
+let lastStaffDelhiverySyncTime = 0;
 
 export async function GET(req: NextRequest) {
   try {
@@ -26,6 +29,21 @@ export async function GET(req: NextRequest) {
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!, 10) : undefined;
 
     let orders = reloadOrdersFromDisk();
+
+    // Automatically synchronize Delhivery status changes & cancellations for managers
+    if (isStaff) {
+      const now = Date.now();
+      const shouldSync = searchParams.get('sync') === 'true';
+      if (shouldSync || now - lastStaffDelhiverySyncTime > 20000) {
+        lastStaffDelhiverySyncTime = now;
+        try {
+          await syncAllActiveDelhiveryOrders();
+          orders = reloadOrdersFromDisk();
+        } catch (syncErr) {
+          console.warn('[Auto-sync Delhivery Warning]', syncErr);
+        }
+      }
+    }
 
     // If database is online, we can optionally synchronize with DB
     try {

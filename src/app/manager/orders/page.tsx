@@ -57,10 +57,10 @@ export default function ManagerOrdersPage() {
   const [trackingDetails, setTrackingDetails] = useState<any | null>(null);
   const [isLoadingTracking, setIsLoadingTracking] = useState(false);
 
-  const fetchLiveOrders = async () => {
+  const fetchLiveOrders = async (forceSync?: boolean) => {
     setIsRefreshing(true);
     try {
-      const res = await fetch('/api/orders');
+      const res = await fetch(`/api/orders${forceSync === true ? '?sync=true' : ''}`);
       if (res.status === 401) {
         window.location.href = '/portal?redirect=/manager/orders';
         return;
@@ -81,7 +81,7 @@ export default function ManagerOrdersPage() {
       const res = await fetch('/api/shipping/delhivery/sync', { method: 'POST' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to sync with Delhivery');
-      await fetchLiveOrders();
+      await fetchLiveOrders(true);
       setTransitionSuccess(
         `✓ ${data.message || 'Delhivery sync complete'} (${data.cancelledCount || 0} cancellations updated)`
       );
@@ -623,7 +623,7 @@ export default function ManagerOrdersPage() {
           </button>
           <button
             type="button"
-            onClick={fetchLiveOrders}
+            onClick={() => fetchLiveOrders()}
             className="h-8 px-3 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium text-xs flex items-center gap-1.5 border border-zinc-700 transition-colors cursor-pointer disabled:opacity-50"
             disabled={isRefreshing}
           >

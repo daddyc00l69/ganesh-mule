@@ -525,7 +525,13 @@ export async function getDelhiveryTracking(
           ? DELHIVERY_URLS.STAGING_API
           : DELHIVERY_URLS.PRODUCTION_API;
 
-      const res = await fetch(`${apiBase}/api/v1/packages/json/?waybill=${cleanAwb}`, {
+      const isSimulated = cleanAwb.startsWith('143');
+      const trackingUrl =
+        isSimulated && orderNumber
+          ? `${apiBase}/api/v1/packages/json/?ref_ids=${encodeURIComponent(orderNumber)}`
+          : `${apiBase}/api/v1/packages/json/?waybill=${cleanAwb}`;
+
+      const res = await fetch(trackingUrl, {
         headers: {
           Authorization: `Token ${settings.apiKey}`,
         },
@@ -533,7 +539,10 @@ export async function getDelhiveryTracking(
 
       if (res.ok) {
         const data = await res.json();
-        const pkg = data?.ShipmentData?.[0]?.Shipment;
+        const shipments = (data?.ShipmentData || []).map((s: any) => s?.Shipment).filter(Boolean);
+        const pkg = (cleanAwb && !cleanAwb.startsWith('143'))
+          ? shipments.find((s: any) => s.AWB === cleanAwb) || shipments[shipments.length - 1]
+          : shipments[shipments.length - 1];
         if (pkg) {
           const scans: DelhiveryTrackingCheckpoint[] = (pkg.Scans || []).map((s: any) => ({
             timestamp: s?.ScanDetail?.ScanDateTime || new Date().toISOString(),
@@ -545,18 +554,38 @@ export async function getDelhiveryTracking(
           const statusObj = pkg.Status || {};
           const instructions = (statusObj.Instructions || '').toLowerCase();
           const statusText = (statusObj.Status || '').toLowerCase();
-          const statusCodeRaw = statusObj.StatusCode || '';
+          const statusCodeRaw = (statusObj.StatusCode || '').toUpperCase();
           const scanCheckCancelled = (pkg.Scans || []).some(
-            (s: any) =>
-              s?.ScanDetail?.StatusCode === 'DTUP-210' ||
-              (s?.ScanDetail?.Instructions || '').toLowerCase().includes('cancel') ||
-              (s?.ScanDetail?.Scan || '').toLowerCase().includes('cancel')
+            (s: any) => {
+              const code = (s?.ScanDetail?.StatusCode || '').toUpperCase();
+              const inst = (s?.ScanDetail?.Instructions || '').toLowerCase();
+              const scan = (s?.ScanDetail?.Scan || '').toLowerCase();
+              return (
+                code === 'DTUP-210' ||
+                code === 'X-PNP' ||
+                code === 'X-CANC' ||
+                code === 'CANC' ||
+                code === 'RTO' ||
+                inst.includes('cancel') ||
+                inst.includes('not received') ||
+                inst.includes('not picked') ||
+                scan.includes('cancel') ||
+                scan.includes('not picked')
+              );
+            }
           );
 
           const isCancelledOnDelhivery =
             statusCodeRaw === 'DTUP-210' ||
+            statusCodeRaw === 'X-PNP' ||
+            statusCodeRaw === 'X-CANC' ||
+            statusCodeRaw === 'CANC' ||
+            statusCodeRaw === 'RTO' ||
             instructions.includes('cancel') ||
+            instructions.includes('not received') ||
+            instructions.includes('seller cancelled') ||
             statusText.includes('cancel') ||
+            statusText.includes('not picked') ||
             scanCheckCancelled;
 
           let resolvedStatusCode: 'MANIFESTED' | 'IN_TRANSIT' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED' = 'IN_TRANSIT';
@@ -571,11 +600,13 @@ export async function getDelhiveryTracking(
           }
 
           const resolvedStatus = isCancelledOnDelhivery
-            ? `Cancelled on Delhivery (${statusObj.Instructions || 'Seller cancelled'})`
+            ? `Cancelled on Delhivery (${statusObj.Instructions || statusObj.Status || 'Seller cancelled'})`
             : statusObj.Status || 'In Transit';
 
           // Automatically synchronize with local order database
           const resolvedOrderNumber = pkg.ReferenceNo || orderNumber;
+          const liveAwb = pkg.AWB || cleanAwb;
+
           if (resolvedOrderNumber) {
             const liveOrders = getLiveOrders();
             const orderToUpdate =
@@ -583,20 +614,42 @@ export async function getDelhiveryTracking(
               liveOrders.find((o) => o.delhiveryWaybill === cleanAwb || o.trackingNumber === cleanAwb);
 
             if (orderToUpdate) {
-              if (isCancelledOnDelhivery && orderToUpdate.orderStatus !== 'CANCELLED') {
-                updateLiveOrderStatus(orderToUpdate.orderNumber, {
-                  orderStatus: 'CANCELLED',
-                  delhiveryStatus: resolvedStatus,
-                });
+              if (isCancelledOnDelhivery) {
+                if (
+                  orderToUpdate.orderStatus !== 'CANCELLED' ||
+                  orderToUpdate.trackingNumber !== liveAwb ||
+                  orderToUpdate.delhiveryStatus !== resolvedStatus
+                ) {
+                  updateLiveOrderStatus(orderToUpdate.orderNumber, {
+                    orderStatus: 'CANCELLED',
+                    delhiveryStatus: resolvedStatus,
+                    trackingNumber: liveAwb,
+                    delhiveryWaybill: liveAwb,
+                  });
+                  try {
+                    const { prisma } = await import('@/lib/db');
+                    await prisma.order.updateMany({
+                      where: { orderNumber: orderToUpdate.orderNumber },
+                      data: {
+                        orderStatus: 'CANCELLED',
+                        trackingNumber: liveAwb,
+                      },
+                    });
+                  } catch {}
+                }
               } else if (!isCancelledOnDelhivery) {
                 if (resolvedStatusCode === 'DELIVERED' && orderToUpdate.orderStatus !== 'DELIVERED') {
                   updateLiveOrderStatus(orderToUpdate.orderNumber, {
                     orderStatus: 'DELIVERED',
                     delhiveryStatus: 'Delivered',
+                    trackingNumber: liveAwb,
+                    delhiveryWaybill: liveAwb,
                   });
                 } else if (statusObj.Status && orderToUpdate.delhiveryStatus !== statusObj.Status) {
                   updateLiveOrderStatus(orderToUpdate.orderNumber, {
                     delhiveryStatus: statusObj.Status,
+                    trackingNumber: liveAwb,
+                    delhiveryWaybill: liveAwb,
                   });
                 }
               }
@@ -728,104 +781,202 @@ export async function syncAllActiveDelhiveryOrders(): Promise<{
       : DELHIVERY_URLS.PRODUCTION_API;
 
   const liveOrders = getLiveOrders();
-  // We check all orders with a live tracking number (especially starting with 718, or non-simulated)
-  const candidates = liveOrders.filter(
-    (o) => o.trackingNumber && !o.trackingNumber.startsWith('143')
-  );
+  const candidates = liveOrders;
 
   if (candidates.length === 0) {
     return { success: true, totalChecked: 0, cancelledCount: 0, updatedCount: 0, details: [] };
   }
 
-  const waybills = candidates.map((o) => o.trackingNumber!.trim());
+  const waybills = candidates
+    .map((o) => o.trackingNumber?.trim())
+    .filter((w): w is string => Boolean(w && !w.startsWith('143')));
+
+  const orderNumbers = candidates
+    .map((o) => o.orderNumber?.trim())
+    .filter(Boolean);
+
   let cancelledCount = 0;
   let updatedCount = 0;
   const details: any[] = [];
+  const processedAwbs = new Set<string>();
 
-  // Query in chunks of 20
-  for (let i = 0; i < waybills.length; i += 20) {
-    const chunk = waybills.slice(i, i + 20);
+  // Process shipments returned from Delhivery
+  const processShipmentItem = async (pkg: any) => {
+    if (!pkg?.AWB || processedAwbs.has(pkg.AWB)) return;
+    processedAwbs.add(pkg.AWB);
+
+    const cleanPkgRef = (pkg.ReferenceNo || '').replace(/^#/, '').toLowerCase();
+    const targetOrder = candidates.find((c) => {
+      const cleanOrderNum = (c.orderNumber || '').replace(/^#/, '').toLowerCase();
+      const cleanId = (c.id || '').toLowerCase();
+      return (
+        (cleanPkgRef && (cleanOrderNum === cleanPkgRef || cleanId === cleanPkgRef)) ||
+        c.trackingNumber === pkg.AWB ||
+        c.delhiveryWaybill === pkg.AWB
+      );
+    });
+    if (!targetOrder) return;
+
+    const statusObj = pkg.Status || {};
+    const instructions = (statusObj.Instructions || '').toLowerCase();
+    const statusText = (statusObj.Status || '').toLowerCase();
+    const statusCodeRaw = (statusObj.StatusCode || '').toUpperCase();
+    const scanCheckCancelled = (pkg.Scans || []).some((sc: any) => {
+      const code = (sc?.ScanDetail?.StatusCode || '').toUpperCase();
+      const inst = (sc?.ScanDetail?.Instructions || '').toLowerCase();
+      const scan = (sc?.ScanDetail?.Scan || '').toLowerCase();
+      return (
+        code === 'DTUP-210' ||
+        code === 'X-PNP' ||
+        code === 'X-CANC' ||
+        code === 'CANC' ||
+        code === 'RTO' ||
+        inst.includes('cancel') ||
+        inst.includes('not received') ||
+        inst.includes('not picked') ||
+        scan.includes('cancel') ||
+        scan.includes('not picked')
+      );
+    });
+
+    const isCancelled =
+      statusCodeRaw === 'DTUP-210' ||
+      statusCodeRaw === 'X-PNP' ||
+      statusCodeRaw === 'X-CANC' ||
+      statusCodeRaw === 'CANC' ||
+      statusCodeRaw === 'RTO' ||
+      instructions.includes('cancel') ||
+      instructions.includes('not received') ||
+      instructions.includes('seller cancelled') ||
+      statusText.includes('cancel') ||
+      statusText.includes('not picked') ||
+      scanCheckCancelled;
+
+    const liveAwb = pkg.AWB || targetOrder.trackingNumber || targetOrder.delhiveryWaybill;
+
+    if (isCancelled) {
+      if (
+        targetOrder.orderStatus !== 'CANCELLED' ||
+        targetOrder.trackingNumber !== liveAwb ||
+        !targetOrder.delhiveryStatus?.includes('Cancelled')
+      ) {
+        cancelledCount++;
+        const note = `Cancelled on Delhivery (${statusObj.Instructions || statusObj.Status || 'Seller cancelled'})`;
+        updateLiveOrderStatus(targetOrder.orderNumber, {
+          orderStatus: 'CANCELLED',
+          delhiveryStatus: note,
+          trackingNumber: liveAwb,
+          delhiveryWaybill: liveAwb,
+        });
+        try {
+          const { prisma } = await import('@/lib/db');
+          await prisma.order.updateMany({
+            where: { orderNumber: targetOrder.orderNumber },
+            data: {
+              orderStatus: 'CANCELLED',
+              trackingNumber: liveAwb,
+            },
+          });
+        } catch {}
+        details.push({
+          orderNumber: targetOrder.orderNumber,
+          waybill: liveAwb,
+          prevStatus: targetOrder.orderStatus,
+          newStatus: 'CANCELLED',
+          delhiveryStatus: note,
+        });
+      }
+    } else if (!isCancelled) {
+      if (statusText.includes('delivered') && targetOrder.orderStatus !== 'DELIVERED') {
+        updatedCount++;
+        updateLiveOrderStatus(targetOrder.orderNumber, {
+          orderStatus: 'DELIVERED',
+          delhiveryStatus: 'Delivered',
+          trackingNumber: liveAwb,
+          delhiveryWaybill: liveAwb,
+        });
+        try {
+          const { prisma } = await import('@/lib/db');
+          await prisma.order.updateMany({
+            where: { orderNumber: targetOrder.orderNumber },
+            data: {
+              orderStatus: 'DELIVERED',
+              trackingNumber: liveAwb,
+            },
+          });
+        } catch {}
+        details.push({
+          orderNumber: targetOrder.orderNumber,
+          waybill: liveAwb,
+          prevStatus: targetOrder.orderStatus,
+          newStatus: 'DELIVERED',
+          delhiveryStatus: 'Delivered',
+        });
+      } else if (
+        (statusObj.Status && targetOrder.delhiveryStatus !== statusObj.Status) ||
+        (liveAwb && targetOrder.trackingNumber !== liveAwb)
+      ) {
+        updatedCount++;
+        updateLiveOrderStatus(targetOrder.orderNumber, {
+          delhiveryStatus: statusObj.Status || targetOrder.delhiveryStatus,
+          trackingNumber: liveAwb,
+          delhiveryWaybill: liveAwb,
+        });
+        try {
+          const { prisma } = await import('@/lib/db');
+          await prisma.order.updateMany({
+            where: { orderNumber: targetOrder.orderNumber },
+            data: {
+              trackingNumber: liveAwb,
+            },
+          });
+        } catch {}
+        details.push({
+          orderNumber: targetOrder.orderNumber,
+          waybill: liveAwb,
+          prevStatus: targetOrder.delhiveryStatus || '',
+          newStatus: targetOrder.orderStatus,
+          delhiveryStatus: statusObj.Status || '',
+        });
+      }
+    }
+  };
+
+  // 1. Query Delhivery by Reference Numbers (Order IDs)
+  for (let i = 0; i < orderNumbers.length; i += 20) {
+    const chunk = orderNumbers.slice(i, i + 20);
     try {
-      const res = await fetch(`${apiBase}/api/v1/packages/json/?waybill=${chunk.join(',')}`, {
+      const res = await fetch(`${apiBase}/api/v1/packages/json/?ref_ids=${encodeURIComponent(chunk.join(','))}`, {
         headers: { Authorization: `Token ${settings.apiKey}` },
       });
-      if (!res.ok) continue;
-      const data = await res.json();
-      const shipments = data?.ShipmentData || [];
-
-      for (const s of shipments) {
-        const pkg = s?.Shipment;
-        if (!pkg?.AWB) continue;
-        const targetOrder = candidates.find(
-          (c) =>
-            c.trackingNumber === pkg.AWB ||
-            c.delhiveryWaybill === pkg.AWB ||
-            c.orderNumber === pkg.ReferenceNo
-        );
-        if (!targetOrder) continue;
-
-        const statusObj = pkg.Status || {};
-        const instructions = (statusObj.Instructions || '').toLowerCase();
-        const statusText = (statusObj.Status || '').toLowerCase();
-        const statusCodeRaw = statusObj.StatusCode || '';
-        const scanCheckCancelled = (pkg.Scans || []).some(
-          (sc: any) =>
-            sc?.ScanDetail?.StatusCode === 'DTUP-210' ||
-            (sc?.ScanDetail?.Instructions || '').toLowerCase().includes('cancel') ||
-            (sc?.ScanDetail?.Scan || '').toLowerCase().includes('cancel')
-        );
-
-        const isCancelled =
-          statusCodeRaw === 'DTUP-210' ||
-          instructions.includes('cancel') ||
-          statusText.includes('cancel') ||
-          scanCheckCancelled;
-
-        if (isCancelled && targetOrder.orderStatus !== 'CANCELLED') {
-          cancelledCount++;
-          const note = `Cancelled on Delhivery (${statusObj.Instructions || 'Seller cancelled'})`;
-          updateLiveOrderStatus(targetOrder.orderNumber, {
-            orderStatus: 'CANCELLED',
-            delhiveryStatus: note,
-          });
-          details.push({
-            orderNumber: targetOrder.orderNumber,
-            waybill: pkg.AWB,
-            prevStatus: targetOrder.orderStatus,
-            newStatus: 'CANCELLED',
-            delhiveryStatus: note,
-          });
-        } else if (!isCancelled) {
-          if (statusText.includes('delivered') && targetOrder.orderStatus !== 'DELIVERED') {
-            updatedCount++;
-            updateLiveOrderStatus(targetOrder.orderNumber, {
-              orderStatus: 'DELIVERED',
-              delhiveryStatus: 'Delivered',
-            });
-            details.push({
-              orderNumber: targetOrder.orderNumber,
-              waybill: pkg.AWB,
-              prevStatus: targetOrder.orderStatus,
-              newStatus: 'DELIVERED',
-              delhiveryStatus: 'Delivered',
-            });
-          } else if (statusObj.Status && targetOrder.delhiveryStatus !== statusObj.Status) {
-            updatedCount++;
-            updateLiveOrderStatus(targetOrder.orderNumber, {
-              delhiveryStatus: statusObj.Status,
-            });
-            details.push({
-              orderNumber: targetOrder.orderNumber,
-              waybill: pkg.AWB,
-              prevStatus: targetOrder.delhiveryStatus || '',
-              newStatus: targetOrder.orderStatus,
-              delhiveryStatus: statusObj.Status,
-            });
-          }
+      if (res.ok) {
+        const data = await res.json();
+        const shipments = data?.ShipmentData || [];
+        for (const s of shipments) {
+          if (s?.Shipment) await processShipmentItem(s.Shipment);
         }
       }
     } catch (err) {
-      console.warn('[Delhivery Batch Sync Error]', err);
+      console.warn('[Delhivery Batch Sync by ref_ids Error]', err);
+    }
+  }
+
+  // 2. Query Delhivery by live Waybills
+  for (let i = 0; i < waybills.length; i += 20) {
+    const chunk = waybills.slice(i, i + 20);
+    try {
+      const res = await fetch(`${apiBase}/api/v1/packages/json/?waybill=${encodeURIComponent(chunk.join(','))}`, {
+        headers: { Authorization: `Token ${settings.apiKey}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const shipments = data?.ShipmentData || [];
+        for (const s of shipments) {
+          if (s?.Shipment) await processShipmentItem(s.Shipment);
+        }
+      }
+    } catch (err) {
+      console.warn('[Delhivery Batch Sync by waybill Error]', err);
     }
   }
 
@@ -1160,7 +1311,7 @@ export async function calculateDelhiveryShippingCost(params: {
               peakSurcharge,
               handlingFee,
               additionalWeightCharge: 0,
-              insuredGlassHandlingFee,
+              insuredGlassHandlingFee: handlingFee || 0,
               fuelSurcharge,
               subtotal: Math.round(grossAmount * 100) / 100,
               gstRate: 18.0,

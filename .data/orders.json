@@ -22,14 +22,14 @@
     "taxAmount": 4495,
     "discountAmount": 0,
     "totalAmount": 94395,
-    "orderStatus": "CONFIRMED",
-    "paymentStatus": "PAID",
-    "paymentMethod": "ONLINE",
+    "orderStatus": "CANCELLED",
+    "paymentStatus": "COD_PENDING",
+    "paymentMethod": "COD",
     "assignedManagerName": "Operations Manager",
-    "trackingNumber": "14309778631486",
+    "trackingNumber": "71890010000103",
     "carrier": "Delhivery One (Air Express)",
-    "delhiveryWaybill": "14309778631486",
-    "delhiveryStatus": "Ready for Courier Booking",
+    "delhiveryWaybill": "71890010000103",
+    "delhiveryStatus": "Cancelled on Delhivery (Shipment not received from client)",
     "delhiveryEstimatedDelivery": "2026-10-30",
     "delhiveryLabelUrl": "/api/shipping/delhivery/label?orderNumber=SG-2026-6352",
     "items": [
@@ -45,7 +45,7 @@
       }
     ],
     "createdAt": "2026-10-26T10:53:48.282Z",
-    "updatedAt": "2026-10-26T10:53:48.283Z"
+    "updatedAt": "2026-10-26T13:13:29.918Z"
   },
   {
     "id": "ord-live-1793007981624",
@@ -71,8 +71,8 @@
     "discountAmount": 0,
     "totalAmount": 104953,
     "orderStatus": "CANCELLED",
-    "paymentStatus": "PAID",
-    "paymentMethod": "ONLINE",
+    "paymentStatus": "COD_PENDING",
+    "paymentMethod": "COD",
     "items": [
       {
         "id": "item-1",
@@ -86,7 +86,7 @@
       }
     ],
     "createdAt": "2026-10-26T09:46:21.624Z",
-    "updatedAt": "2026-10-26T09:46:22.223Z",
+    "updatedAt": "2026-10-26T13:13:33.997Z",
     "delhiverySortCode": "MMB/GRT",
     "trackingNumber": "71890010000070",
     "carrier": "Delhivery One (Surface)",
@@ -119,8 +119,8 @@
     "discountAmount": 0,
     "totalAmount": 104953,
     "orderStatus": "CONFIRMED",
-    "paymentStatus": "PAID",
-    "paymentMethod": "ONLINE",
+    "paymentStatus": "COD_PENDING",
+    "paymentMethod": "COD",
     "items": [
       {
         "id": "item-1",
@@ -200,9 +200,9 @@
       "totalTax": 6577,
       "grandTotal": 104953
     },
-    "paymentMethod": "ONLINE",
+    "paymentMethod": "COD",
     "orderStatus": "CONFIRMED",
-    "paymentStatus": "PAID",
+    "paymentStatus": "COD_PENDING",
     "items": [
       {
         "id": "item-1793004822701-0",
@@ -226,6 +226,7 @@
     ],
     "createdAt": "2026-10-26T08:53:42.701Z",
     "updatedAt": "2026-10-26T08:53:42.990Z",
+    "delhiveryRemarks": "Delhivery One Notice: Prepaid client manifest requires wallet balance on one.delhivery.com. Please recharge your Delhivery One wallet to book live waybill.",
     "trackingNumber": "14304822702486",
     "delhiveryWaybill": "14304822702486",
     "delhiveryEstimatedDelivery": "2026-10-30",
@@ -289,9 +290,9 @@
       "totalTax": 6365,
       "grandTotal": 103564
     },
-    "paymentMethod": "ONLINE",
+    "paymentMethod": "COD",
     "orderStatus": "CONFIRMED",
-    "paymentStatus": "PAID",
+    "paymentStatus": "COD_PENDING",
     "items": [
       {
         "id": "item-1793004660476-0",
@@ -315,6 +316,7 @@
     ],
     "createdAt": "2026-10-26T08:51:00.476Z",
     "updatedAt": "2026-10-26T08:54:15.830Z",
+    "delhiveryRemarks": "Delhivery One Notice: Prepaid client manifest requires wallet balance on one.delhivery.com. Please recharge your Delhivery One wallet to book live waybill.",
     "trackingNumber": "14304855418486",
     "delhiveryWaybill": "14304855418486",
     "delhiveryEstimatedDelivery": "2026-10-30",
@@ -342,8 +344,8 @@
     "discountAmount": 0,
     "totalAmount": 94400,
     "orderStatus": "CONFIRMED",
-    "paymentStatus": "PAID",
-    "paymentMethod": "ONLINE",
+    "paymentStatus": "COD_PENDING",
+    "paymentMethod": "COD",
     "items": [
       {
         "id": "item-1",
@@ -535,6 +537,7 @@
     ],
     "createdAt": "2026-10-26T08:07:18.791Z",
     "updatedAt": "2026-10-26T08:55:06.574Z",
+    "delhiveryRemarks": "Delhivery One Notice: Prepaid client manifest requires wallet balance on one.delhivery.com. Please recharge your Delhivery One wallet to book live waybill.",
     "trackingNumber": "14304906137112",
     "carrier": "Delhivery One (Surface)",
     "delhiveryWaybill": "14304906137112",

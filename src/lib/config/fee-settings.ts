@@ -110,7 +110,8 @@ export function calculateOrderFees(
   subtotalPaise: number,
   discountPaise: number = 0,
   settings: FeeSettings = activeFeeSettings,
-  customShippingBasePaise?: number
+  customShippingBasePaise?: number,
+  customShippingTotalPaise?: number
 ): FeeCalculationResult {
   const discountedSubtotal = Math.max(0, subtotalPaise - discountPaise);
 
@@ -120,11 +121,27 @@ export function calculateOrderFees(
     settings.freeShippingThreshold > 0 &&
     discountedSubtotal >= settings.freeShippingThreshold;
 
-  const resolvedBase = customShippingBasePaise !== undefined ? customShippingBasePaise : settings.shippingBaseFee;
-  const shippingBase = isFreeShipping || discountedSubtotal === 0 ? 0 : resolvedBase;
   const shippingGstRate = settings.shippingGstRate || 18;
-  const shippingGst = Math.round((shippingBase * shippingGstRate) / 100);
-  const shippingTotal = shippingBase + shippingGst;
+  let shippingBase = 0;
+  let shippingGst = 0;
+  let shippingTotal = 0;
+
+  if (!isFreeShipping && discountedSubtotal > 0) {
+    if (customShippingTotalPaise !== undefined && customShippingTotalPaise > 0) {
+      shippingTotal = customShippingTotalPaise;
+      shippingBase =
+        customShippingBasePaise !== undefined
+          ? customShippingBasePaise
+          : Math.round((shippingTotal * 100) / (100 + shippingGstRate));
+      shippingGst = shippingTotal - shippingBase;
+    } else {
+      const resolvedBase =
+        customShippingBasePaise !== undefined ? customShippingBasePaise : settings.shippingBaseFee;
+      shippingBase = resolvedBase;
+      shippingGst = Math.round((shippingBase * shippingGstRate) / 100);
+      shippingTotal = shippingBase + shippingGst;
+    }
+  }
 
   // 2. Platform Base Fee Calculation (18% GST)
   let platformBase = 0;

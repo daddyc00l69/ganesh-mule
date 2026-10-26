@@ -67,7 +67,7 @@ function CheckoutContent() {
   // Delhivery District & Air/Surface Serviceability States
   const [district, setDistrict] = useState<string>('');
   const [districtVerified, setDistrictVerified] = useState<boolean | null>(null);
-  const [shippingMode, setShippingMode] = useState<'Express' | 'Surface'>('Express');
+  const [shippingMode, setShippingMode] = useState<'Express' | 'Surface'>('Surface');
   const [airAvailable, setAirAvailable] = useState<boolean>(true);
   const [airRestrictionReason, setAirRestrictionReason] = useState<string | null>(null);
 
@@ -218,6 +218,15 @@ function CheckoutContent() {
       } catch (err) {
         console.warn('Using default fee configuration:', err);
       }
+      try {
+        const dRes = await fetch('/api/shipping/delhivery/settings');
+        if (dRes.ok) {
+          const dData = await dRes.json();
+          if (dData?.settings?.shippingMode) {
+            setShippingMode(dData.settings.shippingMode === 'Express' ? 'Express' : 'Surface');
+          }
+        }
+      } catch {}
     }
     loadFeeSettings();
   }, []);
@@ -292,7 +301,8 @@ function CheckoutContent() {
       ? delhiveryRate.subtotalPaise
       : postalCode.length === 6 && isValidIndianPin(postalCode)
       ? undefined
-      : 0
+      : 0,
+    delhiveryRate ? delhiveryRate.totalPaise : undefined
   );
   const {
     discountedSubtotal,
