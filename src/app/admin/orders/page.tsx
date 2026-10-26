@@ -27,12 +27,16 @@ import {
   RefreshCw,
   ExternalLink,
   Tag,
+  UserCheck,
 } from 'lucide-react';
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [managerFilter, setManagerFilter] = useState('ALL');
+  const [availableManagers, setAvailableManagers] = useState<Array<{ id: string; name: string }>>([]);
+  const [isAssigning, setIsAssigning] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Live order synchronization
@@ -60,6 +64,18 @@ export default function AdminOrdersPage() {
     return () => clearInterval(timer);
   }, []);
 
+  // Fetch registered managers for assignment
+  useEffect(() => {
+    fetch('/api/managers')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.managers && Array.isArray(data.managers)) {
+          setAvailableManagers(data.managers.map((m: any) => ({ id: m.id || m.userId, name: m.name })));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // Detail Modal
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
 
@@ -68,17 +84,58 @@ export default function AdminOrdersPage() {
   const [refundReason, setRefundReason] = useState('');
   const [isProcessingRefund, setIsProcessingRefund] = useState(false);
 
+  // Collect all known manager names across registered staff and existing orders
+  const allKnownManagers = Array.from(
+    new Set([
+      ...availableManagers.map((m) => m.name),
+      ...orders.map((o) => o.assignedManagerName).filter(Boolean) as string[],
+    ])
+  );
+
   const filteredOrders = orders.filter((o) => {
     const matchesSearch =
       o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       o.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      o.customerEmail.toLowerCase().includes(searchQuery.toLowerCase());
+      o.customerEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (o.assignedManagerName && o.assignedManagerName.toLowerCase().includes(searchQuery.toLowerCase()));
 
     const matchesStatus =
       statusFilter === 'ALL' ? true : o.orderStatus === statusFilter;
 
-    return matchesSearch && matchesStatus;
+    const matchesManager =
+      managerFilter === 'ALL'
+        ? true
+        : managerFilter === 'UNASSIGNED'
+        ? !o.assignedManagerName
+        : o.assignedManagerName?.toLowerCase() === managerFilter.toLowerCase();
+
+    return matchesSearch && matchesStatus && matchesManager;
   });
+
+  const handleAssignManager = async (orderId: string, managerName: string | null) => {
+    setIsAssigning(true);
+    try {
+      const res = await fetch(`/api/orders/${orderId}/assign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ managerName }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const updatedName = data.assignedManagerName || null;
+        setOrders((prev) =>
+          prev.map((o) => (o.id === orderId ? { ...o, assignedManagerName: updatedName } : o))
+        );
+        if (selectedOrder && selectedOrder.id === orderId) {
+          setSelectedOrder({ ...selectedOrder, assignedManagerName: updatedName });
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to assign manager:', err);
+    } finally {
+      setIsAssigning(false);
+    }
+  };
 
   const handleExecuteRefund = async () => {
     if (!refundingOrder) return;
@@ -171,6 +228,24 @@ export default function AdminOrdersPage() {
             : 'default';
         return <GlassBadge variant={variant} size="sm">{order.orderStatus}</GlassBadge>;
       },
+    },
+    {
+      key: 'assignedManagerName',
+      header: 'Managed By',
+      render: (order) => (
+        <div>
+          {order.assignedManagerName ? (
+            <GlassBadge variant="info" size="sm" className="font-medium flex items-center gap-1 w-fit">
+              <UserCheck className="w-3 h-3" />
+              <span>{order.assignedManagerName}</span>
+            </GlassBadge>
+          ) : (
+            <GlassBadge variant="outline" size="sm" className="text-amber-400 border-amber-500/30 w-fit">
+              ⚡ Unassigned
+            </GlassBadge>
+          )}
+        </div>
+      ),
     },
     {
       key: 'trackingNumber',
@@ -293,6 +368,62 @@ export default function AdminOrdersPage() {
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-amber-500' : ''}`} />
             <span>{isRefreshing ? 'Syncing...' : 'Refresh Orders'}</span>
           </GlassButton>
+        </div>
+      </div>
+
+      {/* Operations Manager Inbox Desk Filters */}
+      <div className="p-3 rounded-2xl glass-panel space-y-2">
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-semibold text-foreground flex items-center gap-1.5">
+            <UserCheck className="w-3.5 h-3.5 text-brand" />
+            <span>Operations Manager Inbox Desk</span>
+          </span>
+          <span className="text-[11px] text-muted-foreground">
+            Admin view: track and inspect orders managed by each operations manager
+          </span>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setManagerFilter('ALL')}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
+              managerFilter === 'ALL'
+                ? 'glass-primary shadow-sm font-semibold'
+                : 'glass-control text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            All Inboxes ({orders.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setManagerFilter('UNASSIGNED')}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
+              managerFilter === 'UNASSIGNED'
+                ? 'glass-primary shadow-sm font-semibold'
+                : 'glass-control text-amber-400 hover:text-amber-300'
+            }`}
+          >
+            ⚡ Unassigned Queue ({orders.filter((o) => !o.assignedManagerName).length})
+          </button>
+          {allKnownManagers.map((mgrName) => {
+            const count = orders.filter(
+              (o) => o.assignedManagerName?.toLowerCase() === mgrName.toLowerCase()
+            ).length;
+            return (
+              <button
+                key={mgrName}
+                type="button"
+                onClick={() => setManagerFilter(mgrName)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
+                  managerFilter.toLowerCase() === mgrName.toLowerCase()
+                    ? 'glass-primary shadow-sm font-semibold'
+                    : 'glass-control text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                👤 {mgrName} ({count})
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -423,6 +554,51 @@ export default function AdminOrdersPage() {
                 </p>
               </GlassCard>
             </div>
+
+            {/* Manager Assignment Desk Card */}
+            <GlassCard variant="panel" className="p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <UserCheck className="w-3.5 h-3.5 text-brand" />
+                  <span>Assigned Operations Manager</span>
+                </h4>
+                {selectedOrder.assignedManagerName ? (
+                  <GlassBadge variant="info" size="sm">
+                    👤 {selectedOrder.assignedManagerName}
+                  </GlassBadge>
+                ) : (
+                  <GlassBadge variant="outline" size="sm" className="text-amber-400 border-amber-500/30">
+                    ⚡ Unassigned / Desk Pool
+                  </GlassBadge>
+                )}
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <select
+                  value={selectedOrder.assignedManagerName || ''}
+                  onChange={(e) => handleAssignManager(selectedOrder.id, e.target.value || null)}
+                  disabled={isAssigning}
+                  className="flex-1 h-9 px-3 text-xs rounded-control glass-control text-foreground focus:outline-none focus:ring-1 focus:ring-brand cursor-pointer"
+                >
+                  <option value="" className="bg-[#1a1c23] text-white">⚡ Unassigned (Operations Desk Pool)</option>
+                  {allKnownManagers.map((mgr) => (
+                    <option key={mgr} value={mgr} className="bg-[#1a1c23] text-white">
+                      👤 {mgr}
+                    </option>
+                  ))}
+                </select>
+                {selectedOrder.assignedManagerName && (
+                  <GlassButton
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleAssignManager(selectedOrder.id, null)}
+                    disabled={isAssigning}
+                    className="text-xs text-rose-400 hover:text-rose-300"
+                  >
+                    Unassign
+                  </GlassButton>
+                )}
+              </div>
+            </GlassCard>
 
             {/* Items Purchased (Historical Snapshots) */}
             <div className="space-y-2">

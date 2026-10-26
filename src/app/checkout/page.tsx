@@ -33,6 +33,7 @@ import {
   Clock,
   Loader2,
   RefreshCw,
+  Trash2,
 } from 'lucide-react';
 import {
   INDIAN_STATES,
@@ -59,7 +60,14 @@ interface AppliedCouponState {
 function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { items, subtotal, clearCart } = useCart();
+  const { items, subtotal, clearCart, removeFromCart, updateQuantity } = useCart();
+
+  // Delhivery District & Air/Surface Serviceability States
+  const [district, setDistrict] = useState<string>('');
+  const [districtVerified, setDistrictVerified] = useState<boolean | null>(null);
+  const [shippingMode, setShippingMode] = useState<'Express' | 'Surface'>('Express');
+  const [airAvailable, setAirAvailable] = useState<boolean>(true);
+  const [airRestrictionReason, setAirRestrictionReason] = useState<string | null>(null);
 
   // Dynamic fee configuration manageable by operations managers
   const [feeSettings, setFeeSettings] = useState<FeeSettings>(DEFAULT_FEE_SETTINGS);
@@ -227,12 +235,13 @@ function CheckoutContent() {
     return acc + 600 * item.quantity;
   }, 0) || 600;
 
-  const fetchDelhiveryFreight = async (pin: string) => {
+  const fetchDelhiveryFreight = async (pin: string, modeOverride?: 'Express' | 'Surface') => {
     if (!isValidIndianPin(pin)) return;
     setIsCalculatingFreight(true);
+    const activeMode = modeOverride || shippingMode;
     try {
       const res = await fetch(
-        `/api/shipping/delhivery/cost?destinationPin=${pin}&weightGrams=${consignmentWeightGrams}`
+        `/api/shipping/delhivery/cost?destinationPin=${pin}&weightGrams=${consignmentWeightGrams}&mode=${activeMode}`
       );
       if (res.ok) {
         const data = await res.json();
@@ -247,7 +256,7 @@ function CheckoutContent() {
             zoneName: data.zone,
             zoneCode: data.zoneCode,
             estimatedDays: data.estimatedDays,
-            carrier: data.provider || 'Delhivery One Express',
+            carrier: activeMode === 'Surface' ? 'Delhivery One Surface' : 'Delhivery One Air Express',
             billableWeightGrams: data.billableWeightGrams,
             serviceable: true,
             rateSource: data.rateSource,
@@ -263,9 +272,9 @@ function CheckoutContent() {
 
   useEffect(() => {
     if (postalCode.length === 6 && isValidIndianPin(postalCode)) {
-      fetchDelhiveryFreight(postalCode);
+      fetchDelhiveryFreight(postalCode, shippingMode);
     }
-  }, [postalCode, consignmentWeightGrams]);
+  }, [postalCode, consignmentWeightGrams, shippingMode]);
 
   // Dynamic calculations with statutory GST and manager-controlled fees
   const totalQuantity = items.reduce((acc, item) => acc + item.quantity, 0);
@@ -376,6 +385,17 @@ function CheckoutContent() {
         if (data.state) {
           setState(data.state);
         }
+        const resolvedDistrict = data.district || data.delhivery?.district || resolvedCity;
+        setDistrict(resolvedDistrict);
+        setDistrictVerified(data.delhivery?.serviceable ?? true);
+
+        const airOk = data.delhivery?.hasAir ?? true;
+        setAirAvailable(airOk);
+        setAirRestrictionReason(data.delhivery?.airRestrictionReason || null);
+        if (!airOk && shippingMode === 'Express') {
+          setShippingMode('Surface');
+        }
+
         if (Array.isArray(data.postOffices) && data.postOffices.length > 0) {
           setAvailableTowns(data.postOffices);
         } else {
@@ -387,11 +407,17 @@ function CheckoutContent() {
       if (err.name !== 'AbortError') {
         const local = guessCityStateFromPin(pin);
         if (local) {
-          if (local.city) setCity(local.city);
+          if (local.city) {
+            setCity(local.city);
+            setDistrict(local.city);
+            setDistrictVerified(true);
+          }
           if (local.state) setState(local.state);
           setPinAutoDetected(`${local.city || ''}${local.city && local.state ? ', ' : ''}${local.state || ''}`);
         } else {
           setPinAutoDetected(null);
+          setDistrict('');
+          setDistrictVerified(null);
           setPinError('Could not auto-detect. Please enter Town/City manually.');
         }
       }
@@ -410,6 +436,8 @@ function CheckoutContent() {
         pincodeAbortRef.current.abort();
       }
       setPinAutoDetected(null);
+      setDistrict('');
+      setDistrictVerified(null);
       setPinError(null);
       setAvailableTowns([]);
       return;
@@ -419,7 +447,11 @@ function CheckoutContent() {
       // 1. Instant local guess for 0ms UI update
       const instant = guessCityStateFromPin(clean);
       if (instant) {
-        if (instant.city) setCity(instant.city);
+        if (instant.city) {
+          setCity(instant.city);
+          setDistrict(instant.city);
+          setDistrictVerified(true);
+        }
         if (instant.state) setState(instant.state);
         setPinAutoDetected(`${instant.city || ''}${instant.city && instant.state ? ', ' : ''}${instant.state || ''}`);
       }
@@ -428,7 +460,7 @@ function CheckoutContent() {
       fetchPinDetails(clean);
 
       // 3. Live Delhivery Freight calculation with 18% GST
-      fetchDelhiveryFreight(clean);
+      fetchDelhiveryFreight(clean, shippingMode);
     }
   };
 
@@ -490,6 +522,7 @@ function CheckoutContent() {
             postalCode: postalCode.trim(),
             country: 'India',
           },
+          shippingMode,
           couponCode: appliedCoupon?.code,
         }),
       });
@@ -834,18 +867,59 @@ function CheckoutContent() {
 
             {isOrderSummaryOpen && (
               <div className="px-5 pb-5 pt-2 border-t border-[#d2d2d7]/30 space-y-3 text-xs bg-[#f5f5f7]/60">
+                <div className="flex items-center justify-between pb-1 border-b border-[#d2d2d7]/30">
+                  <span className="text-[11px] font-medium text-[#6e6e73]">Selected Harvests</span>
+                  <button
+                    type="button"
+                    onClick={() => clearCart()}
+                    className="text-[10px] text-rose-600 hover:text-rose-800 flex items-center gap-1 font-semibold cursor-pointer"
+                  >
+                    <Trash2 className="w-3 h-3" /> Clear Bag
+                  </button>
+                </div>
                 <div className="divide-y divide-[#d2d2d7]/30 max-h-52 overflow-y-auto">
                   {items.map((item) => (
-                    <div key={item.productId} className="py-2.5 flex items-center justify-between">
-                      <div className="pr-2">
+                    <div key={item.productId} className="py-2.5 flex items-center justify-between gap-2">
+                      <div className="pr-1 flex-1 min-w-0">
                         <p className="font-medium text-[#1d1d1f] line-clamp-1">{item.productName}</p>
-                        <p className="text-[11px] text-[#86868b]">
-                          Qty: {item.quantity} × {formatCurrency(item.price)}
-                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="flex items-center border border-[#d2d2d7] rounded-full overflow-hidden bg-white">
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                              className="px-2 py-0.5 text-[#1d1d1f] hover:bg-[#e8e8ed] transition-colors"
+                              title="Decrease"
+                            >
+                              -
+                            </button>
+                            <span className="px-1.5 text-[11px] font-semibold text-[#1d1d1f]">
+                              {item.quantity}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                              className="px-2 py-0.5 text-[#1d1d1f] hover:bg-[#e8e8ed] transition-colors"
+                              title="Increase"
+                            >
+                              +
+                            </button>
+                          </div>
+                          <span className="text-[11px] text-[#86868b]">× {formatCurrency(item.price)}</span>
+                        </div>
                       </div>
-                      <span className="font-semibold text-[#1d1d1f] shrink-0">
-                        {formatCurrency(item.price * item.quantity)}
-                      </span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="font-semibold text-[#1d1d1f]">
+                          {formatCurrency(item.price * item.quantity)}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeFromCart(item.productId)}
+                          className="text-[#86868b] hover:text-rose-600 p-1 transition-colors cursor-pointer"
+                          title="Remove item"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1175,6 +1249,23 @@ function CheckoutContent() {
                       ) : pinError ? (
                         <p className="text-[10px] text-amber-600">{pinError}</p>
                       ) : null}
+
+                      {/* Explicit Delhivery District Verification */}
+                      {district && (
+                        <div className="mt-1 flex items-center flex-wrap gap-1.5 text-[10px]">
+                          <span className="text-[#6e6e73]">District:</span>
+                          <span className="text-[#1d1d1f] font-semibold">{district}</span>
+                          {districtVerified ? (
+                            <span className="inline-flex items-center gap-0.5 text-emerald-700 font-semibold bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.2 rounded-full text-[9px]">
+                              <Check className="w-2.5 h-2.5" /> Verified by Delhivery: YES
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-0.5 text-rose-700 font-semibold bg-rose-50 border border-rose-200/80 px-1.5 py-0.2 rounded-full text-[9px]">
+                              ✕ Verified by Delhivery: NO
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     {/* Town / City */}
@@ -1253,6 +1344,118 @@ function CheckoutContent() {
                     </div>
                   </div>
 
+                  {/* AIR VS. SURFACE SHIPPING MODE SELECTOR */}
+                  <div className="pt-3 border-t border-[#d2d2d7]/40 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-[#1d1d1f] flex items-center gap-1.5">
+                        <Truck className="w-3.5 h-3.5 text-[#0071e3]" />
+                        <span>Select Shipment Speed (Delhivery One)</span>
+                      </label>
+                      {postalCode.length === 6 && (
+                        <span className={`text-[10px] font-semibold ${airAvailable ? 'text-emerald-700' : 'text-amber-700'}`}>
+                          {airAvailable ? 'Air & Surface Available' : 'Surface Only for this PIN'}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {/* Air Express Card */}
+                      <button
+                        type="button"
+                        disabled={!airAvailable}
+                        onClick={() => {
+                          if (airAvailable) {
+                            setShippingMode('Express');
+                            if (postalCode.length === 6 && isValidIndianPin(postalCode)) {
+                              fetchDelhiveryFreight(postalCode, 'Express');
+                            }
+                          }
+                        }}
+                        className={`p-3 rounded-[16px] text-left transition-all border relative flex flex-col justify-between ${
+                          !airAvailable
+                            ? 'bg-[#f5f5f7]/60 border-[#d2d2d7]/50 opacity-60 cursor-not-allowed'
+                            : shippingMode === 'Express'
+                            ? 'bg-[#0071e3]/5 border-[#0071e3] ring-2 ring-[#0071e3]/20 shadow-xs cursor-pointer'
+                            : 'bg-white hover:bg-[#f5f5f7] border-[#d2d2d7]/70 cursor-pointer'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-bold text-[#1d1d1f]">Air Express Priority</span>
+                              <span className="text-[9px] px-1.5 py-0.2 rounded-full font-semibold bg-amber-500/15 text-amber-900 border border-amber-500/30">
+                                ⚡ Fastest
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-[#6e6e73] mt-0.5">
+                              1-2 business days door-to-door air freight
+                            </p>
+                          </div>
+                          <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
+                            shippingMode === 'Express' && airAvailable
+                              ? 'border-[#0071e3] bg-[#0071e3] text-white'
+                              : 'border-[#d2d2d7] bg-white'
+                          }`}>
+                            {shippingMode === 'Express' && airAvailable && <Check className="w-2.5 h-2.5" />}
+                          </div>
+                        </div>
+
+                        {!airAvailable ? (
+                          <p className="text-[9px] text-amber-700 font-medium mt-2 bg-amber-50 p-1.5 rounded-lg border border-amber-200/60">
+                            {airRestrictionReason || `Air courier unserviceable for PIN ${postalCode || ''}. Surface transport enabled.`}
+                          </p>
+                        ) : (
+                          <div className="flex items-center justify-between text-[10px] text-emerald-700 font-semibold mt-2 pt-1.5 border-t border-[#d2d2d7]/30">
+                            <span>✓ Air Serviceable by Delhivery</span>
+                            <span className="text-[#1d1d1f]">Priority Dispatch</span>
+                          </div>
+                        )}
+                      </button>
+
+                      {/* Surface Standard Card */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShippingMode('Surface');
+                          if (postalCode.length === 6 && isValidIndianPin(postalCode)) {
+                            fetchDelhiveryFreight(postalCode, 'Surface');
+                          }
+                        }}
+                        className={`p-3 rounded-[16px] text-left transition-all border relative flex flex-col justify-between ${
+                          shippingMode === 'Surface'
+                            ? 'bg-[#0071e3]/5 border-[#0071e3] ring-2 ring-[#0071e3]/20 shadow-xs cursor-pointer'
+                            : 'bg-white hover:bg-[#f5f5f7] border-[#d2d2d7]/70 cursor-pointer'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-bold text-[#1d1d1f]">Surface Standard</span>
+                              <span className="text-[9px] px-1.5 py-0.2 rounded-full font-semibold bg-blue-500/15 text-blue-900 border border-blue-500/30">
+                                🚛 Ground
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-[#6e6e73] mt-0.5">
+                              3-5 business days door-to-door road freight
+                            </p>
+                          </div>
+                          <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
+                            shippingMode === 'Surface'
+                              ? 'border-[#0071e3] bg-[#0071e3] text-white'
+                              : 'border-[#d2d2d7] bg-white'
+                          }`}>
+                            {shippingMode === 'Surface' && <Check className="w-2.5 h-2.5" />}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[10px] text-emerald-700 font-semibold mt-2 pt-1.5 border-t border-[#d2d2d7]/30">
+                          <span>✓ Available for all Indian PINs</span>
+                          <span className="text-[#1d1d1f]">Standard Ground</span>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+
                   {/* Live Shipping Label Preview Card */}
                   <div className="p-3.5 rounded-[16px] bg-[#f5f5f7]/70 border border-[#d2d2d7]/60 text-xs space-y-1.5">
                     <div className="flex items-center justify-between text-[10px] uppercase font-semibold text-[#86868b] tracking-wider">
@@ -1285,23 +1488,65 @@ function CheckoutContent() {
             {/* Right Desktop Sidebar: Order Summary, Coupons & Pay */}
             <div className="space-y-4">
               <div className="bg-white rounded-[20px] border border-[#d2d2d7]/50 p-6 space-y-4 shadow-sm">
-                <h3 className="text-xs font-semibold text-[#1d1d1f] uppercase tracking-wider pb-3 border-b border-[#d2d2d7]/30 hidden lg:block">
-                  Order Summary ({items.length} {items.length === 1 ? 'item' : 'items'})
-                </h3>
+                <div className="hidden lg:flex items-center justify-between pb-3 border-b border-[#d2d2d7]/30">
+                  <h3 className="text-xs font-semibold text-[#1d1d1f] uppercase tracking-wider">
+                    Order Summary ({items.length} {items.length === 1 ? 'item' : 'items'})
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => clearCart()}
+                    className="text-[11px] text-rose-600 hover:text-rose-800 flex items-center gap-1 font-semibold hover:underline cursor-pointer"
+                    title="Empty entire bag"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    <span>Clear Bag</span>
+                  </button>
+                </div>
 
                 {/* Items List (Desktop view) */}
                 <div className="hidden lg:block divide-y divide-[#d2d2d7]/30 max-h-52 overflow-y-auto pr-1">
                   {items.map((item) => (
-                    <div key={item.productId} className="py-2.5 flex items-center justify-between text-xs">
-                      <div className="pr-2">
+                    <div key={item.productId} className="py-2.5 flex items-center justify-between text-xs gap-2">
+                      <div className="pr-1 flex-1 min-w-0">
                         <p className="font-medium text-[#1d1d1f] line-clamp-1">{item.productName}</p>
-                        <p className="text-[11px] text-[#86868b]">
-                          Qty: {item.quantity} × {formatCurrency(item.price)}
-                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <div className="flex items-center border border-[#d2d2d7] rounded-full overflow-hidden bg-[#f5f5f7]">
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                              className="px-2 py-0.5 text-[#1d1d1f] hover:bg-[#e8e8ed] transition-colors"
+                              title="Decrease"
+                            >
+                              -
+                            </button>
+                            <span className="px-1.5 text-[11px] font-semibold text-[#1d1d1f]">
+                              {item.quantity}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                              className="px-2 py-0.5 text-[#1d1d1f] hover:bg-[#e8e8ed] transition-colors"
+                              title="Increase"
+                            >
+                              +
+                            </button>
+                          </div>
+                          <span className="text-[11px] text-[#86868b]">× {formatCurrency(item.price)}</span>
+                        </div>
                       </div>
-                      <span className="font-semibold text-[#1d1d1f] shrink-0">
-                        {formatCurrency(item.price * item.quantity)}
-                      </span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="font-semibold text-[#1d1d1f]">
+                          {formatCurrency(item.price * item.quantity)}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeFromCart(item.productId)}
+                          className="text-[#86868b] hover:text-rose-600 p-1 transition-colors cursor-pointer"
+                          title="Remove item"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>

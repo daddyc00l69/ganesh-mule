@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Menu, Sun, Moon, Bell, Shield, User } from 'lucide-react';
+import { Menu, Sun, Moon, Bell, Shield, User, LogOut } from 'lucide-react';
 import { GlassButton } from '@/components/ui/glass-button';
 import { GlassBadge } from '@/components/ui/glass-badge';
 
@@ -34,6 +34,15 @@ export const Topbar: React.FC<TopbarProps> = ({
     setIsDark(nextTheme);
     localStorage.setItem('solid-glass:theme', nextTheme ? 'dark' : 'light');
     document.documentElement.classList.toggle('dark', nextTheme);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      window.location.href = '/portal';
+    } catch {
+      window.location.href = '/portal';
+    }
   };
 
   return (
@@ -74,6 +83,17 @@ export const Topbar: React.FC<TopbarProps> = ({
             <p className="text-[10px] text-muted-foreground mt-0.5">{role}</p>
           </div>
         </div>
+
+        {/* Prominent Universal Sign Out Button */}
+        <button
+          type="button"
+          onClick={handleLogout}
+          title="Sign Out of Console"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-control glass-control text-destructive hover:bg-destructive/15 transition-all text-xs font-medium cursor-pointer ml-1"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Sign Out</span>
+        </button>
       </div>
     </header>
   );

@@ -13,14 +13,43 @@ import { GlassCard } from '@/components/ui/glass-card';
 import { MOCK_ORDERS } from '@/lib/mock-data';
 import { OrderRecord, OrderStatus } from '@/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { Truck, CheckCircle2, Clock, Eye, AlertCircle, Package, FileText, RefreshCw, ExternalLink, Tag, Zap } from 'lucide-react';
+import {
+  Truck,
+  CheckCircle2,
+  Clock,
+  Eye,
+  AlertCircle,
+  Package,
+  FileText,
+  RefreshCw,
+  ExternalLink,
+  Tag,
+  Zap,
+  UserCheck,
+  Inbox,
+} from 'lucide-react';
 
 export default function ManagerOrdersPage() {
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [inboxTab, setInboxTab] = useState<'MY_INBOX' | 'UNASSIGNED' | 'ALL'>('MY_INBOX');
+  const [currentManagerName, setCurrentManagerName] = useState<string>('');
+  const [isClaiming, setIsClaiming] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isGeneratingAwb, setIsGeneratingAwb] = useState(false);
+
+  // Identify logged in manager
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.user?.name) {
+          setCurrentManagerName(data.user.name);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Live order synchronization
   const fetchLiveOrders = async () => {
@@ -56,15 +85,55 @@ export default function ManagerOrdersPage() {
   const [transitionSuccess, setTransitionSuccess] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
+  const handleClaimOrder = async (orderId: string, managerName: string | null) => {
+    setIsClaiming(true);
+    try {
+      const res = await fetch(`/api/orders/${orderId}/assign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ managerName }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const updatedName = data.assignedManagerName || null;
+        setOrders((prev) =>
+          prev.map((o) => (o.id === orderId ? { ...o, assignedManagerName: updatedName } : o))
+        );
+        if (activeOrder && activeOrder.id === orderId) {
+          setActiveOrder({ ...activeOrder, assignedManagerName: updatedName });
+        }
+        setTransitionSuccess(
+          updatedName
+            ? `✓ Order claimed by ${updatedName}. Added to your active inbox.`
+            : `✓ Order released to general operations queue.`
+        );
+      }
+    } catch (err) {
+      console.warn('Failed to assign order:', err);
+    } finally {
+      setIsClaiming(false);
+    }
+  };
+
   const filteredOrders = orders.filter((o) => {
     const matchesSearch =
       o.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      o.customerName.toLowerCase().includes(searchQuery.toLowerCase());
+      o.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (o.assignedManagerName && o.assignedManagerName.toLowerCase().includes(searchQuery.toLowerCase()));
 
     const matchesStatus =
       statusFilter === 'ALL' ? true : o.orderStatus === statusFilter;
 
-    return matchesSearch && matchesStatus;
+    const matchesInbox =
+      inboxTab === 'ALL'
+        ? true
+        : inboxTab === 'UNASSIGNED'
+        ? !o.assignedManagerName
+        : currentManagerName
+        ? o.assignedManagerName?.toLowerCase() === currentManagerName.toLowerCase()
+        : true;
+
+    return matchesSearch && matchesStatus && matchesInbox;
   });
 
   const handleOpenFulfill = (order: OrderRecord) => {
@@ -196,6 +265,36 @@ export default function ManagerOrdersPage() {
       ),
     },
     {
+      key: 'assignedManagerName',
+      header: 'Manager Ownership',
+      render: (o) => {
+        const isMine =
+          currentManagerName &&
+          o.assignedManagerName?.toLowerCase() === currentManagerName.toLowerCase();
+        if (isMine) {
+          return (
+            <GlassBadge variant="success" size="sm" className="font-semibold flex items-center gap-1 w-fit">
+              <UserCheck className="w-3 h-3" />
+              <span>Assigned to You</span>
+            </GlassBadge>
+          );
+        }
+        if (o.assignedManagerName) {
+          return (
+            <GlassBadge variant="info" size="sm" className="font-medium flex items-center gap-1 w-fit">
+              <UserCheck className="w-3 h-3" />
+              <span>{o.assignedManagerName}</span>
+            </GlassBadge>
+          );
+        }
+        return (
+          <GlassBadge variant="outline" size="sm" className="text-amber-400 border-amber-500/30 w-fit">
+            ⚡ Unassigned
+          </GlassBadge>
+        );
+      },
+    },
+    {
       key: 'trackingNumber',
       header: 'Delhivery Shipment Tracking',
       render: (o) => (
@@ -227,6 +326,18 @@ export default function ManagerOrdersPage() {
       headerClassName: 'text-right',
       render: (o) => (
         <div className="flex items-center justify-end gap-1.5">
+          {!o.assignedManagerName && currentManagerName && (
+            <GlassButton
+              variant="secondary"
+              size="sm"
+              disabled={isClaiming}
+              onClick={() => handleClaimOrder(o.id, currentManagerName)}
+              className="text-xs text-amber-400 hover:text-amber-300 font-medium"
+              title="Claim this order into your inbox"
+            >
+              Claim
+            </GlassButton>
+          )}
           {o.trackingNumber && (
             <GlassButton
               variant="outline"
@@ -300,6 +411,54 @@ export default function ManagerOrdersPage() {
         </div>
       )}
 
+      {/* Manager Order Inbox Desk */}
+      <div className="p-3 rounded-2xl glass-panel space-y-2">
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-semibold text-foreground flex items-center gap-1.5">
+            <Inbox className="w-3.5 h-3.5 text-brand" />
+            <span>Fulfillment Operations Inbox</span>
+          </span>
+          <span className="text-[11px] text-muted-foreground">
+            {currentManagerName ? `Logged in as: ${currentManagerName}` : 'Manager Operations Desk'}
+          </span>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setInboxTab('MY_INBOX')}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
+              inboxTab === 'MY_INBOX'
+                ? 'glass-primary shadow-sm font-semibold'
+                : 'glass-control text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            📥 My Assigned Orders ({orders.filter((o) => currentManagerName && o.assignedManagerName?.toLowerCase() === currentManagerName.toLowerCase()).length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setInboxTab('UNASSIGNED')}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
+              inboxTab === 'UNASSIGNED'
+                ? 'glass-primary shadow-sm font-semibold'
+                : 'glass-control text-amber-400 hover:text-amber-300'
+            }`}
+          >
+            ⚡ Unassigned Queue ({orders.filter((o) => !o.assignedManagerName).length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setInboxTab('ALL')}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
+              inboxTab === 'ALL'
+                ? 'glass-primary shadow-sm font-semibold'
+                : 'glass-control text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            🌐 All Orders ({orders.length})
+          </button>
+        </div>
+      </div>
+
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
         <FilterBar
           options={[
@@ -360,6 +519,45 @@ export default function ManagerOrdersPage() {
                 <span>{transitionError}</span>
               </div>
             )}
+
+            {/* Manager Assignment Desk inside modal */}
+            <div className="p-3.5 rounded-xl glass-control flex items-center justify-between text-xs">
+              <div className="space-y-0.5">
+                <span className="text-muted-foreground">Assigned Manager:</span>
+                <p className="font-semibold text-foreground flex items-center gap-1">
+                  <UserCheck className="w-3.5 h-3.5 text-brand" />
+                  <span>{activeOrder.assignedManagerName || '⚡ Unassigned'}</span>
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {currentManagerName &&
+                  activeOrder.assignedManagerName?.toLowerCase() !==
+                    currentManagerName.toLowerCase() && (
+                    <GlassButton
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      disabled={isClaiming}
+                      onClick={() => handleClaimOrder(activeOrder.id, currentManagerName)}
+                      className="text-xs text-amber-400 hover:text-amber-300"
+                    >
+                      Claim for Myself
+                    </GlassButton>
+                  )}
+                {activeOrder.assignedManagerName && (
+                  <GlassButton
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isClaiming}
+                    onClick={() => handleClaimOrder(activeOrder.id, null)}
+                    className="text-xs text-muted-foreground hover:text-destructive"
+                  >
+                    Release Order
+                  </GlassButton>
+                )}
+              </div>
+            </div>
 
             {/* Current Status Overview */}
             <div className="p-3.5 rounded-xl glass-control flex items-center justify-between text-xs">

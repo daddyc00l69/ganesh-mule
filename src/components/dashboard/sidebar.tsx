@@ -104,12 +104,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, isOpen, onClose }) => {
       {/* Sidebar Panel */}
       <aside
         className={cn(
-          'fixed top-0 bottom-0 left-0 z-40 w-64 glass-panel border-r border-border/40 flex flex-col transition-transform duration-300 ease-in-out lg:static lg:translate-x-0',
+          'fixed top-0 bottom-0 left-0 z-40 w-64 glass-panel border-r border-border/40 flex flex-col transition-transform duration-300 ease-in-out lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 shrink-0',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         {/* Brand Header */}
-        <div className="h-16 flex items-center justify-between px-5 border-b border-border/40">
+        <div className="h-16 shrink-0 flex items-center justify-between px-5 border-b border-border/40">
           <Link href={role === 'ADMIN' ? '/admin' : '/manager'} className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl glass-primary flex items-center justify-center font-bold text-sm tracking-wider shadow-sm">
               <Sparkles className="w-4 h-4" />
@@ -140,7 +140,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, isOpen, onClose }) => {
         </div>
 
         {/* Navigation Items */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        <nav className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 py-4 space-y-1 scrollbar-thin">
           {navItems.map((item) => {
             const isActive =
               item.href === (role === 'ADMIN' ? '/admin' : '/manager')
@@ -157,7 +157,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, isOpen, onClose }) => {
                 className={cn(
                   'flex items-center justify-between px-3 py-2 text-xs font-medium rounded-control transition-all select-none',
                   isActive
-                    ? 'glass-primary shadow-sm'
+                    ? 'glass-primary shadow-sm font-semibold'
                     : 'text-muted-foreground hover:text-foreground hover:bg-white/10 dark:hover:bg-white/10'
                 )}
               >
@@ -181,7 +181,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, isOpen, onClose }) => {
         </nav>
 
         {/* Footer Actions */}
-        <div className="p-3 border-t border-border/40 space-y-1">
+        <div className="shrink-0 p-3 border-t border-border/40 space-y-1 bg-background/95 backdrop-blur-md sticky bottom-0 z-10">
           <Link
             href="/"
             target="_blank"

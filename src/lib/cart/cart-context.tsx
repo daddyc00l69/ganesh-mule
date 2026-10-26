@@ -26,7 +26,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const saved = localStorage.getItem('sg_cart');
       if (saved) {
-        setItems(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setItems(parsed.filter((i) => i && i.productId && typeof i.quantity === 'number' && i.quantity > 0));
+        } else {
+          setItems([]);
+        }
       }
     } catch {}
     setIsLoaded(true);

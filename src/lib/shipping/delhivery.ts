@@ -120,8 +120,41 @@ export interface PincodeServiceabilityResult {
   deliverySpeed: string;
   city: string;
   state: string;
+  district?: string;
+  districtVerified?: boolean;
+  hasAir: boolean;
+  hasSurface: boolean;
+  airRestrictionReason?: string;
   carrier: string;
   providerUrl: string;
+}
+
+/**
+ * Checks whether Delhivery Air Express is available for a given Indian pincode.
+ * Remote zones (Andaman & Nicobar 744xxx, Lakshadweep 68255x, remote Ladakh 194xxx)
+ * only support Surface transport due to DG/liquid aviation rules or remote mountain routing.
+ */
+export function checkDelhiveryAirAvailability(pincode: string): {
+  available: boolean;
+  reason?: string;
+} {
+  const cleanPin = pincode.replace(/\D/g, '').slice(0, 6);
+  if (!isValidIndianPin(cleanPin)) {
+    return { available: false, reason: 'Invalid Indian PIN code' };
+  }
+
+  // Non-air / Surface-only regions:
+  if (cleanPin.startsWith('744')) {
+    return { available: false, reason: 'Andaman & Nicobar Islands: Surface freight only (Aviation liquid cargo restricted).' };
+  }
+  if (cleanPin.startsWith('682') && ['682555', '682556', '682557', '682558', '682559'].includes(cleanPin)) {
+    return { available: false, reason: 'Lakshadweep Islands: Surface/Vessel transport only.' };
+  }
+  if (cleanPin.startsWith('194')) {
+    return { available: false, reason: 'Remote Ladakh High-Altitude Zone: Surface transit only.' };
+  }
+
+  return { available: true };
 }
 
 export async function checkDelhiveryServiceability(
@@ -135,6 +168,8 @@ export async function checkDelhiveryServiceability(
     settings.environment === 'staging'
       ? DELHIVERY_URLS.STAGING_API
       : DELHIVERY_URLS.PRODUCTION_API;
+
+  const airCheck = checkDelhiveryAirAvailability(cleanPin);
 
   // If live API token is present, attempt live request
   if (isValidPin && settings.apiKey && !settings.apiKey.includes('placeholder')) {
@@ -155,6 +190,7 @@ export async function checkDelhiveryServiceability(
         if (pinData) {
           const isPrepaid = pinData.pre_paid === 'Y';
           const cod = pinData.cod === 'Y';
+          const apiAir = pinData.express === 'Y' && airCheck.available;
           return {
             pincode: cleanPin,
             serviceable: isPrepaid,
@@ -164,6 +200,11 @@ export async function checkDelhiveryServiceability(
             deliverySpeed: settings.shippingMode === 'Express' ? 'Delhivery One Air Express' : 'Delhivery One Surface',
             city: pinData.district || 'India',
             state: pinData.state_code || 'India',
+            district: pinData.district || 'District City',
+            districtVerified: isPrepaid,
+            hasAir: apiAir,
+            hasSurface: true,
+            airRestrictionReason: !apiAir ? 'Air cargo unserviceable for this PIN by Delhivery One' : undefined,
             carrier: 'Delhivery One',
             providerUrl: DELHIVERY_URLS.PORTAL,
           };
@@ -176,6 +217,7 @@ export async function checkDelhiveryServiceability(
 
   // Robust verified Indian pincode serviceability engine (all standard 6-digit Indian PINs serviceable by Delhivery)
   const isServiceable = isValidPin;
+  const localHint = guessCityStateFromPin(cleanPin);
   return {
     pincode: cleanPin,
     serviceable: isServiceable,
@@ -183,8 +225,13 @@ export async function checkDelhiveryServiceability(
     codAvailable: false, // Strict business invariant: Prepaid only
     expectedDeliveryDays: settings.shippingMode === 'Express' ? 2 : 4,
     deliverySpeed: settings.shippingMode === 'Express' ? 'Delhivery One Air Express' : 'Delhivery One Surface',
-    city: 'Direct Apiary Dispatch',
-    state: 'India Postal Network',
+    city: localHint?.city || 'Direct Apiary Dispatch',
+    state: localHint?.state || 'India Postal Network',
+    district: localHint?.city || 'District City',
+    districtVerified: isServiceable,
+    hasAir: airCheck.available,
+    hasSurface: true,
+    airRestrictionReason: airCheck.reason,
     carrier: 'Delhivery One',
     providerUrl: DELHIVERY_URLS.PORTAL,
   };

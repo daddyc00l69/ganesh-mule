@@ -185,7 +185,7 @@ export async function GET(
         success: true,
         postalCode: pin,
         city,
-        district: rawDistrict,
+        district: rawDistrict || localGuess?.city || city,
         state: normalizeStateName(rawState),
         defaultTown: primaryTown,
         postOffices: allOffices,
@@ -197,6 +197,11 @@ export async function GET(
           deliverySpeed: delhivery.deliverySpeed,
           carrier: delhivery.carrier,
           providerUrl: delhivery.providerUrl,
+          district: rawDistrict || localGuess?.city || city,
+          districtVerified: delhivery.serviceable,
+          hasAir: delhivery.hasAir,
+          hasSurface: delhivery.hasSurface,
+          airRestrictionReason: delhivery.airRestrictionReason,
         },
       };
 
@@ -224,6 +229,11 @@ export async function GET(
           deliverySpeed: delhivery.deliverySpeed,
           carrier: delhivery.carrier,
           providerUrl: delhivery.providerUrl,
+          district: city,
+          districtVerified: delhivery.serviceable,
+          hasAir: delhivery.hasAir,
+          hasSurface: delhivery.hasSurface,
+          airRestrictionReason: delhivery.airRestrictionReason,
         },
       };
       pincodeCache.set(pin, payload);

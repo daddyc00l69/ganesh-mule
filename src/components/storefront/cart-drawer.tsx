@@ -8,7 +8,7 @@ import { calculateOrderFees } from '@/lib/config/fee-settings';
 import { X, Trash2, Plus, Minus, ShoppingBag, ArrowRight, Truck, Droplets } from 'lucide-react';
 
 export const CartDrawer: React.FC = () => {
-  const { items, removeFromCart, updateQuantity, subtotal, totalItems, isCartOpen, setIsCartOpen } = useCart();
+  const { items, removeFromCart, updateQuantity, clearCart, subtotal, totalItems, isCartOpen, setIsCartOpen } = useCart();
 
   // Lock main page body scroll when cart drawer is active
   useEffect(() => {
@@ -65,13 +65,26 @@ export const CartDrawer: React.FC = () => {
                 {totalItems} {totalItems === 1 ? 'item' : 'items'} • Cold-extracted &amp; NMR Pure
               </p>
             </div>
-            <button
-              onClick={() => setIsCartOpen(false)}
-              className="w-8 h-8 rounded-full bg-[#e8e8ed] text-[#1d1d1f] hover:bg-[#d2d2d7] flex items-center justify-center transition-colors cursor-pointer"
-              aria-label="Close bag"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              {items.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => clearCart()}
+                  className="px-2.5 py-1 text-xs text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-full font-medium transition-colors flex items-center gap-1 cursor-pointer border border-rose-200/60"
+                  title="Empty Bag"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Empty Bag</span>
+                </button>
+              )}
+              <button
+                onClick={() => setIsCartOpen(false)}
+                className="w-8 h-8 rounded-full bg-[#e8e8ed] text-[#1d1d1f] hover:bg-[#d2d2d7] flex items-center justify-center transition-colors cursor-pointer"
+                aria-label="Close bag"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {/* Free Delivery Banner */}

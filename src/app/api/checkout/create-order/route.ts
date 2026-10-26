@@ -37,6 +37,7 @@ const CheckoutSchema = z.object({
     postalCode: z.string(),
     country: z.string().default('India'),
   }),
+  shippingMode: z.enum(['Express', 'Surface']).optional().default('Express'),
   couponCode: z.string().optional(),
 });
 
@@ -159,9 +160,11 @@ export async function POST(req: NextRequest) {
 
     // Dynamic Delhivery Freight calculation based on destination PIN and gross glass jar consignment weight
     const totalConsignmentWeightGrams = calculateConsignmentWeightGrams(verifiedLineItems as any);
+    const chosenMode = parsed.data.shippingMode || 'Express';
     const delhiveryPricing = await calculateDelhiveryShippingCost({
       destinationPincode: address.postalCode,
       weightGrams: totalConsignmentWeightGrams,
+      mode: chosenMode,
     });
     const delhiveryShippingBasePaise = Math.round(delhiveryPricing.pricing.subtotal * 100);
 
@@ -259,7 +262,8 @@ export async function POST(req: NextRequest) {
       subtotal,
       shippingCost: feeBreakdown.shippingBase,
       shippingGst: feeBreakdown.shippingGst,
-      carrier: `Delhivery One (${delhiveryPricing.shippingMode || 'Express'} Air)`,
+      carrier: chosenMode === 'Surface' ? 'Delhivery One (Surface)' : 'Delhivery One (Air Express)',
+      shippingMode: chosenMode,
       shippingZone: delhiveryPricing.zone,
       delhiveryStatus: 'Payment Pending',
       platformFee: feeBreakdown.platformBase,
