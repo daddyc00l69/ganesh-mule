@@ -40,7 +40,7 @@ const CheckoutSchema = z.object({
     country: z.string().default('India'),
   }),
   shippingMode: z.enum(['Express', 'Surface']).optional().default('Express'),
-  paymentMethod: z.enum(['ONLINE', 'COD']).optional().default('ONLINE'),
+  paymentMethod: z.literal('ONLINE').optional().default('ONLINE'),
   couponCode: z.string().optional(),
 });
 
@@ -277,9 +277,10 @@ export async function POST(req: NextRequest) {
       assignedManagerName: appliedManagerName,
       totalAmount,
       feeBreakdown,
-      paymentMethod: parsed.data.paymentMethod,
-      orderStatus: parsed.data.paymentMethod === 'COD' ? 'CONFIRMED' : 'PENDING',
-      paymentStatus: parsed.data.paymentMethod === 'COD' ? 'COD_PENDING' : 'CREATED',
+      delhiveryPricing,
+      paymentMethod: 'ONLINE',
+      orderStatus: 'PENDING',
+      paymentStatus: 'CREATED',
       items: verifiedLineItems.map((item, idx) => ({
         id: `item-${Date.now()}-${idx}`,
         orderId: internalOrderId,
@@ -293,8 +294,8 @@ export async function POST(req: NextRequest) {
       payments: [
         {
           id: `pay-${Date.now()}`,
-          provider: parsed.data.paymentMethod === 'COD' ? 'COD' : 'RAZORPAY',
-          razorpayOrderId: parsed.data.paymentMethod === 'COD' ? undefined : razorpayOrderId,
+          provider: 'RAZORPAY',
+          razorpayOrderId,
           amount: totalAmount,
           currency: 'INR',
           status: 'PENDING',
@@ -305,22 +306,9 @@ export async function POST(req: NextRequest) {
     };
     addLiveOrder(orderRecord);
 
-    // If COD order, trigger automatic Delhivery One dispatch immediately for live tracking & labels
-    if (parsed.data.paymentMethod === 'COD') {
-      try {
-        await createDelhiveryShipment(orderRecord, {
-          mode: chosenMode,
-          isCod: true,
-          forceRegenerate: true,
-        } as any);
-      } catch (shipErr) {
-        console.warn('[COD Delhivery Auto-Ship Notice]', shipErr);
-      }
-    }
-
     return NextResponse.json({
       success: true,
-      isCod: parsed.data.paymentMethod === 'COD',
+      isCod: false,
       orderId: internalOrderId,
       orderNumber,
       razorpayOrderId,

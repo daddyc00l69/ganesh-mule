@@ -485,6 +485,36 @@ export default function InvoicePage() {
                   </span>
                 </div>
 
+                {invoice.delhiveryLogistics && (
+                  <div className="bg-stone-50 border border-stone-200/90 rounded-lg p-2.5 my-1 text-[10px] space-y-1 font-mono text-stone-600">
+                    <div className="flex justify-between items-center text-stone-900 font-semibold font-sans">
+                      <span className="flex items-center gap-1">
+                        <Truck className="w-3 h-3 text-amber-700" />
+                        <span>Delhivery One Courier Freight:</span>
+                      </span>
+                      <span>{invoice.delhiveryLogistics.zone}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>• Base Freight (Docket):</span>
+                      <span>{formatCurrency(invoice.delhiveryLogistics.baseFreightPaise)}</span>
+                    </div>
+                    {(invoice.delhiveryLogistics.lastMilePaise > 0 || invoice.delhiveryLogistics.peakSurchargePaise > 0) && (
+                      <div className="flex justify-between">
+                        <span>• Last-Mile &amp; Peak Surcharges:</span>
+                        <span>{formatCurrency(invoice.delhiveryLogistics.lastMilePaise + invoice.delhiveryLogistics.peakSurchargePaise)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span>• Courier GST (18% SAC 9965):</span>
+                      <span>{formatCurrency(invoice.delhiveryLogistics.gstAmountPaise)}</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-stone-900 pt-0.5 border-t border-stone-200">
+                      <span>Total Delhivery Freight:</span>
+                      <span>{formatCurrency(invoice.delhiveryLogistics.totalFreightPaise)}</span>
+                    </div>
+                  </div>
+                )}
+
                 {(invoice.platformBase ?? 0) > 0 && (
                   <div className="flex justify-between items-center text-stone-600">
                     <span>Platform Fee (SAC 9971):</span>
@@ -604,14 +634,23 @@ export default function InvoicePage() {
                 </p>
                 <div className="text-xs space-y-1 text-stone-700">
                   <p>
-                    <span className="font-medium text-stone-900">Courier Partner:</span> Delhivery One Express Doorstep
+                    <span className="font-medium text-stone-900">Courier Partner:</span>{' '}
+                    {invoice.delhiveryLogistics?.carrier || order?.carrier || 'Delhivery One (Surface)'}
                   </p>
                   <p>
                     <span className="font-medium text-stone-900">Waybill / Tracking:</span>{' '}
                     <span className="font-mono text-stone-900 font-semibold">
-                      {order?.delhiveryWaybill || `DLHV-${invoice.orderNumber.replace(/[^0-9]/g, '')}`}
+                      {order?.trackingNumber || order?.delhiveryWaybill || invoice.delhiveryLogistics?.waybill || `DLHV-${invoice.orderNumber.replace(/[^0-9]/g, '')}`}
                     </span>
                   </p>
+                  {invoice.delhiveryLogistics && (
+                    <p>
+                      <span className="font-medium text-stone-900">Routing &amp; Zone:</span>{' '}
+                      <span className="font-mono text-stone-800 font-medium">
+                        {invoice.delhiveryLogistics.zone} ({invoice.delhiveryLogistics.weightGrams}g Billable)
+                      </span>
+                    </p>
+                  )}
                   <p>
                     <span className="font-medium text-stone-900">Package Type:</span> Heavy Food-Safe Solid Glass Jar with Airtight Seal
                   </p>

@@ -3,6 +3,7 @@ import { prisma, isDatabaseOnline } from '@/lib/db';
 import { MOCK_ORDERS } from '@/lib/mock-data';
 import { getLiveOrders, getLiveOrderById } from '@/lib/orders/store';
 import { buildTaxInvoiceData } from '@/lib/invoice';
+import { calculateDelhiveryShippingCost, calculateConsignmentWeightGrams } from '@/lib/shipping/delhivery';
 
 export async function GET(
   req: NextRequest,
@@ -73,6 +74,24 @@ export async function GET(
         { error: `Order "${orderNumber}" not found. Please verify the order number.` },
         { status: 404 }
       );
+    }
+
+    // Ensure real Delhivery courier pricing is calculated if missing
+    if (!order.delhiveryPricing && order.shippingAddress?.postalCode) {
+      try {
+        const weightGrams = calculateConsignmentWeightGrams(order.items);
+        const mode = order.carrier?.toLowerCase().includes('surface') ? 'Surface' : 'Express';
+        const costRes = await calculateDelhiveryShippingCost({
+          destinationPincode: order.shippingAddress.postalCode,
+          weightGrams,
+          mode,
+        });
+        if (costRes?.pricing) {
+          order.delhiveryPricing = costRes;
+        }
+      } catch (err) {
+        console.warn('[Invoice Delhivery Calculation]', err);
+      }
     }
 
     const invoiceData = buildTaxInvoiceData(order);

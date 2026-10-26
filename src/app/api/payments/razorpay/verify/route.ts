@@ -171,6 +171,18 @@ export async function POST(req: NextRequest) {
             forceRegenerate: true,
           });
           console.log(`[Delhivery Auto-Ship] Booked AWB ${shipmentResult.waybill} for Order #${mockOrder.orderNumber}`);
+
+          if (dbOnline) {
+            try {
+              await prisma.order.updateMany({
+                where: { orderNumber: mockOrder.orderNumber },
+                data: {
+                  trackingNumber: shipmentResult.waybill,
+                  carrier: shipmentResult.carrier,
+                },
+              });
+            } catch {}
+          }
         } catch (shipErr) {
           console.warn('[Delhivery Auto-Ship Exception]', shipErr);
         }
@@ -207,7 +219,9 @@ export async function POST(req: NextRequest) {
       verified: true,
       paymentId: razorpayPaymentId,
       orderNumber,
-      message: 'Payment successfully authenticated and order transitioned to PROCESSING.',
+      waybill: mockOrder?.trackingNumber || mockOrder?.delhiveryWaybill,
+      carrier: mockOrder?.carrier,
+      message: 'Payment successfully authenticated and live order dispatched on Delhivery.',
     });
   } catch (err: any) {
     return NextResponse.json({ error: 'Payment verification failed', details: err.message }, { status: 500 });

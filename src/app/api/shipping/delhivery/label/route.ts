@@ -171,10 +171,7 @@ export async function GET(req: NextRequest) {
     (order as any).shippingMode === 'Surface' ||
     liveDelhiveryPkg?.mot === 'S';
   const modeText = isSurface ? 'SURFACE' : 'EXPRESS';
-  const isCod =
-    order.paymentStatus === 'COD_PENDING' ||
-    (order as any).paymentMethod === 'COD' ||
-    liveDelhiveryPkg?.pt === 'COD';
+  const isCod = false;
 
   const sortCode =
     liveDelhiveryPkg?.sort_code ||

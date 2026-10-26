@@ -345,14 +345,14 @@ export default function AdminOrdersPage() {
       render: (order) => (
         <div>
           {order.assignedManagerName ? (
-            <GlassBadge variant="info" size="sm" className="font-medium flex items-center gap-1 w-fit">
-              <UserCheck className="w-3 h-3" />
+            <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-zinc-800/80 text-zinc-300 border border-zinc-700 font-medium">
+              <UserCheck className="w-3 h-3 text-zinc-400" />
               <span>{order.assignedManagerName}</span>
-            </GlassBadge>
+            </span>
           ) : (
-            <GlassBadge variant="outline" size="sm" className="text-amber-400 border-amber-500/30 w-fit">
-              ⚡ Unassigned
-            </GlassBadge>
+            <span className="inline-flex items-center text-[10px] px-2 py-0.5 rounded-full bg-zinc-900 text-zinc-400 border border-zinc-800">
+              Unassigned
+            </span>
           )}
         </div>
       ),
@@ -372,36 +372,36 @@ export default function AdminOrdersPage() {
                     href={`https://www.delhivery.com/track/package/${order.trackingNumber}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-mono text-xs font-semibold text-brand hover:underline inline-flex items-center gap-1"
+                    className="font-mono text-xs font-semibold text-zinc-100 hover:text-white hover:underline inline-flex items-center gap-1"
                     title="Track package live on Delhivery One"
                   >
                     <span>{order.trackingNumber}</span>
-                    <ExternalLink className="w-3 h-3 opacity-70" />
+                    <ExternalLink className="w-3 h-3 opacity-60" />
                   </a>
                   {isLiveAwb && (
-                    <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-zinc-800 text-emerald-300 font-mono border border-emerald-800/40">
                       Live AWB
                     </span>
                   )}
                   <button
                     type="button"
                     onClick={() => handleOpenTracking(order)}
-                    className="text-[9px] px-1.5 py-0.2 rounded-full bg-sky-500/20 text-sky-300 font-semibold border border-sky-500/30 hover:bg-sky-500/30 cursor-pointer inline-flex items-center gap-0.5"
+                    className="text-[9px] px-1.5 py-0.2 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 border border-zinc-700 cursor-pointer inline-flex items-center gap-0.5 font-mono"
                     title="Open live scan checkpoint drawer"
                   >
-                    📡 Track
+                    Track
                   </button>
                 </div>
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-[10px] text-zinc-400 font-mono">
                   {rawCarrier.includes('(') ? rawCarrier : `(${rawCarrier})`}
                 </span>
               </div>
             ) : (
-              <span className="text-xs text-muted-foreground/60 italic">Unassigned</span>
+              <span className="text-xs text-zinc-500 font-mono italic">Unassigned</span>
             )}
             {(order as any).delhiveryRemarks && (
-              <p className="text-[10px] text-amber-400 font-medium leading-tight flex items-center gap-1 mt-0.5">
-                <span>⚠️ Delhivery One: Wallet balance needed to manifest on portal</span>
+              <p className="text-[10px] text-zinc-400 font-medium leading-tight flex items-center gap-1 mt-0.5">
+                <span>⚠️ {((order as any).delhiveryRemarks || '').slice(0, 50)}</span>
               </p>
             )}
           </div>
@@ -423,72 +423,55 @@ export default function AdminOrdersPage() {
       className: 'text-right',
       headerClassName: 'text-right',
       render: (order) => (
-        <div className="flex items-center justify-end gap-1.5 flex-wrap sm:flex-nowrap">
+        <div className="flex items-center justify-end gap-1.5 flex-nowrap">
           {(!order.trackingNumber || order.trackingNumber.startsWith('143')) && order.orderStatus !== 'CANCELLED' && (
-            <GlassButton
-              variant="primary"
-              size="sm"
+            <button
+              type="button"
               onClick={() => handleBookLiveDelhivery(order)}
-              className="gap-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md border-emerald-400/30 whitespace-nowrap"
+              className="text-xs px-2.5 py-1 rounded bg-zinc-100 hover:bg-white text-zinc-900 font-semibold shadow-xs flex items-center gap-1 cursor-pointer transition-colors whitespace-nowrap"
               title="Book real live shipment on Delhivery One directly with 1 click"
             >
               <Truck className="w-3.5 h-3.5" />
               <span>Book Live</span>
-            </GlassButton>
+            </button>
           )}
           {order.trackingNumber && (
-            <GlassButton
-              variant="outline"
-              size="sm"
-              onClick={() => handleOpenTracking(order)}
-              className="gap-1 text-sky-400 hover:text-sky-300 hover:border-sky-500/30 text-xs"
-              title="View live checkpoints from Delhivery"
-            >
-              <span>Track</span>
-            </GlassButton>
-          )}
-          {order.trackingNumber && (
-            <GlassButton
-              variant="outline"
-              size="sm"
+            <button
+              type="button"
               onClick={() => window.open(`/api/shipping/delhivery/label?orderNumber=${order.orderNumber}`, '_blank')}
-              className="gap-1 text-emerald-400 hover:text-emerald-300 hover:border-emerald-500/30 text-xs"
+              className="text-xs px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-zinc-700 cursor-pointer flex items-center gap-1 transition-colors"
               title="Print official Delhivery Shipping Label PDF"
             >
-              <Tag className="w-3.5 h-3.5" />
+              <Tag className="w-3 h-3 text-zinc-400" />
               <span>Label</span>
-            </GlassButton>
+            </button>
           )}
-          {order.trackingNumber && !order.trackingNumber.startsWith('143') && order.orderStatus !== 'CANCELLED' && (
-            <GlassButton
-              variant="outline"
-              size="sm"
-              onClick={() => handleCancelShipment(order)}
-              className="gap-1 text-rose-400 hover:text-rose-300 hover:border-rose-500/30 text-xs"
-              title="Void / Cancel this Delhivery shipment and refund courier freight to wallet"
-            >
-              <span>Void</span>
-            </GlassButton>
-          )}
-          <GlassButton
-            variant="outline"
-            size="sm"
+          <button
+            type="button"
             onClick={() => window.open(`/invoice/${order.orderNumber}`, '_blank')}
-            className="gap-1 text-amber-500 hover:text-amber-400 hover:border-amber-500/30"
+            className="text-xs px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-zinc-700 cursor-pointer flex items-center gap-1 transition-colors"
             title="Open official GST Tax Invoice"
           >
-            <FileText className="w-3.5 h-3.5" />
+            <FileText className="w-3 h-3 text-zinc-400" />
             <span>Invoice</span>
-          </GlassButton>
-          <GlassButton
-            variant="outline"
-            size="sm"
+          </button>
+          {order.trackingNumber && !order.trackingNumber.startsWith('143') && order.orderStatus !== 'CANCELLED' && (
+            <button
+              type="button"
+              onClick={() => handleCancelShipment(order)}
+              className="text-xs px-2 py-1 text-zinc-400 hover:text-rose-400 cursor-pointer transition-colors"
+              title="Void / Cancel this Delhivery shipment"
+            >
+              Void
+            </button>
+          )}
+          <button
+            type="button"
             onClick={() => setSelectedOrder(order)}
-            className="gap-1.5"
+            className="text-xs px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-100 font-medium border border-zinc-700 cursor-pointer transition-colors whitespace-nowrap"
           >
-            <Eye className="w-3.5 h-3.5" />
-            <span>Details</span>
-          </GlassButton>
+            Details
+          </button>
           {order.paymentStatus === 'PAID' && (
             <GlassButton
               variant="destructive"

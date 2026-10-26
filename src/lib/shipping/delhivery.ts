@@ -313,12 +313,9 @@ export async function createDelhiveryShipment(
   // If live Delhivery API key is provided, attempt live CMU shipment creation
   if (settings.apiKey && !settings.apiKey.includes('placeholder')) {
     try {
-      const isCod =
-        order.paymentStatus === 'COD_PENDING' ||
-        (order as any).paymentMethod === 'COD' ||
-        (options as any)?.isCod;
-      const paymentMode = isCod ? 'COD' : 'Prepaid';
-      const codAmount = isCod ? (order.totalAmount / 100).toFixed(2) : '0.00';
+      // Strict Prepaid Business Invariant: All consignments are 100% prepaid
+      const paymentMode = 'Prepaid';
+      const codAmount = '0.00';
 
       const payload = {
         shipments: [
@@ -369,6 +366,7 @@ export async function createDelhiveryShipment(
         const pkg = json?.packages?.[0];
         if (pkg?.waybill) {
           assignedAwb = pkg.waybill;
+          (order as any).delhiveryRemarks = undefined;
           if (pkg.sort_code) {
             (order as any).delhiverySortCode = pkg.sort_code;
           }
@@ -905,14 +903,20 @@ export async function getDelhiveryOfficialPackingSlip(
  * Delhivery One Rate Calculator & Zone Matrix
  */
 export interface DelhiveryPricingBreakdown {
-  baseFreight: number; // in INR
+  baseFreight: number; // in INR (charge_DL)
+  lastMileCharge?: number; // in INR (charge_LM)
+  peakSurcharge?: number; // in INR (charge_PEAK)
+  handlingFee?: number; // in INR (charge_DPH)
   additionalWeightCharge: number; // in INR
   insuredGlassHandlingFee: number; // in INR
   fuelSurcharge: number; // in INR
-  subtotal: number; // in INR
+  subtotal: number; // in INR (gross_amount)
   gstRate: number; // 18%
-  gstAmount: number; // in INR
-  totalShippingCost: number; // in INR
+  gstAmount: number; // in INR (tax_data)
+  cgst?: number;
+  sgst?: number;
+  igst?: number;
+  totalShippingCost: number; // in INR (total_amount)
   totalShippingCostPaise: number; // in paise
 }
 
@@ -1119,8 +1123,21 @@ export async function calculateDelhiveryShippingCost(params: {
 
       if (res.ok) {
         const liveData = await res.json();
-        if (liveData && typeof liveData[0]?.total_amount === 'number') {
-          const liveTotal = liveData[0].total_amount;
+        const item = liveData?.[0];
+        if (item && typeof item.total_amount === 'number') {
+          const liveTotal = item.total_amount;
+          const grossAmount = typeof item.gross_amount === 'number' ? item.gross_amount : Math.round((liveTotal / 1.18) * 100) / 100;
+          const cgst = item.tax_data?.CGST ?? 0;
+          const sgst = item.tax_data?.SGST ?? 0;
+          const igst = item.tax_data?.IGST ?? 0;
+          const taxSum = cgst + sgst + igst;
+          const gstAmount = taxSum > 0 ? taxSum : Math.round((liveTotal - grossAmount) * 100) / 100;
+          const baseFreight = typeof item.charge_DL === 'number' ? item.charge_DL : Math.round(grossAmount * 0.85 * 100) / 100;
+          const lastMileCharge = item.charge_LM || 0;
+          const peakSurcharge = item.charge_PEAK || 0;
+          const handlingFee = item.charge_DPH || 0;
+          const fuelSurcharge = item.charge_FSC || item.charge_FS || 0;
+
           return {
             success: true,
             originPincode: originPin,
@@ -1130,21 +1147,27 @@ export async function calculateDelhiveryShippingCost(params: {
             destinationCity: zoneInfo.city,
             destinationState: zoneInfo.state,
             weightGrams,
-            billableWeightGrams,
+            billableWeightGrams: item.charged_weight || billableWeightGrams,
             shippingMode: mode,
-            zone: zoneInfo.zoneName,
-            zoneCode: zoneInfo.zoneCode,
+            zone: item.zone ? `Zone ${item.zone}` : zoneInfo.zoneName,
+            zoneCode: (item.zone as any) || zoneInfo.zoneCode,
             zoneDescription: tariff.desc,
             isLocal: zoneInfo.isLocal,
             estimatedDays: zoneInfo.estimatedDays,
             pricing: {
-              baseFreight: Math.round(liveTotal * 0.7 * 100) / 100,
+              baseFreight,
+              lastMileCharge,
+              peakSurcharge,
+              handlingFee,
               additionalWeightCharge: 0,
               insuredGlassHandlingFee,
-              fuelSurcharge: Math.round(liveTotal * 0.08 * 100) / 100,
-              subtotal: Math.round((liveTotal / 1.18) * 100) / 100,
+              fuelSurcharge,
+              subtotal: Math.round(grossAmount * 100) / 100,
               gstRate: 18.0,
-              gstAmount: Math.round((liveTotal - liveTotal / 1.18) * 100) / 100,
+              gstAmount: Math.round(gstAmount * 100) / 100,
+              cgst,
+              sgst,
+              igst,
               totalShippingCost: liveTotal,
               totalShippingCostPaise: Math.round(liveTotal * 100),
             },

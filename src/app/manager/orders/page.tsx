@@ -390,9 +390,20 @@ export default function ManagerOrdersPage() {
       key: 'paymentStatus',
       header: 'Payment Status',
       render: (o) => (
-        <GlassBadge variant={o.paymentStatus === 'PAID' ? 'success' : 'warning'} size="sm">
-          {o.paymentStatus}
-        </GlassBadge>
+        <span
+          className={`inline-flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-full font-medium ${
+            o.paymentStatus === 'PAID'
+              ? 'bg-zinc-800/90 text-emerald-300 border border-emerald-800/30'
+              : 'bg-zinc-800/60 text-zinc-400 border border-zinc-700/40'
+          }`}
+        >
+          <span
+            className={`w-1.5 h-1.5 rounded-full ${
+              o.paymentStatus === 'PAID' ? 'bg-emerald-400' : 'bg-zinc-500'
+            }`}
+          />
+          <span>{o.paymentStatus === 'COD_PENDING' ? 'PAID' : o.paymentStatus}</span>
+        </span>
       ),
     },
     {
@@ -402,25 +413,24 @@ export default function ManagerOrdersPage() {
         const isCancelled = o.orderStatus === 'CANCELLED';
         const isDelhiveryCancelled = isCancelled && (o.delhiveryStatus || '').toLowerCase().includes('delhivery');
         return (
-          <div className="space-y-0.5">
-            <GlassBadge
-              variant={
+          <div className="space-y-0.5 min-w-[110px]">
+            <span
+              className={`inline-flex items-center text-[10px] px-2 py-0.5 rounded-full font-medium ${
                 o.orderStatus === 'DELIVERED'
-                  ? 'success'
+                  ? 'bg-zinc-800 text-emerald-300 border border-emerald-800/30'
                   : o.orderStatus === 'SHIPPED'
-                  ? 'info'
+                  ? 'bg-zinc-800 text-blue-300 border border-blue-800/30'
                   : o.orderStatus === 'CONFIRMED'
-                  ? 'warning'
+                  ? 'bg-zinc-800 text-zinc-200 border border-zinc-700'
                   : isCancelled
-                  ? 'destructive'
-                  : 'default'
-              }
-              size="sm"
+                  ? 'bg-zinc-800 text-rose-300 border border-rose-800/30'
+                  : 'bg-zinc-800 text-zinc-300 border border-zinc-700/50'
+              }`}
             >
               {isDelhiveryCancelled ? 'CANCELLED (Delhivery)' : o.orderStatus}
-            </GlassBadge>
+            </span>
             {o.delhiveryStatus && (
-              <p className="text-[10px] text-muted-foreground leading-tight max-w-[140px] truncate" title={o.delhiveryStatus}>
+              <p className="text-[10px] text-zinc-400 leading-tight max-w-[140px] truncate" title={o.delhiveryStatus}>
                 {o.delhiveryStatus}
               </p>
             )}
@@ -437,24 +447,24 @@ export default function ManagerOrdersPage() {
           o.assignedManagerName?.toLowerCase() === currentManagerName.toLowerCase();
         if (isMine) {
           return (
-            <GlassBadge variant="success" size="sm" className="font-semibold flex items-center gap-1 w-fit whitespace-nowrap">
-              <UserCheck className="w-3 h-3" />
+            <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-200 border border-zinc-700 font-medium whitespace-nowrap">
+              <UserCheck className="w-3 h-3 text-zinc-400" />
               <span>Assigned to You</span>
-            </GlassBadge>
+            </span>
           );
         }
         if (o.assignedManagerName) {
           return (
-            <GlassBadge variant="info" size="sm" className="font-medium flex items-center gap-1 w-fit whitespace-nowrap">
-              <UserCheck className="w-3 h-3" />
+            <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-zinc-800/60 text-zinc-300 border border-zinc-700/50 font-medium whitespace-nowrap">
+              <UserCheck className="w-3 h-3 text-zinc-500" />
               <span>{o.assignedManagerName}</span>
-            </GlassBadge>
+            </span>
           );
         }
         return (
-          <GlassBadge variant="outline" size="sm" className="text-amber-400 border-amber-500/30 w-fit whitespace-nowrap">
-            ⚡ Unassigned
-          </GlassBadge>
+          <span className="inline-flex items-center text-[10px] px-2 py-0.5 rounded-full bg-zinc-900 text-zinc-400 border border-zinc-800 whitespace-nowrap">
+            Unassigned
+          </span>
         );
       },
     },
@@ -465,7 +475,7 @@ export default function ManagerOrdersPage() {
         const rawCarrier = (o.carrier || 'Delhivery One').trim();
         const isLiveAwb = o.trackingNumber?.startsWith('718');
         return (
-          <div className="space-y-1 min-w-[170px]">
+          <div className="space-y-1 min-w-[160px]">
             {o.trackingNumber ? (
               <div className="flex flex-col gap-0.5">
                 <div className="flex items-center gap-1.5 flex-wrap">
@@ -473,21 +483,21 @@ export default function ManagerOrdersPage() {
                     href={`https://www.delhivery.com/track/package/${o.trackingNumber}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="font-mono text-xs font-semibold text-brand hover:underline inline-flex items-center gap-1"
-                    title="Track package live on Delhivery One portal"
+                    className="font-mono text-xs font-semibold text-zinc-100 hover:text-white hover:underline inline-flex items-center gap-1"
+                    title="Track package on Delhivery One portal"
                   >
                     <span>{o.trackingNumber}</span>
-                    <ExternalLink className="w-3 h-3 opacity-70" />
+                    <ExternalLink className="w-3 h-3 opacity-60" />
                   </a>
                   {isLiveAwb ? (
-                    <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-zinc-800 text-emerald-300 font-mono border border-emerald-800/40">
                       Live AWB
                     </span>
                   ) : (
                     <button
                       type="button"
                       onClick={() => handleBookLiveDelhivery(o)}
-                      className="text-[9px] px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30 hover:bg-amber-500/30 cursor-pointer"
+                      className="text-[9px] px-1.5 py-0.2 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 cursor-pointer font-mono"
                       title="Click to book live on Delhivery One"
                     >
                       ⚡ Book Live
@@ -496,29 +506,28 @@ export default function ManagerOrdersPage() {
                   <button
                     type="button"
                     onClick={() => handleOpenTracking(o)}
-                    className="text-[9px] px-1.5 py-0.2 rounded-full bg-sky-500/20 text-sky-300 font-semibold border border-sky-500/30 hover:bg-sky-500/30 cursor-pointer inline-flex items-center gap-0.5"
-                    title="Open live scan checkpoint drawer"
+                    className="text-[9px] px-1.5 py-0.2 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-200 border border-zinc-700 cursor-pointer inline-flex items-center gap-0.5 font-mono"
+                    title="Open live scan checkpoints"
                   >
-                    📡 Track
+                    Track
                   </button>
                 </div>
-                <span className="text-[10px] text-muted-foreground">
+                <span className="text-[10px] text-zinc-400 font-mono">
                   {rawCarrier.includes('(') ? rawCarrier : `(${rawCarrier})`}
                 </span>
               </div>
             ) : (
-              <GlassButton
-                variant="outline"
-                size="sm"
+              <button
+                type="button"
                 onClick={() => handleBookLiveDelhivery(o)}
-                className="text-[10px] h-6 px-2 text-amber-400 border-amber-500/30 hover:bg-amber-500/10"
+                className="text-[10px] h-6 px-2 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700 font-medium cursor-pointer"
               >
                 ⚡ Book Live AWB
-              </GlassButton>
+              </button>
             )}
             {(o as any).delhiveryRemarks && (
-              <p className="text-[10px] text-amber-400 font-medium leading-tight flex items-center gap-1 mt-0.5">
-                <span>⚠️ Delhivery One: Wallet balance needed to manifest on portal</span>
+              <p className="text-[10px] text-zinc-400 font-medium leading-tight flex items-center gap-1 mt-0.5">
+                <span>⚠️ {((o as any).delhiveryRemarks || '').slice(0, 50)}</span>
               </p>
             )}
           </div>
@@ -531,79 +540,67 @@ export default function ManagerOrdersPage() {
       className: 'text-right',
       headerClassName: 'text-right',
       render: (o) => (
-        <div className="flex items-center justify-end gap-1.5 flex-wrap sm:flex-nowrap">
+        <div className="flex items-center justify-end gap-1.5 flex-nowrap">
           {!o.assignedManagerName && currentManagerName && (
-            <GlassButton
-              variant="secondary"
-              size="sm"
+            <button
+              type="button"
               disabled={isClaiming}
               onClick={() => handleClaimOrder(o.id, currentManagerName)}
-              className="text-xs text-amber-400 hover:text-amber-300 font-medium"
+              className="text-xs px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-zinc-700 cursor-pointer transition-colors"
               title="Claim this order into your inbox"
             >
               Claim
-            </GlassButton>
+            </button>
           )}
           {(!o.trackingNumber || o.trackingNumber.startsWith('143')) && o.orderStatus !== 'CANCELLED' && (
-            <GlassButton
-              variant="primary"
-              size="sm"
+            <button
+              type="button"
               disabled={isRefreshing}
               onClick={() => handleBookLiveDelhivery(o)}
-              className="gap-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md border-emerald-400/30 whitespace-nowrap"
-              title="Book real live shipment on Delhivery One directly with 1 click"
+              className="text-xs px-2.5 py-1 rounded bg-zinc-100 hover:bg-white text-zinc-900 font-semibold shadow-xs flex items-center gap-1 cursor-pointer transition-colors whitespace-nowrap"
+              title="Book real live shipment on Delhivery One directly"
             >
               <Truck className="w-3.5 h-3.5" />
               <span>Book Live</span>
-            </GlassButton>
+            </button>
           )}
           {o.trackingNumber && (
-            <GlassButton
-              variant="outline"
-              size="sm"
-              onClick={() => handleOpenTracking(o)}
-              className="gap-1 text-sky-400 hover:text-sky-300 hover:border-sky-500/30 text-xs"
-              title="View live checkpoints from Delhivery"
-            >
-              <span>Track</span>
-            </GlassButton>
-          )}
-          {o.trackingNumber && (
-            <GlassButton
-              variant="outline"
-              size="sm"
+            <button
+              type="button"
               onClick={() => window.open(`/api/shipping/delhivery/label?orderNumber=${o.orderNumber}`, '_blank')}
-              className="gap-1 text-emerald-400 hover:text-emerald-300 hover:border-emerald-500/30 text-xs"
+              className="text-xs px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-zinc-700 cursor-pointer flex items-center gap-1 transition-colors"
               title="Print official Delhivery Shipping Label PDF"
             >
-              <Tag className="w-3.5 h-3.5" />
+              <Tag className="w-3 h-3 text-zinc-400" />
               <span>Label</span>
-            </GlassButton>
+            </button>
           )}
-          {o.trackingNumber && !o.trackingNumber.startsWith('143') && o.orderStatus !== 'CANCELLED' && (
-            <GlassButton
-              variant="outline"
-              size="sm"
-              onClick={() => handleCancelShipment(o)}
-              className="gap-1 text-rose-400 hover:text-rose-300 hover:border-rose-500/30 text-xs"
-              title="Void / Cancel this Delhivery shipment and refund courier freight to wallet"
-            >
-              <span>Void</span>
-            </GlassButton>
-          )}
-          <GlassButton
-            variant="outline"
-            size="sm"
+          <button
+            type="button"
             onClick={() => window.open(`/invoice/${o.orderNumber}`, '_blank')}
-            className="gap-1 text-amber-500 hover:text-amber-400 hover:border-amber-500/30 text-xs"
+            className="text-xs px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white border border-zinc-700 cursor-pointer flex items-center gap-1 transition-colors"
             title="Open official GST Tax Invoice & Packing Slip"
           >
-            <FileText className="w-3.5 h-3.5" />
+            <FileText className="w-3 h-3 text-zinc-400" />
             <span>Invoice</span>
-          </GlassButton>
-          <GlassButton variant="primary" size="sm" onClick={() => handleOpenFulfill(o)} className="text-xs whitespace-nowrap">
+          </button>
+          {o.trackingNumber && !o.trackingNumber.startsWith('143') && o.orderStatus !== 'CANCELLED' && (
+            <button
+              type="button"
+              onClick={() => handleCancelShipment(o)}
+              className="text-xs px-2 py-1 text-zinc-400 hover:text-rose-400 cursor-pointer transition-colors"
+              title="Void / Cancel this Delhivery shipment"
+            >
+              Void
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => handleOpenFulfill(o)}
+            className="text-xs px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-100 font-medium border border-zinc-700 cursor-pointer transition-colors whitespace-nowrap"
+          >
             Update Stage
-          </GlassButton>
+          </button>
         </div>
       ),
     },
@@ -617,9 +614,9 @@ export default function ManagerOrdersPage() {
             <h2 className="text-lg font-bold tracking-tight text-foreground">
               Fulfillment Queue &amp; Dispatch
             </h2>
-            <GlassBadge variant="success" size="sm">
-              Prepaid &amp; COD Active • Live Delhivery One
-            </GlassBadge>
+            <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 border border-zinc-700 font-medium">
+              100% Prepaid Orders • Live Delhivery One
+            </span>
           </div>
           <p className="text-xs text-muted-foreground">
             Process orders through verified state transitions and record courier tracking references
@@ -627,38 +624,35 @@ export default function ManagerOrdersPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
-          <GlassButton
-            variant="primary"
-            size="sm"
+          <button
+            type="button"
             onClick={handleBookAllConfirmedLive}
-            className="gap-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md border-emerald-400/30"
+            className="h-8 px-3 rounded-md bg-zinc-100 hover:bg-white text-zinc-900 font-semibold text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer disabled:opacity-50"
             disabled={isRefreshing}
             title="Book all unmanifested confirmed orders directly on Delhivery One in 1 click"
           >
             <Truck className="w-3.5 h-3.5" />
             <span>⚡ Book Confirmed Orders on Delhivery</span>
-          </GlassButton>
-          <GlassButton
-            variant="outline"
-            size="sm"
+          </button>
+          <button
+            type="button"
             onClick={handleSyncDelhiveryStatus}
-            className="gap-1.5 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 font-semibold"
+            className="h-8 px-3 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-medium text-xs flex items-center gap-1.5 border border-zinc-700 transition-colors cursor-pointer disabled:opacity-50"
             disabled={isSyncingDelhivery || isRefreshing}
             title="Synchronize live status directly from Delhivery One (updates cancellations, deliveries, transit scans)"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isSyncingDelhivery ? 'animate-spin text-emerald-400' : ''}`} />
-            <span>{isSyncingDelhivery ? 'Syncing...' : '🔄 Sync Delhivery'}</span>
-          </GlassButton>
-          <GlassButton
-            variant="outline"
-            size="sm"
+            <RefreshCw className={`w-3.5 h-3.5 ${isSyncingDelhivery ? 'animate-spin text-zinc-400' : ''}`} />
+            <span>{isSyncingDelhivery ? 'Syncing...' : 'Sync Delhivery'}</span>
+          </button>
+          <button
+            type="button"
             onClick={fetchLiveOrders}
-            className="gap-1.5"
+            className="h-8 px-3 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium text-xs flex items-center gap-1.5 border border-zinc-700 transition-colors cursor-pointer disabled:opacity-50"
             disabled={isRefreshing}
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-amber-500' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-zinc-400' : ''}`} />
             <span>{isRefreshing ? 'Syncing...' : 'Refresh Queue'}</span>
-          </GlassButton>
+          </button>
         </div>
       </div>
 

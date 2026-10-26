@@ -23,8 +23,8 @@
     "discountAmount": 0,
     "totalAmount": 94395,
     "orderStatus": "CONFIRMED",
-    "paymentStatus": "COD_PENDING",
-    "paymentMethod": "COD",
+    "paymentStatus": "PAID",
+    "paymentMethod": "ONLINE",
     "assignedManagerName": "Operations Manager",
     "trackingNumber": "14309778631486",
     "carrier": "Delhivery One (Air Express)",
@@ -71,8 +71,8 @@
     "discountAmount": 0,
     "totalAmount": 104953,
     "orderStatus": "CANCELLED",
-    "paymentStatus": "COD_PENDING",
-    "paymentMethod": "COD",
+    "paymentStatus": "PAID",
+    "paymentMethod": "ONLINE",
     "items": [
       {
         "id": "item-1",
@@ -119,8 +119,8 @@
     "discountAmount": 0,
     "totalAmount": 104953,
     "orderStatus": "CONFIRMED",
-    "paymentStatus": "COD_PENDING",
-    "paymentMethod": "COD",
+    "paymentStatus": "PAID",
+    "paymentMethod": "ONLINE",
     "items": [
       {
         "id": "item-1",
@@ -200,9 +200,9 @@
       "totalTax": 6577,
       "grandTotal": 104953
     },
-    "paymentMethod": "COD",
+    "paymentMethod": "ONLINE",
     "orderStatus": "CONFIRMED",
-    "paymentStatus": "COD_PENDING",
+    "paymentStatus": "PAID",
     "items": [
       {
         "id": "item-1793004822701-0",
@@ -289,9 +289,9 @@
       "totalTax": 6365,
       "grandTotal": 103564
     },
-    "paymentMethod": "COD",
+    "paymentMethod": "ONLINE",
     "orderStatus": "CONFIRMED",
-    "paymentStatus": "COD_PENDING",
+    "paymentStatus": "PAID",
     "items": [
       {
         "id": "item-1793004660476-0",
@@ -342,8 +342,8 @@
     "discountAmount": 0,
     "totalAmount": 94400,
     "orderStatus": "CONFIRMED",
-    "paymentStatus": "COD_PENDING",
-    "paymentMethod": "COD",
+    "paymentStatus": "PAID",
+    "paymentMethod": "ONLINE",
     "items": [
       {
         "id": "item-1",

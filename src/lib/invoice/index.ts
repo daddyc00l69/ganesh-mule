@@ -19,6 +19,27 @@ export interface InvoiceLineItem {
   total: number; // paise
 }
 
+export interface DelhiveryInvoiceLogistics {
+  carrier: string;
+  waybill?: string;
+  zone: string;
+  destinationPin: string;
+  weightGrams: number;
+  baseFreightPaise: number;
+  lastMilePaise: number;
+  peakSurchargePaise: number;
+  handlingFeePaise: number;
+  fuelSurchargePaise: number;
+  taxableFreightPaise: number;
+  gstRate: number;
+  gstAmountPaise: number;
+  cgstPaise: number;
+  sgstPaise: number;
+  igstPaise: number;
+  totalFreightPaise: number;
+  rateSource: string;
+}
+
 export interface TaxInvoiceData {
   invoiceNumber: string;
   invoiceDate: string;
@@ -63,6 +84,7 @@ export interface TaxInvoiceData {
   shippingCost: number; // paise
   shippingBase?: number; // paise
   shippingGst?: number; // paise
+  delhiveryLogistics?: DelhiveryInvoiceLogistics;
   platformBase?: number; // paise
   platformGst?: number; // paise
   totalTax: number; // paise
@@ -277,6 +299,70 @@ export function buildTaxInvoiceData(order: any): TaxInvoiceData {
 
   const grandTotal = order.totalAmount || Math.max(0, runningSubtotal - discountAmount + shippingCost + platformTotal);
 
+  let delhiveryLogistics: DelhiveryInvoiceLogistics | undefined = undefined;
+  const dp = order.delhiveryPricing;
+  if (dp?.pricing) {
+    const basePaise = Math.round((dp.pricing.baseFreight || 0) * 100);
+    const lastMilePaise = Math.round((dp.pricing.lastMileCharge || 0) * 100);
+    const peakPaise = Math.round((dp.pricing.peakSurcharge || 0) * 100);
+    const handlingPaise = Math.round((dp.pricing.handlingFee || 0) * 100);
+    const fuelPaise = Math.round((dp.pricing.fuelSurcharge || 0) * 100);
+    const taxablePaise = Math.round((dp.pricing.subtotal || 0) * 100);
+    const gstPaise = Math.round((dp.pricing.gstAmount || 0) * 100);
+    const cgstPaise = dp.pricing.cgst ? Math.round(dp.pricing.cgst * 100) : isIntraState ? Math.round(gstPaise / 2) : 0;
+    const sgstPaise = dp.pricing.sgst ? Math.round(dp.pricing.sgst * 100) : isIntraState ? (gstPaise - cgstPaise) : 0;
+    const igstPaise = dp.pricing.igst ? Math.round(dp.pricing.igst * 100) : !isIntraState ? gstPaise : 0;
+    const totalPaise = Math.round((dp.pricing.totalShippingCost || 0) * 100);
+
+    delhiveryLogistics = {
+      carrier: order.carrier || dp.provider || 'Delhivery One',
+      waybill: order.delhiveryWaybill || order.trackingNumber,
+      zone: dp.zone || order.shippingZone || 'Zone B',
+      destinationPin: order.shippingAddress?.postalCode || dp.destinationPincode || '400001',
+      weightGrams: dp.weightGrams || 1280,
+      baseFreightPaise: basePaise,
+      lastMilePaise,
+      peakSurchargePaise: peakPaise,
+      handlingFeePaise: handlingPaise,
+      fuelSurchargePaise: fuelPaise,
+      taxableFreightPaise: taxablePaise,
+      gstRate: 18,
+      gstAmountPaise: gstPaise,
+      cgstPaise,
+      sgstPaise,
+      igstPaise,
+      totalFreightPaise: totalPaise,
+      rateSource: dp.rateSource || 'DELHIVERY_API_LIVE',
+    };
+  } else if (shippingBase > 0 || shippingCost > 0) {
+    const basePaise = shippingBase || Math.round(shippingCost / 1.18);
+    const gstPaise = shippingGst || (shippingCost - basePaise);
+    const cgstPaise = isIntraState ? Math.round(gstPaise / 2) : 0;
+    const sgstPaise = isIntraState ? (gstPaise - cgstPaise) : 0;
+    const igstPaise = !isIntraState ? gstPaise : 0;
+
+    delhiveryLogistics = {
+      carrier: order.carrier || 'Delhivery One',
+      waybill: order.delhiveryWaybill || order.trackingNumber,
+      zone: order.shippingZone || 'Zone B (Intra-State)',
+      destinationPin: order.shippingAddress?.postalCode || '400001',
+      weightGrams: 1280,
+      baseFreightPaise: basePaise,
+      lastMilePaise: 0,
+      peakSurchargePaise: 0,
+      handlingFeePaise: 0,
+      fuelSurchargePaise: 0,
+      taxableFreightPaise: basePaise,
+      gstRate: 18,
+      gstAmountPaise: gstPaise,
+      cgstPaise,
+      sgstPaise,
+      igstPaise,
+      totalFreightPaise: basePaise + gstPaise,
+      rateSource: 'DELHIVERY_STANDARD_TARIFF',
+    };
+  }
+
   const invoiceNumber = `INV-${new Date(order.createdAt || Date.now()).getFullYear()}-${order.orderNumber?.replace(/[^0-9]/g, '').slice(-4) || '1042'}`;
   const verificationHash = `SHA256-${Math.abs((order.orderNumber || 'SG-2026').split('').reduce((a: number, b: string) => ((a << 5) - a) + b.charCodeAt(0), 0)).toString(16).toUpperCase()}`;
 
@@ -324,6 +410,7 @@ export function buildTaxInvoiceData(order: any): TaxInvoiceData {
     shippingCost,
     shippingBase,
     shippingGst,
+    delhiveryLogistics,
     platformBase,
     platformGst,
     totalTax: isIntraState ? runningCgst + runningSgst : runningIgst,

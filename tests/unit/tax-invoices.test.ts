@@ -114,5 +114,44 @@ describe('Official Indian GST Tax Invoice Engine', () => {
       expect(invoice.sgstTotal).toBe(0);
       expect(invoice.igstTotal).toBe(invoice.totalTax);
     });
+
+    it('should include authentic Delhivery logistics breakdown when delhiveryPricing is attached', () => {
+      const mockOrderWithDelhivery = {
+        ...mockOrderIntraState,
+        orderNumber: 'SG-2026-9903',
+        delhiveryWaybill: '71890010000070',
+        delhiveryPricing: {
+          success: true,
+          zone: 'Zone B (Intra-State)',
+          weightGrams: 1280,
+          provider: 'Delhivery One (API Live)',
+          rateSource: 'DELHIVERY_API_LIVE',
+          pricing: {
+            baseFreight: 97,
+            lastMileCharge: 5,
+            peakSurcharge: 2,
+            handlingFee: 3.57,
+            subtotal: 107.57,
+            gstAmount: 19.36,
+            cgst: 9.68,
+            sgst: 9.68,
+            igst: 0,
+            totalShippingCost: 126.93,
+          },
+        },
+      };
+
+      const invoice = buildTaxInvoiceData(mockOrderWithDelhivery);
+
+      expect(invoice.delhiveryLogistics).toBeDefined();
+      expect(invoice.delhiveryLogistics?.carrier).toContain('Delhivery One');
+      expect(invoice.delhiveryLogistics?.waybill).toBe('71890010000070');
+      expect(invoice.delhiveryLogistics?.zone).toContain('Zone B');
+      expect(invoice.delhiveryLogistics?.baseFreightPaise).toBe(9700);
+      expect(invoice.delhiveryLogistics?.lastMilePaise).toBe(500);
+      expect(invoice.delhiveryLogistics?.peakSurchargePaise).toBe(200);
+      expect(invoice.delhiveryLogistics?.totalFreightPaise).toBe(12693);
+      expect(invoice.delhiveryLogistics?.rateSource).toBe('DELHIVERY_API_LIVE');
+    });
   });
 });

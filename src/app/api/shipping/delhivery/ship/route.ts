@@ -30,8 +30,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Allow PAID or COD orders to be booked on Delhivery One
-    if (order.paymentStatus !== 'PAID' && order.paymentStatus !== 'COD_PENDING') {
+    // Only verified PAID orders can be dispatched on Delhivery One
+    if (order.paymentStatus !== 'PAID') {
       return NextResponse.json(
         { error: 'Cannot book courier dispatch for unconfirmed order.' },
         { status: 400 }

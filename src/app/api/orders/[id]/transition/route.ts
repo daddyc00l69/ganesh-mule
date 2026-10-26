@@ -29,21 +29,15 @@ export async function POST(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    // Business Invariant 1: Paid online orders or COD orders can be fulfilled
-    const isPayableOrCod = order.paymentStatus === 'PAID' || order.paymentStatus === 'COD_PENDING';
+    // Business Invariant 1: Paid online orders can be fulfilled
     if (
-      !isPayableOrCod &&
+      order.paymentStatus !== 'PAID' &&
       (status === 'CONFIRMED' || status === 'SHIPPED' || status === 'DELIVERED')
     ) {
       return NextResponse.json(
         { error: 'Cannot advance unverified orders with unpaid online payment status.' },
         { status: 400 }
       );
-    }
-
-    // When a COD order reaches DELIVERED, cash has been collected by Delhivery courier
-    if (status === 'DELIVERED' && order.paymentStatus === 'COD_PENDING') {
-      order.paymentStatus = 'PAID';
     }
 
     let activeTrackingNumber = trackingNumber?.trim() || order.trackingNumber || '';
