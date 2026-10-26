@@ -6,11 +6,13 @@
 
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { OrderRecord, OrderStatus, PaymentStatus } from '@/types';
 import { MOCK_ORDERS } from '@/lib/mock-data';
 
 const DATA_DIR = path.join(process.cwd(), '.data');
 const ORDERS_FILE_PATH = path.join(DATA_DIR, 'orders.json');
+const TMP_ORDERS_FILE_PATH = path.join(os.tmpdir(), 'orders-solidglass.json');
 
 // Persistent in-memory cache
 const globalStore = globalThis as unknown as {
@@ -23,31 +25,69 @@ function readOrdersFromDisk(): OrderRecord[] {
   if (isTestEnv) {
     return [...MOCK_ORDERS];
   }
-  try {
-    if (fs.existsSync(ORDERS_FILE_PATH)) {
-      const content = fs.readFileSync(ORDERS_FILE_PATH, 'utf-8').trim();
-      if (content) {
-        const parsed = JSON.parse(content);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+
+  const orderMap = new Map<string, OrderRecord>();
+
+  // Helper to load file into map
+  const loadFromFile = (filePath: string) => {
+    try {
+      if (fs.existsSync(filePath)) {
+        const content = fs.readFileSync(filePath, 'utf-8').trim();
+        if (content) {
+          const parsed = JSON.parse(content);
+          if (Array.isArray(parsed)) {
+            for (const o of parsed) {
+              if (o && (o.id || o.orderNumber)) {
+                const key = (o.orderNumber || o.id).toLowerCase();
+                // Later files or more recent entries take precedence
+                if (!orderMap.has(key)) {
+                  orderMap.set(key, o);
+                } else {
+                  // Merge fields if existing
+                  orderMap.set(key, { ...orderMap.get(key), ...o });
+                }
+              }
+            }
+          }
         }
       }
+    } catch (err) {
+      console.warn(`[Orders Store] Failed to read orders from ${filePath}:`, err);
     }
-  } catch (err) {
-    console.warn('[Orders Store] Failed to read orders from disk:', err);
+  };
+
+  // 1. Read from local .data/orders.json
+  loadFromFile(ORDERS_FILE_PATH);
+
+  // 2. Read from os.tmpdir()/orders-solidglass.json (Vercel serverless / persistent scratch)
+  loadFromFile(TMP_ORDERS_FILE_PATH);
+
+  if (orderMap.size > 0) {
+    return Array.from(orderMap.values());
   }
+
   return [...MOCK_ORDERS];
 }
 
 function writeOrdersToDisk(orders: OrderRecord[]): void {
   if (isTestEnv) return;
+  const jsonStr = JSON.stringify(orders, null, 2);
+
+  // 1. Write to local .data directory
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
-    fs.writeFileSync(ORDERS_FILE_PATH, JSON.stringify(orders, null, 2), 'utf-8');
+    fs.writeFileSync(ORDERS_FILE_PATH, jsonStr, 'utf-8');
   } catch (err) {
-    console.warn('[Orders Store] Failed to write orders to disk:', err);
+    // Read-only filesystem fallback on serverless runtimes
+  }
+
+  // 2. Write to os.tmpdir() (always writable across cloud runtimes)
+  try {
+    fs.writeFileSync(TMP_ORDERS_FILE_PATH, jsonStr, 'utf-8');
+  } catch (err) {
+    console.warn('[Orders Store] Failed to write orders to tmpdir:', err);
   }
 }
 

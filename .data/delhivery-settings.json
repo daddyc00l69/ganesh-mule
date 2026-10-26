@@ -1,0 +1,12 @@
+{
+  "apiKey": "1dc311f006e46db696c3e34bff2f130fc1e8a22c",
+  "clientId": "GANESH_MULE_ENTERPRISE",
+  "pickupLocation": "Ganesh Mule Apiary Dispatch Center, Pune",
+  "autoShipping": true,
+  "shippingMode": "Surface",
+  "environment": "production",
+  "originPincode": "411004",
+  "originCity": "Pune",
+  "originState": "Maharashtra",
+  "insuredPackaging": true
+}

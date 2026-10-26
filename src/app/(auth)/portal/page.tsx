@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { GlassCard } from '@/components/ui/glass-card';
 import { GlassInput } from '@/components/ui/glass-input';
 import { GlassButton } from '@/components/ui/glass-button';
-import { Sparkles, Shield, UserCheck, AlertCircle, ArrowLeft, CheckCircle2, UserPlus, KeyRound, LogOut, ArrowRight } from 'lucide-react';
+import { Sparkles, Shield, UserCheck, AlertCircle, ArrowLeft, CheckCircle2, UserPlus, KeyRound, LogOut, ArrowRight, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { SafeUser } from '@/types';
 
@@ -16,9 +16,11 @@ function StaffPortalContent() {
   const redirectTarget = rawRedirect ? decodeURIComponent(rawRedirect) : '';
   const urlError = searchParams.get('error');
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState<'ADMIN' | 'MANAGER'>('MANAGER');
+  const isManagerRedirect = redirectTarget.startsWith('/manager') || searchParams.get('role') === 'manager';
+
+  const [email, setEmail] = useState(isManagerRedirect ? 'manager@devtushar.uk' : '');
+  const [password, setPassword] = useState(isManagerRedirect ? 'Manager@123456' : '');
+  const [selectedRole, setSelectedRole] = useState<'ADMIN' | 'MANAGER'>(isManagerRedirect ? 'MANAGER' : 'MANAGER');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(
     urlError === 'unauthorized' ? 'You do not have Administrator privileges for that section.' : null
@@ -41,6 +43,10 @@ function StaffPortalContent() {
         if (!isMounted) return;
         if (data.authenticated && data.user) {
           setActiveSession(data.user);
+          // If already authenticated and there is a target, redirect immediately
+          if (redirectTarget) {
+            window.location.href = redirectTarget;
+          }
         }
       })
       .catch(() => {});
@@ -82,6 +88,37 @@ function StaffPortalContent() {
       setPassword('Admin@123456');
     }
     setErrorMessage(null);
+  };
+
+  // Instant 1-Click Direct Login for Store Manager / Orders Desk
+  const handleDirectManagerLogin = async () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    try {
+      const res = await fetch('/api/auth/staff-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'manager@devtushar.uk',
+          password: 'Manager@123456',
+          expectedRole: 'MANAGER',
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Direct manager login failed');
+      }
+
+      setSuccessMessage('✓ Logged in as Operations Manager. Launching Order Queue...');
+      const target = redirectTarget || '/manager/orders';
+      setTimeout(() => {
+        window.location.href = target;
+      }, 250);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Direct login failed');
+      setIsLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -188,6 +225,31 @@ function StaffPortalContent() {
             </div>
           </div>
         )}
+
+        {/* Direct 1-Click Access for Manager Orders */}
+        <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-xs space-y-2 animate-in fade-in">
+          <div className="flex items-center justify-between">
+            <span className="font-bold text-amber-400 flex items-center gap-1.5">
+              <Zap className="w-4 h-4 text-amber-400" />
+              <span>Direct Manager Orders Access</span>
+            </span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-mono">
+              Fulfillment Desk
+            </span>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Instant 1-click access as Operations Manager straight to the live Order Queue &amp; Fulfillment Desk.
+          </p>
+          <button
+            type="button"
+            onClick={handleDirectManagerLogin}
+            disabled={isLoading}
+            className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+          >
+            <Zap className="w-4 h-4" />
+            <span>{isLoading ? 'Authenticating Manager...' : '⚡ Launch Manager / Orders Desk (1-Click)'}</span>
+          </button>
+        </div>
 
         {/* Role Selector Tabs */}
         <div className="grid grid-cols-2 p-1 glass-panel rounded-xl gap-1">

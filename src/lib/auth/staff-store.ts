@@ -129,7 +129,10 @@ function loadPersistedState(): { admin: AdminAccount | null; managers: StoredMan
 function persistState() {
   const data = {
     admin: globalStaff.__STAFF_STORE__?.admin || DEFAULT_ROOT_ADMIN,
-    managers: globalStaff.__STAFF_STORE__?.managers || [DEFAULT_STORE_MANAGER],
+    managers:
+      globalStaff.__STAFF_STORE__?.managers && globalStaff.__STAFF_STORE__.managers.length > 0
+        ? globalStaff.__STAFF_STORE__.managers
+        : [DEFAULT_STORE_MANAGER],
     invites: globalStaff.__STAFF_STORE__?.invites || [],
   };
   const jsonStr = JSON.stringify(data, null, 2);

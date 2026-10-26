@@ -33,7 +33,7 @@ export default function ManagerOrdersPage() {
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [inboxTab, setInboxTab] = useState<'MY_INBOX' | 'UNASSIGNED' | 'ALL'>('MY_INBOX');
+  const [inboxTab, setInboxTab] = useState<'MY_INBOX' | 'UNASSIGNED' | 'ALL'>('ALL');
   const [currentManagerName, setCurrentManagerName] = useState<string>('');
   const [isClaiming, setIsClaiming] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -168,9 +168,10 @@ export default function ManagerOrdersPage() {
       return;
     }
 
-    // 2. Cannot advance unpaid order to shipped
-    if (activeOrder.paymentStatus !== 'PAID' && (newStatus === 'SHIPPED' || newStatus === 'DELIVERED')) {
-      setTransitionError('Cannot advance an order with unverified payment status.');
+    // 2. Paid online orders or COD orders can be advanced to shipped/delivered
+    const isPayableOrCod = activeOrder.paymentStatus === 'PAID' || activeOrder.paymentStatus === 'COD_PENDING';
+    if (!isPayableOrCod && (newStatus === 'SHIPPED' || newStatus === 'DELIVERED')) {
+      setTransitionError('Cannot advance an order with unverified online payment status.');
       setIsUpdating(false);
       return;
     }
@@ -239,22 +240,16 @@ export default function ManagerOrdersPage() {
       ),
     },
     {
-      key: 'customerName',
-      header: 'Customer',
+      key: 'customer',
+      header: 'Customer & Destination',
       render: (o) => (
-        <div>
-          <p className="font-semibold text-foreground text-xs">{o.customerName}</p>
-          <p className="text-[11px] text-muted-foreground">{o.customerPhone || o.customerEmail}</p>
+        <div className="space-y-0.5 min-w-[140px]">
+          <p className="font-semibold text-foreground text-xs leading-snug">{o.customerName}</p>
+          <p className="text-[11px] text-muted-foreground font-mono leading-tight">{o.customerPhone || o.customerEmail}</p>
+          <p className="text-[11px] text-muted-foreground/80 leading-tight">
+            📍 {o.shippingAddress?.city}, {o.shippingAddress?.state}
+          </p>
         </div>
-      ),
-    },
-    {
-      key: 'destination',
-      header: 'Destination',
-      render: (o) => (
-        <span className="text-xs text-muted-foreground">
-          {o.shippingAddress.city}, {o.shippingAddress.state}
-        </span>
       ),
     },
     {
@@ -295,7 +290,7 @@ export default function ManagerOrdersPage() {
           o.assignedManagerName?.toLowerCase() === currentManagerName.toLowerCase();
         if (isMine) {
           return (
-            <GlassBadge variant="success" size="sm" className="font-semibold flex items-center gap-1 w-fit">
+            <GlassBadge variant="success" size="sm" className="font-semibold flex items-center gap-1 w-fit whitespace-nowrap">
               <UserCheck className="w-3 h-3" />
               <span>Assigned to You</span>
             </GlassBadge>
@@ -303,14 +298,14 @@ export default function ManagerOrdersPage() {
         }
         if (o.assignedManagerName) {
           return (
-            <GlassBadge variant="info" size="sm" className="font-medium flex items-center gap-1 w-fit">
+            <GlassBadge variant="info" size="sm" className="font-medium flex items-center gap-1 w-fit whitespace-nowrap">
               <UserCheck className="w-3 h-3" />
               <span>{o.assignedManagerName}</span>
             </GlassBadge>
           );
         }
         return (
-          <GlassBadge variant="outline" size="sm" className="text-amber-400 border-amber-500/30 w-fit">
+          <GlassBadge variant="outline" size="sm" className="text-amber-400 border-amber-500/30 w-fit whitespace-nowrap">
             ⚡ Unassigned
           </GlassBadge>
         );
@@ -319,32 +314,37 @@ export default function ManagerOrdersPage() {
     {
       key: 'trackingNumber',
       header: 'Delhivery Shipment Tracking',
-      render: (o) => (
-        <div className="space-y-0.5">
-          {o.trackingNumber ? (
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <a
-                href={`https://www.delhivery.com/track/package/${o.trackingNumber}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-mono text-xs font-semibold text-brand hover:underline inline-flex items-center gap-1"
-                title="Track package live on Delhivery One"
-              >
-                <span>{o.trackingNumber}</span>
-                <ExternalLink className="w-3 h-3 opacity-70" />
-              </a>
-              <span className="text-[10px] text-muted-foreground">({o.carrier || 'Delhivery One'})</span>
-            </div>
-          ) : (
-            <span className="text-xs text-muted-foreground/60 italic">Unassigned</span>
-          )}
-          {(o as any).delhiveryRemarks && (
-            <p className="text-[10px] text-amber-400 font-medium leading-tight flex items-center gap-1 mt-0.5">
-              <span>⚠️ Delhivery One: Wallet balance needed to manifest on portal</span>
-            </p>
-          )}
-        </div>
-      ),
+      render: (o) => {
+        const rawCarrier = (o.carrier || 'Delhivery One').trim();
+        return (
+          <div className="space-y-0.5 min-w-[160px]">
+            {o.trackingNumber ? (
+              <div className="flex flex-col gap-0.5">
+                <a
+                  href={`https://www.delhivery.com/track/package/${o.trackingNumber}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-xs font-semibold text-brand hover:underline inline-flex items-center gap-1"
+                  title="Track package live on Delhivery One"
+                >
+                  <span>{o.trackingNumber}</span>
+                  <ExternalLink className="w-3 h-3 opacity-70" />
+                </a>
+                <span className="text-[10px] text-muted-foreground">
+                  {rawCarrier.includes('(') ? rawCarrier : `(${rawCarrier})`}
+                </span>
+              </div>
+            ) : (
+              <span className="text-xs text-muted-foreground/60 italic">Unassigned</span>
+            )}
+            {(o as any).delhiveryRemarks && (
+              <p className="text-[10px] text-amber-400 font-medium leading-tight flex items-center gap-1 mt-0.5">
+                <span>⚠️ Delhivery One: Wallet balance needed to manifest on portal</span>
+              </p>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: 'actions',
@@ -352,7 +352,7 @@ export default function ManagerOrdersPage() {
       className: 'text-right',
       headerClassName: 'text-right',
       render: (o) => (
-        <div className="flex items-center justify-end gap-1.5">
+        <div className="flex items-center justify-end gap-1.5 flex-wrap sm:flex-nowrap">
           {!o.assignedManagerName && currentManagerName && (
             <GlassButton
               variant="secondary"
@@ -370,7 +370,7 @@ export default function ManagerOrdersPage() {
               variant="outline"
               size="sm"
               onClick={() => window.open(`/api/shipping/delhivery/label?orderNumber=${o.orderNumber}`, '_blank')}
-              className="gap-1 text-emerald-400 hover:text-emerald-300 hover:border-emerald-500/30"
+              className="gap-1 text-emerald-400 hover:text-emerald-300 hover:border-emerald-500/30 text-xs"
               title="Print Delhivery One Shipping Label"
             >
               <Tag className="w-3.5 h-3.5" />
@@ -392,13 +392,13 @@ export default function ManagerOrdersPage() {
             variant="outline"
             size="sm"
             onClick={() => window.open(`/invoice/${o.orderNumber}`, '_blank')}
-            className="gap-1 text-amber-500 hover:text-amber-400 hover:border-amber-500/30"
+            className="gap-1 text-amber-500 hover:text-amber-400 hover:border-amber-500/30 text-xs"
             title="Open official GST Tax Invoice & Packing Slip"
           >
             <FileText className="w-3.5 h-3.5" />
             <span>Invoice</span>
           </GlassButton>
-          <GlassButton variant="primary" size="sm" onClick={() => handleOpenFulfill(o)}>
+          <GlassButton variant="primary" size="sm" onClick={() => handleOpenFulfill(o)} className="text-xs whitespace-nowrap">
             Update Stage
           </GlassButton>
         </div>

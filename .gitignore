@@ -41,7 +41,10 @@ prisma/*.db-journal
 gh_bin/
 
 # local runtime data
-.data/
+.data/*
+!.data/orders.json
+!.data/staff-registry.json
+!.data/delhivery-settings.json
 
 # local test web files (not added to git)
 delhivery-local-test.html

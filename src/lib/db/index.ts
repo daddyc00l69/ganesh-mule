@@ -9,7 +9,7 @@ const globalForPrisma = globalThis as unknown as {
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
+    log: [],
   });
 
 if (process.env.NODE_ENV !== 'production') {
@@ -20,6 +20,10 @@ if (process.env.NODE_ENV !== 'production') {
 const DB_PROBE_COOLDOWN_MS = 60000; // 60 seconds
 
 export async function isDatabaseOnline(): Promise<boolean> {
+  if (!process.env.DATABASE_URL) {
+    return false;
+  }
+
   const now = Date.now();
   if (globalForPrisma.lastDbCheck && now - globalForPrisma.lastDbCheck < DB_PROBE_COOLDOWN_MS) {
     return globalForPrisma.isDbHealthy ?? false;

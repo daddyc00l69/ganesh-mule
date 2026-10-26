@@ -272,32 +272,37 @@ export default function AdminOrdersPage() {
     {
       key: 'trackingNumber',
       header: 'Delhivery Tracking',
-      render: (order) => (
-        <div className="space-y-0.5">
-          {order.trackingNumber ? (
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <a
-                href={`https://www.delhivery.com/track/package/${order.trackingNumber}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-mono text-xs font-semibold text-brand hover:underline inline-flex items-center gap-1"
-                title="Track package live on Delhivery One"
-              >
-                <span>{order.trackingNumber}</span>
-                <ExternalLink className="w-3 h-3 opacity-70" />
-              </a>
-              <span className="text-[10px] text-muted-foreground">({order.carrier || 'Delhivery One'})</span>
-            </div>
-          ) : (
-            <span className="text-xs text-muted-foreground/60 italic">Unassigned</span>
-          )}
-          {(order as any).delhiveryRemarks && (
-            <p className="text-[10px] text-amber-400 font-medium leading-tight flex items-center gap-1 mt-0.5">
-              <span>⚠️ Delhivery One: Wallet balance needed to manifest on portal</span>
-            </p>
-          )}
-        </div>
-      ),
+      render: (order) => {
+        const rawCarrier = (order.carrier || 'Delhivery One').trim();
+        return (
+          <div className="space-y-0.5">
+            {order.trackingNumber ? (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <a
+                  href={`https://www.delhivery.com/track/package/${order.trackingNumber}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-xs font-semibold text-brand hover:underline inline-flex items-center gap-1"
+                  title="Track package live on Delhivery One"
+                >
+                  <span>{order.trackingNumber}</span>
+                  <ExternalLink className="w-3 h-3 opacity-70" />
+                </a>
+                <span className="text-[10px] text-muted-foreground">
+                  {rawCarrier.includes('(') ? rawCarrier : `(${rawCarrier})`}
+                </span>
+              </div>
+            ) : (
+              <span className="text-xs text-muted-foreground/60 italic">Unassigned</span>
+            )}
+            {(order as any).delhiveryRemarks && (
+              <p className="text-[10px] text-amber-400 font-medium leading-tight flex items-center gap-1 mt-0.5">
+                <span>⚠️ Delhivery One: Wallet balance needed to manifest on portal</span>
+              </p>
+            )}
+          </div>
+        );
+      },
     },
     {
       key: 'createdAt',

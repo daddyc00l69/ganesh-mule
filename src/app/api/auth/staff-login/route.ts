@@ -8,7 +8,7 @@ import { authenticateStaffLogin, getAdminConfigStatus } from '@/lib/auth/staff-s
 const LoginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
-  expectedRole: z.enum(['ADMIN', 'MANAGER']),
+  expectedRole: z.enum(['ADMIN', 'MANAGER']).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -20,18 +20,29 @@ export async function POST(req: NextRequest) {
     }
 
     const { email, password, expectedRole } = parsed.data;
+    const cleanEmail = email.toLowerCase().trim();
+    const resolvedRole = expectedRole || (cleanEmail.includes('admin') ? 'ADMIN' : 'MANAGER');
+    const isHttps = req.nextUrl.protocol === 'https:';
 
     // 1. Check Staff Store (configured Admin and verified Managers)
     try {
-      const result = await authenticateStaffLogin({ email, password, expectedRole });
-      if (result.success) {
+      let result;
+      try {
+        result = await authenticateStaffLogin({ email, password, expectedRole: resolvedRole });
+      } catch (err: any) {
+        // Try other role if expectedRole didn't match
+        const altRole = resolvedRole === 'ADMIN' ? 'MANAGER' : 'ADMIN';
+        result = await authenticateStaffLogin({ email, password, expectedRole: altRole });
+      }
+
+      if (result && result.success) {
         const response = NextResponse.json({
           success: true,
           user: result.user,
         });
         response.cookies.set(SESSION_COOKIE_NAME, result.token, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
+          secure: process.env.NODE_ENV === 'production' && isHttps,
           sameSite: 'lax',
           path: '/',
           maxAge: SESSION_MAX_AGE,
@@ -93,7 +104,7 @@ export async function POST(req: NextRequest) {
 
         response.cookies.set(SESSION_COOKIE_NAME, token, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
+          secure: process.env.NODE_ENV === 'production' && isHttps,
           sameSite: 'lax',
           path: '/',
           maxAge: SESSION_MAX_AGE,

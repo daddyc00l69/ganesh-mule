@@ -1,0 +1,37 @@
+{
+  "admin": {
+    "id": "usr-admin-root",
+    "name": "Tushar (Super Administrator)",
+    "email": "admin@devtushar.uk",
+    "phone": "+91 98220 00000",
+    "passwordHash": "scrypt$73656375726531323334$553dd1eac6f0544b8164282d167631f5bd41a5011e6c6e84ff763c6e0c595b9f66a68eee8e2de98640e9d7b8d6f9ff673a97197a7b966f924f9ffdcc7c2d9d12",
+    "role": "ADMIN",
+    "isActive": true,
+    "createdAt": "2026-01-01T00:00:00.000Z"
+  },
+  "managers": [
+    {
+      "id": "mgr-default-operations",
+      "userId": "usr-manager-default",
+      "name": "Operations Manager",
+      "email": "manager@devtushar.uk",
+      "phone": "+91 98220 11111",
+      "department": "Fulfillment & Operations",
+      "permissions": [
+        "orders.read",
+        "orders.update",
+        "inventory.read",
+        "inventory.update",
+        "coupons.read",
+        "coupons.manage",
+        "support.manage",
+        "reports.view"
+      ],
+      "passwordHash": "scrypt$73656375726531323334$553dd1eac6f0544b8164282d167631f5bd41a5011e6c6e84ff763c6e0c595b9f66a68eee8e2de98640e9d7b8d6f9ff673a97197a7b966f924f9ffdcc7c2d9d12",
+      "isActive": true,
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "updatedAt": "2026-01-01T00:00:00.000Z"
+    }
+  ],
+  "invites": []
+}
