@@ -271,5 +271,6 @@ export interface DelhiveryShipmentResult {
   estimatedDeliveryDays: number;
   status: string;
   error?: string;
+  remarks?: string;
 }
 

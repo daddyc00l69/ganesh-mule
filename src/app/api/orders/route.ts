@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getLiveOrders, addLiveOrder } from '@/lib/orders/store';
+import { getLiveOrders, reloadOrdersFromDisk, addLiveOrder } from '@/lib/orders/store';
 import { prisma, isDatabaseOnline } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth/server';
 
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     const manager = searchParams.get('manager')?.toLowerCase().trim();
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!, 10) : undefined;
 
-    let orders = getLiveOrders();
+    let orders = reloadOrdersFromDisk();
 
     // If database is online, we can optionally synchronize with DB
     try {

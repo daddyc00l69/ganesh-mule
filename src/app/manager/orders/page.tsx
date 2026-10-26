@@ -617,12 +617,18 @@ export default function ManagerOrdersPage() {
                         const res = await fetch('/api/shipping/delhivery/ship', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ orderNumber: activeOrder.orderNumber }),
+                          body: JSON.stringify({
+                            orderNumber: activeOrder.orderNumber,
+                            mode: carrier.toLowerCase().includes('surface') ? 'Surface' : 'Express',
+                          }),
                         });
                         const data = await res.json();
                         if (data?.shipment) {
                           setTrackingNumber(data.shipment.waybill);
                           setCarrier(data.shipment.carrier);
+                          if (data.shipment.remarks) {
+                            setTransitionError(data.shipment.remarks);
+                          }
                         }
                       } catch (err) {
                         console.warn('Auto AWB generation error:', err);

@@ -164,7 +164,11 @@ export async function POST(req: NextRequest) {
       const delhiverySettings = getDelhiverySettings();
       if (delhiverySettings.autoShipping) {
         try {
-          const shipmentResult = await createDelhiveryShipment(mockOrder);
+          const shipmentResult = await createDelhiveryShipment(mockOrder, {
+            mode:
+              (mockOrder as any).shippingMode ||
+              (mockOrder.carrier?.toLowerCase().includes('surface') ? 'Surface' : 'Express'),
+          });
           console.log(`[Delhivery Auto-Ship] Booked AWB ${shipmentResult.waybill} for Order #${mockOrder.orderNumber}`);
         } catch (shipErr) {
           console.warn('[Delhivery Auto-Ship Exception]', shipErr);

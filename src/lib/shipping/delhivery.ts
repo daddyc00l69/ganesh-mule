@@ -262,7 +262,15 @@ export async function createDelhiveryShipment(
   options?: { mode?: 'Express' | 'Surface'; forceRegenerate?: boolean }
 ): Promise<DelhiveryShipmentResult> {
   const settings = getDelhiverySettings();
-  const mode = options?.mode || settings.shippingMode;
+  const mode: 'Express' | 'Surface' =
+    options?.mode ||
+    (order as any).shippingMode ||
+    (order.carrier?.toLowerCase().includes('surface') ? 'Surface' : undefined) ||
+    (order.carrier?.toLowerCase().includes('air') ? 'Express' : undefined) ||
+    settings.shippingMode ||
+    'Surface';
+
+  const carrierName = mode === 'Surface' ? 'Delhivery One (Surface)' : 'Delhivery One (Air Express)';
 
   // If order already has an AWB and regeneration not requested, return existing
   if (order.delhiveryWaybill && !options?.forceRegenerate) {
@@ -272,7 +280,7 @@ export async function createDelhiveryShipment(
       orderNumber: order.orderNumber,
       trackingUrl: `${DELHIVERY_URLS.TRACKING_BASE}/${order.delhiveryWaybill}`,
       labelUrl: `/api/shipping/delhivery/label?orderNumber=${order.orderNumber}`,
-      carrier: `Delhivery One (${mode} Air)`,
+      carrier: carrierName,
       estimatedDeliveryDays: mode === 'Express' ? 2 : 4,
       status: order.delhiveryStatus || 'Manifested / Ready for Courier Pickup',
     };
@@ -334,8 +342,20 @@ export async function createDelhiveryShipment(
 
       if (res.ok) {
         const json = await res.json();
-        if (json?.packages?.[0]?.waybill) {
-          assignedAwb = json.packages[0].waybill;
+        const pkg = json?.packages?.[0];
+        if (pkg?.waybill) {
+          assignedAwb = pkg.waybill;
+          if (pkg.sort_code) {
+            (order as any).delhiverySortCode = pkg.sort_code;
+          }
+        } else if (pkg?.remarks?.length) {
+          const rawRemark = pkg.remarks.join('; ');
+          if (rawRemark.includes('insufficient balance')) {
+            (order as any).delhiveryRemarks =
+              'Delhivery One Notice: Prepaid client manifest requires wallet balance on one.delhivery.com. Please recharge your Delhivery One wallet to book live waybill.';
+          } else {
+            (order as any).delhiveryRemarks = rawRemark;
+          }
         }
       }
     } catch (apiErr) {
@@ -345,13 +365,12 @@ export async function createDelhiveryShipment(
 
   const trackingUrl = `${DELHIVERY_URLS.TRACKING_BASE}/${assignedAwb}`;
   const labelUrl = `/api/shipping/delhivery/label?orderNumber=${order.orderNumber}`;
-  const carrierName = `Delhivery One (${mode} Air)`;
   const estimatedDays = mode === 'Express' ? 2 : 4;
   const deliveryDate = new Date(Date.now() + estimatedDays * 24 * 60 * 60 * 1000)
     .toISOString()
     .split('T')[0];
 
-  // Mutate in-memory order object
+  // Mutate order record with resolved values
   order.trackingNumber = assignedAwb;
   order.carrier = carrierName;
   order.delhiveryWaybill = assignedAwb;
@@ -378,6 +397,7 @@ export async function createDelhiveryShipment(
     carrier: carrierName,
     estimatedDeliveryDays: estimatedDays,
     status: 'Manifested / Slotted for Pickup',
+    remarks: (order as any).delhiveryRemarks,
   };
 }
 
