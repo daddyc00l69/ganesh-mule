@@ -97,14 +97,14 @@ export function calculateConsignmentWeightGrams(items: OrderRecord['items']): nu
     const sku = (item.sku || '').toLowerCase();
     const qty = item.quantity || 1;
 
-    if (name.includes('1050') || sku.includes('1050')) {
-      // 1050g honey package -> 1500g Delhivery 1.5kg billable slab
+    if (name.includes('1kg') || sku.includes('1kg') || name.includes('1050') || sku.includes('1050')) {
+      // 1kg / 1050g honey package in solid glass -> 1500g Delhivery 1.5kg billable slab
       totalGrams += 1500 * qty;
-    } else if (name.includes('750') || sku.includes('750')) {
-      // 750g honey package -> 1000g Delhivery 1.0kg billable slab
+    } else if (name.includes('500g') || sku.includes('500g') || name.includes('750') || sku.includes('750')) {
+      // 500g / 750g honey package in solid glass -> 1000g Delhivery 1.0kg billable slab
       totalGrams += 1000 * qty;
     } else {
-      // 300g honey package -> 500g Delhivery 0.5kg billable slab
+      // 250g / 300g sampler package in solid glass -> 500g Delhivery 0.5kg billable slab
       totalGrams += 500 * qty;
     }
   }

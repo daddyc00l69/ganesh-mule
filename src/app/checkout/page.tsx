@@ -193,12 +193,13 @@ function CheckoutContent() {
     couponCode?: string;
   } | null>(null);
 
-  // Billable package weight based on Delhivery slabs (300g -> 500g, 750g -> 1000g, 1050g -> 1500g)
+  // Billable package weight based on Delhivery slabs (250g -> 500g slab, 500g -> 800g slab, 1kg -> 1500g slab)
   const consignmentWeightGrams = items.reduce((acc, item) => {
     const name = (item.productName || (item as any).name || '').toLowerCase();
     const id = (item.productId || '').toLowerCase();
-    if (name.includes('1050') || id.includes('1050')) return acc + 1500 * item.quantity;
-    if (name.includes('750') || id.includes('750')) return acc + 1000 * item.quantity;
+    const weight = ((item as any).weight || '').toLowerCase();
+    if (weight.includes('1kg') || name.includes('1kg') || name.includes('1050') || id.includes('1kg') || id.includes('1050')) return acc + 1500 * item.quantity;
+    if (weight.includes('500g') || name.includes('500g') || name.includes('750') || id.includes('500g') || id.includes('750')) return acc + 800 * item.quantity;
     return acc + 500 * item.quantity;
   }, 0) || 500;
 
@@ -1764,7 +1765,7 @@ function CheckoutContent() {
                       <div className="pr-1 flex-1 min-w-0">
                         <p className="font-semibold text-stone-900 line-clamp-1">{item.productName}</p>
                         <p className="text-[10px] text-stone-500 font-mono">
-                          {item.weight || (item.productName.includes('1050') ? '1050g Glass Jar' : item.productName.includes('750') ? '750g Glass Jar' : '300g Glass Jar')}
+                          {item.weight || (item.productName.includes('1kg') ? '1kg Solid Glass Jar' : item.productName.includes('250g') ? '250g Solid Glass Jar' : '500g Solid Glass Jar')}
                         </p>
                         <div className="flex items-center gap-2 mt-1.5">
                           <div className="flex items-center border border-stone-200 rounded-full bg-stone-50 shadow-2xs">
