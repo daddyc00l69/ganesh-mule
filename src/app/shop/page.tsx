@@ -6,7 +6,7 @@ import { ShopClient } from '@/components/storefront/shop-client';
 export const metadata: Metadata = {
   title: 'The Honey Shop | 100% Raw Wild Forest Honey in Solid Glass',
   description:
-    'Explore our 6 artisanal single-origin wild forest honey varieties, alpine acacia, royal saffron infusions, and virgin comb slabs.',
+    'Single-origin, unheated raw wild forest honey from the Western Ghats, bottled exclusively in solid glass jars (300g, 750g, 1050g).',
 };
 
 export default function ShopPage() {

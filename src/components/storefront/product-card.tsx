@@ -2,10 +2,11 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ProductItem } from '@/types';
 import { formatCurrency } from '@/lib/utils';
 import { useCart } from '@/lib/cart/cart-context';
-import { Check, Plus, Star, ShieldCheck, Sparkles, MapPin } from 'lucide-react';
+import { Check, Plus, Star } from 'lucide-react';
 
 export interface ProductCardProps {
   product: ProductItem;
@@ -20,142 +21,95 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     e.stopPropagation();
     addToCart(product, 1);
     setIsAdded(true);
-    setTimeout(() => setIsAdded(false), 1600);
+    setTimeout(() => setIsAdded(false), 1500);
   };
 
   const isOutOfStock = product.stockQuantity <= 0;
   const isLowStock = product.stockQuantity > 0 && product.stockQuantity <= product.lowStockThreshold;
-
-  const discountPercent = product.compareAtPrice
-    ? Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)
-    : 0;
-
   const rating = product.rating || 4.9;
-  const ratingCount = product.ratingCount || 1240;
 
-  const getWeightLabel = () => {
-    if (product.weightGrams) {
-      if (product.weightGrams >= 1000) return `${(product.weightGrams / 1000).toFixed(1)}kg Solid Glass`;
-      return `${product.weightGrams}g Solid Glass`;
-    }
-    return '500g Solid Glass';
-  };
-
-  const originText = (product as any).origin || 'Western Ghats, India';
+  const weightLabel = product.weightGrams
+    ? product.weightGrams >= 1000
+      ? `${(product.weightGrams / 1000).toFixed(2).replace(/\.?0+$/, '')} kg`
+      : `${product.weightGrams}g`
+    : '500g';
 
   return (
     <Link href={`/product/${product.slug}`} className="group block h-full select-none">
-      <div className="bg-white border border-[#e5e5e7] hover:border-amber-400/80 rounded-[24px] p-3.5 sm:p-5 flex flex-col h-full shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-[0_16px_36px_rgba(217,119,6,0.12)] transition-all duration-300 relative overflow-hidden">
-        
-        {/* Subtle Ambient Golden Nectar Glow on Hover */}
-        <div className="absolute -top-24 -right-24 w-48 h-48 bg-amber-400/10 rounded-full blur-3xl pointer-events-none group-hover:scale-150 transition-transform duration-700" />
-
-        {/* Product Studio Showcase */}
-        <div className="w-full aspect-square rounded-[20px] bg-gradient-to-b from-[#fbf9f6] to-[#f4efe8] relative mb-3.5 flex items-center justify-center p-4 sm:p-6 overflow-hidden border border-[#f0ede6]">
+      <article className="bg-white border border-stone-200/80 hover:border-stone-300 rounded-2xl p-4 sm:p-5 flex flex-col h-full transition-all duration-300 hover:shadow-[0_12px_30px_rgba(28,25,23,0.06)]">
+        {/* Clean Full-Bleed Studio Photo */}
+        <div className="w-full aspect-square rounded-xl bg-[#F7F4EE] relative mb-4 overflow-hidden">
           {product.images[0] ? (
-            <img
+            <Image
               src={product.images[0].url}
               alt={product.name}
-              className="w-full h-full object-contain filter drop-shadow-[0_10px_16px_rgba(0,0,0,0.08)] group-hover:scale-108 group-hover:-translate-y-1 transition-all duration-500 ease-out"
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 360px"
+              className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
             />
           ) : (
-            <div className="text-xs font-mono text-[#86868b]">{product.sku}</div>
+            <div className="w-full h-full flex items-center justify-center">
+              <span className="text-xs font-mono text-stone-400">{product.sku}</span>
+            </div>
           )}
 
-          {/* Floating Badges Left: Discount & Stock */}
-          <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5 z-10">
-            {discountPercent > 0 && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#1c1917] text-amber-300 shadow-sm tracking-wide">
-                SAVE {discountPercent}%
-              </span>
-            )}
-            {isOutOfStock ? (
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200 shadow-2xs">
-                Sold Out
-              </span>
-            ) : isLowStock ? (
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs animate-pulse">
-                Only {product.stockQuantity} Left
-              </span>
-            ) : null}
-          </div>
-
-          {/* Floating Badge Right: NMR Purity Seal */}
-          <div className="absolute top-2.5 right-2.5 z-10">
-            <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-white/95 text-amber-950 border border-amber-300/80 shadow-xs backdrop-blur-md">
-              <Sparkles className="w-2.5 h-2.5 text-amber-600 fill-amber-500" />
-              <span>{product.badge || 'NMR Pure 400MHz'}</span>
+          {isOutOfStock ? (
+            <span className="absolute top-3 left-3 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+              Sold Out
             </span>
-          </div>
-
-          {/* Bottom Pill: Weight & Solid Glass */}
-          <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between text-[9px] font-medium text-[#78716c] px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-md border border-[#e7e5e4]">
-            <span className="font-semibold text-stone-800 tracking-tight flex items-center gap-1">
-              <ShieldCheck className="w-3 h-3 text-emerald-600" />
-              <span>{getWeightLabel()}</span>
+          ) : isLowStock ? (
+            <span className="absolute top-3 left-3 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+              Only {product.stockQuantity} left
             </span>
-            <span className="truncate max-w-[120px] text-stone-500 flex items-center gap-0.5">
-              <MapPin className="w-2.5 h-2.5 text-amber-700 shrink-0" />
-              <span className="truncate">{originText.split(',')[0]}</span>
+          ) : product.badge === 'Most Popular' ? (
+            <span className="absolute top-3 left-3 text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-white/95 text-stone-800 border border-stone-200 shadow-2xs">
+              Most Popular
             </span>
-          </div>
+          ) : null}
         </div>
 
-        {/* Product Details & Content */}
-        <div className="flex-1 flex flex-col justify-between space-y-3">
-          <div>
-            {/* Category & Rating Row */}
-            <div className="flex items-center justify-between text-[11px] text-[#78716c]">
-              <span className="truncate max-w-[140px] font-medium text-amber-900/90 tracking-wide uppercase text-[10px]">
-                {product.category?.name || 'Raw Forest Honey'}
-              </span>
-              <div className="flex items-center gap-1 text-stone-900 font-semibold shrink-0 bg-stone-100/80 px-1.5 py-0.5 rounded-md">
+        {/* Clean Product Copy */}
+        <div className="flex-1 flex flex-col justify-between gap-4">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs text-stone-500">
+              <span>{weightLabel} · Solid Glass</span>
+              <span className="inline-flex items-center gap-1 text-stone-700 font-medium">
                 <Star className="w-3 h-3 fill-amber-400 text-amber-500" />
-                <span>{rating}</span>
-                <span className="text-[#a8a29e] text-[9px] font-normal">({ratingCount})</span>
-              </div>
+                {rating}
+              </span>
             </div>
 
-            {/* Product Title */}
-            <h3 className="text-sm sm:text-base font-bold text-stone-900 group-hover:text-amber-800 transition-colors line-clamp-1 mt-1 font-serif tracking-tight">
+            <h3 className="text-base sm:text-lg font-semibold text-stone-950 group-hover:text-amber-900 transition-colors font-serif tracking-tight line-clamp-1">
               {product.name}
             </h3>
 
-            {/* Aromatic Floral Tasting Notes */}
-            <p className="text-[11px] sm:text-xs text-[#78716c] line-clamp-2 mt-1 leading-relaxed">
+            <p className="text-xs text-stone-500 line-clamp-1">
               {(product as any).flavour || product.description}
             </p>
           </div>
 
-          {/* Pricing & Add to Jar Action */}
-          <div className="pt-3 border-t border-[#f5f5f4] flex items-center justify-between gap-2">
-            <div className="min-w-0">
-              <div className="flex items-baseline gap-1.5 flex-wrap">
-                <span className="text-base sm:text-lg font-bold text-stone-950 font-sans tracking-tight">
-                  {formatCurrency(product.price)}
-                </span>
-                {product.compareAtPrice && (
-                  <span className="text-xs text-[#a8a29e] line-through font-normal">
-                    {formatCurrency(product.compareAtPrice)}
-                  </span>
-                )}
-              </div>
-              <span className="text-[10px] text-emerald-800 font-medium block truncate">
-                5% GST Included • Insured Glass Safe
+          <div className="pt-3 border-t border-stone-100 flex items-center justify-between gap-3">
+            <div className="flex items-baseline gap-2">
+              <span className="text-lg font-semibold text-stone-950 tracking-tight">
+                {formatCurrency(product.price)}
               </span>
+              {product.compareAtPrice && (
+                <span className="text-xs text-stone-400 line-through">
+                  {formatCurrency(product.compareAtPrice)}
+                </span>
+              )}
             </div>
 
-            {/* Luxury Amber Add Button */}
             <button
               type="button"
               disabled={isOutOfStock}
               onClick={handleAdd}
-              className={`px-3.5 py-2 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shrink-0 shadow-sm ${
+              className={`px-4 py-2 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shrink-0 ${
                 isAdded
-                  ? 'bg-emerald-700 text-white shadow-emerald-700/20'
+                  ? 'bg-emerald-700 text-white'
                   : isOutOfStock
-                  ? 'bg-[#e7e5e4] text-[#a8a29e] cursor-not-allowed'
-                  : 'bg-stone-900 hover:bg-amber-600 text-white hover:shadow-amber-600/30'
+                  ? 'bg-stone-100 text-stone-400 cursor-not-allowed'
+                  : 'bg-stone-900 hover:bg-amber-800 text-white'
               }`}
             >
               {isAdded ? (
@@ -166,13 +120,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               ) : (
                 <>
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Add to Jar</span>
+                  <span>Add</span>
                 </>
               )}
             </button>
           </div>
         </div>
-      </div>
+      </article>
     </Link>
   );
 };

@@ -12,6 +12,7 @@ import {
 } from '@/lib/email/templates';
 import { MOCK_ORDERS, MOCK_MANAGERS, MOCK_COUPONS } from '@/lib/mock-data';
 import { OrderRecord } from '@/types';
+import { requireAuthInProduction } from '@/lib/auth/server';
 
 // Sample demonstration order for test emails if store is fresh
 const SAMPLE_TEST_ORDER: OrderRecord = {
@@ -67,6 +68,9 @@ const SAMPLE_TEST_ORDER: OrderRecord = {
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAuthInProduction('ADMIN');
+    if ('response' in auth) return auth.response;
+
     const body = await req.json();
     const {
       type = 'ORDER_CONFIRMATION',
@@ -184,6 +188,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
+  const auth = await requireAuthInProduction('ADMIN');
+  if ('response' in auth) return auth.response;
+
   return NextResponse.json({
     availableTypes: [
       { id: 'ORDER_CONFIRMATION', name: 'Customer Order Confirmation & Raw Honey Care Guide' },

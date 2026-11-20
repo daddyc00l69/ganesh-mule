@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAuth } from '@/lib/auth/server';
+import { requireAuthInProduction } from '@/lib/auth/server';
 import { PERMISSIONS } from '@/lib/permissions';
 import { prisma } from '@/lib/db';
 
@@ -8,8 +8,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const auth = await requireAuth('ADMIN', PERMISSIONS.PRODUCTS_UPDATE);
-  const actorId = 'error' in auth ? null : auth.user.id;
+  const auth = await requireAuthInProduction('ADMIN', PERMISSIONS.PRODUCTS_UPDATE);
+  if ('response' in auth) return auth.response;
+  const actorId = auth.user?.id ?? null;
 
   try {
     const body = await req.json();
@@ -57,8 +58,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const auth = await requireAuth('ADMIN', PERMISSIONS.PRODUCTS_UPDATE);
-  const actorId = 'error' in auth ? null : auth.user.id;
+  const auth = await requireAuthInProduction('ADMIN', PERMISSIONS.PRODUCTS_UPDATE);
+  if ('response' in auth) return auth.response;
+  const actorId = auth.user?.id ?? null;
 
   try {
     try {

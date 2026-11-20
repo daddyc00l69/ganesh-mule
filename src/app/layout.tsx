@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import '@/styles/globals.css';
+import '@/styles/solid-glass.css';
 import { Providers } from '@/components/providers';
 
 export const viewport: Viewport = {

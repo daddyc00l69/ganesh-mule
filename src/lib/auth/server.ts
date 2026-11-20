@@ -29,7 +29,7 @@ export async function getCurrentUser(): Promise<SafeUser | null> {
     if (staffUser) return staffUser;
 
     // Fallback dev session token format for testing / dev mode: dev_ROLE_email
-    if (token.startsWith('dev_')) {
+    if (process.env.NODE_ENV !== 'production' && token.startsWith('dev_')) {
       const [, role, email] = token.split('_');
       return {
         id: `usr-${role.toLowerCase()}`,
@@ -105,4 +105,24 @@ export async function requireAuth(
   }
 
   return { user };
+}
+
+/**
+ * Enforces staff authentication & permission in production deployments (e.g., public VPS)
+ * while preserving dev/test ergonomics locally.
+ */
+export async function requireAuthInProduction(
+  requiredRole: 'ADMIN' | 'MANAGER' = 'MANAGER',
+  requiredPermission?: PermissionKey
+): Promise<{ user: SafeUser | null } | { response: NextResponse }> {
+  const auth = await requireAuth(requiredRole, requiredPermission);
+  if ('error' in auth) {
+    if (process.env.NODE_ENV === 'production') {
+      return {
+        response: NextResponse.json({ error: auth.error }, { status: auth.status }),
+      };
+    }
+    return { user: null };
+  }
+  return { user: auth.user };
 }

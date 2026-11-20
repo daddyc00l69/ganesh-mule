@@ -5,24 +5,58 @@
 
 import { ProductItem, InventoryMovementRecord } from '@/types';
 import { MOCK_PRODUCTS, MOCK_INVENTORY_MOVEMENTS } from '@/lib/mock-data';
+import {
+  isTestStorageBypassed,
+  readPersistedJson,
+  writePersistedJson,
+} from '@/lib/storage/json-store';
+
+const INVENTORY_FILENAME = 'inventory.json';
+
+interface PersistedInventoryState {
+  products: ProductItem[];
+  movements: InventoryMovementRecord[];
+}
 
 const globalInventoryStore = globalThis as unknown as {
   __LIVE_PRODUCTS__?: ProductItem[];
   __LIVE_INVENTORY_MOVEMENTS__?: InventoryMovementRecord[];
 };
 
-if (!globalInventoryStore.__LIVE_PRODUCTS__) {
-  globalInventoryStore.__LIVE_PRODUCTS__ = JSON.parse(JSON.stringify(MOCK_PRODUCTS));
-}
+function hydrateInventoryFromDisk(): void {
+  if (globalInventoryStore.__LIVE_PRODUCTS__ && globalInventoryStore.__LIVE_INVENTORY_MOVEMENTS__) {
+    return;
+  }
 
-if (!globalInventoryStore.__LIVE_INVENTORY_MOVEMENTS__) {
-  globalInventoryStore.__LIVE_INVENTORY_MOVEMENTS__ = [...MOCK_INVENTORY_MOVEMENTS];
-}
+  if (!isTestStorageBypassed()) {
+    const persisted = readPersistedJson<PersistedInventoryState>(INVENTORY_FILENAME);
+    if (persisted && Array.isArray(persisted.products) && persisted.products.length > 0) {
+      globalInventoryStore.__LIVE_PRODUCTS__ = persisted.products;
+      globalInventoryStore.__LIVE_INVENTORY_MOVEMENTS__ = Array.isArray(persisted.movements)
+        ? persisted.movements
+        : [...MOCK_INVENTORY_MOVEMENTS];
+      return;
+    }
+  }
 
-export function getLiveProducts(): ProductItem[] {
   if (!globalInventoryStore.__LIVE_PRODUCTS__) {
     globalInventoryStore.__LIVE_PRODUCTS__ = JSON.parse(JSON.stringify(MOCK_PRODUCTS));
   }
+  if (!globalInventoryStore.__LIVE_INVENTORY_MOVEMENTS__) {
+    globalInventoryStore.__LIVE_INVENTORY_MOVEMENTS__ = [...MOCK_INVENTORY_MOVEMENTS];
+  }
+}
+
+function persistInventoryToDisk(): void {
+  const products = getLiveProducts();
+  const movements = getLiveInventoryMovements().slice(0, 500);
+  writePersistedJson(INVENTORY_FILENAME, { products, movements });
+}
+
+hydrateInventoryFromDisk();
+
+export function getLiveProducts(): ProductItem[] {
+  hydrateInventoryFromDisk();
   return globalInventoryStore.__LIVE_PRODUCTS__!;
 }
 
@@ -32,9 +66,7 @@ export function getLiveProductById(idOrSlug: string): ProductItem | undefined {
 }
 
 export function getLiveInventoryMovements(): InventoryMovementRecord[] {
-  if (!globalInventoryStore.__LIVE_INVENTORY_MOVEMENTS__) {
-    globalInventoryStore.__LIVE_INVENTORY_MOVEMENTS__ = [...MOCK_INVENTORY_MOVEMENTS];
-  }
+  hydrateInventoryFromDisk();
   return globalInventoryStore.__LIVE_INVENTORY_MOVEMENTS__!;
 }
 
@@ -52,6 +84,15 @@ export function decrementProductStock(
 
   if (!product) {
     return { success: false, newStock: 0 };
+  }
+
+  // Idempotency check: Prevent double-decrement if both verify route and webhook process the same order
+  const existingMovements = getLiveInventoryMovements();
+  const alreadyDecremented = existingMovements.some(
+    (m) => m.referenceId === orderNumber && m.productId === productId && m.reason === 'ORDER_FULFILLMENT'
+  );
+  if (alreadyDecremented) {
+    return { success: true, newStock: product.stockQuantity };
   }
 
   const previousStock = product.stockQuantity;
@@ -85,6 +126,7 @@ export function decrementProductStock(
   const movements = getLiveInventoryMovements();
   movements.unshift(movement);
   MOCK_INVENTORY_MOVEMENTS.unshift(movement);
+  persistInventoryToDisk();
 
   return { success: true, newStock, movement };
 }
@@ -136,6 +178,7 @@ export function adjustProductStock(
   const movements = getLiveInventoryMovements();
   movements.unshift(movement);
   MOCK_INVENTORY_MOVEMENTS.unshift(movement);
+  persistInventoryToDisk();
 
   return { success: true, newStock, movement };
 }

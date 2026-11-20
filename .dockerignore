@@ -1,0 +1,15 @@
+node_modules
+.next
+.git
+.env
+.env*.local
+.vercel
+coverage
+scratch
+gh_bin
+local-test
+local-tester
+delhivery-local-test.html
+*.tsbuildinfo
+npm-debug.log*
+

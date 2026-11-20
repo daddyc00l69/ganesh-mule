@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requireAuth } from '@/lib/auth/server';
+import { requireAuthInProduction } from '@/lib/auth/server';
 import { PERMISSIONS } from '@/lib/permissions';
 import { prisma, isDatabaseOnline } from '@/lib/db';
 import { MOCK_PRODUCTS } from '@/lib/mock-data';
@@ -74,8 +74,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAuth('ADMIN', PERMISSIONS.PRODUCTS_CREATE);
-  const actorId = 'error' in auth ? null : auth.user.id;
+  const auth = await requireAuthInProduction('ADMIN', PERMISSIONS.PRODUCTS_CREATE);
+  if ('response' in auth) return auth.response;
+  const actorId = auth.user?.id ?? null;
 
   try {
     const body = await req.json();

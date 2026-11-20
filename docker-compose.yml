@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_change_me}
+      POSTGRES_DB: ${POSTGRES_DB:-solid_glass_ecommerce}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-solid_glass_ecommerce}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${PORT:-3000}:3000"
+    env_file:
+      - .env.local
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATA_DIR: /app/data
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_change_me}@postgres:5432/${POSTGRES_DB:-solid_glass_ecommerce}?schema=public
+    volumes:
+      - app_data:/app/data
+
+  db-push:
+    image: node:22-alpine
+    profiles: ["tools"]
+    working_dir: /app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_change_me}@postgres:5432/${POSTGRES_DB:-solid_glass_ecommerce}?schema=public
+    volumes:
+      - .:/app
+    command: ["sh", "-c", "npm ci --ignore-scripts && npx prisma db push"]
+
+volumes:
+  postgres_data:
+  app_data:

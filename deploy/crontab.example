@@ -1,0 +1,8 @@
+# Automated 12:30 AM IST Warehouse Batch Reconciliation Cron Job
+# Run `crontab -e` on your Ubuntu VPS (which typically uses UTC timezone).
+# 12:30 AM IST (UTC+05:30) = 19:00 UTC every day.
+#
+# Replace YOUR_CRON_SECRET with the CRON_SECRET value from your .env.local file.
+
+0 19 * * * curl -fsS -X POST -H "x-cron-secret: YOUR_CRON_SECRET" http://127.0.0.1:3000/api/warehouse/reconcile >> /var/log/ganesh-mule-reconcile.log 2>&1
+

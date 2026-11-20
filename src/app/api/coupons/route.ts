@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth, getCurrentUser } from '@/lib/auth/server';
-import { MOCK_COUPONS, MOCK_MANAGERS } from '@/lib/mock-data';
+import { MOCK_MANAGERS } from '@/lib/mock-data';
 import { DiscountCoupon } from '@/types';
-
-// In-memory store for active session mutations when DB is offline
-let IN_MEMORY_COUPONS: DiscountCoupon[] = [...MOCK_COUPONS];
+import {
+  getLiveCoupons,
+  getLiveCouponByCode,
+  addLiveCoupon,
+  updateLiveCoupon,
+} from '@/lib/coupons/store';
 
 const CreateCouponSchema = z.object({
   code: z
@@ -35,7 +38,7 @@ export async function GET(req: NextRequest) {
 
   // 1. Public Offers Endpoint (for shoppers refreshing offers on checkout)
   if (searchParams.get('publicOnly') === 'true') {
-    const publicCoupons = IN_MEMORY_COUPONS
+    const publicCoupons = getLiveCoupons()
       .filter((c) => c.isActive && c.isPublic)
       .map((c) => ({
         code: c.code,
@@ -60,7 +63,7 @@ export async function GET(req: NextRequest) {
   const userId = user?.id || 'usr-admin-1';
 
   try {
-    let coupons = IN_MEMORY_COUPONS;
+    let coupons = getLiveCoupons();
 
     // Filter by role: Managers only see coupons assigned to them
     if (role === 'MANAGER') {
@@ -118,7 +121,7 @@ export async function POST(req: NextRequest) {
     const normalizedCode = code.trim().toUpperCase();
 
     // Check code uniqueness
-    const exists = IN_MEMORY_COUPONS.some((c) => c.code.toUpperCase() === normalizedCode);
+    const exists = Boolean(getLiveCouponByCode(normalizedCode));
     if (exists) {
       return NextResponse.json({ error: `Coupon code "${normalizedCode}" already exists.` }, { status: 409 });
     }
@@ -148,7 +151,7 @@ export async function POST(req: NextRequest) {
       updatedAt: new Date().toISOString(),
     };
 
-    IN_MEMORY_COUPONS.unshift(newCoupon);
+    addLiveCoupon(newCoupon);
 
     return NextResponse.json({ success: true, coupon: newCoupon });
   } catch (err: any) {
@@ -170,14 +173,14 @@ export async function PATCH(req: NextRequest) {
     }
 
     const { id, isPublic, isActive } = parsed.data;
-    const coupon = IN_MEMORY_COUPONS.find((c) => c.id === id);
+    const updates: Partial<DiscountCoupon> = {};
+    if (isPublic !== undefined) updates.isPublic = isPublic;
+    if (isActive !== undefined) updates.isActive = isActive;
+
+    const coupon = updateLiveCoupon(id, updates);
     if (!coupon) {
       return NextResponse.json({ error: 'Coupon not found' }, { status: 404 });
     }
-
-    if (isPublic !== undefined) coupon.isPublic = isPublic;
-    if (isActive !== undefined) coupon.isActive = isActive;
-    coupon.updatedAt = new Date().toISOString();
 
     return NextResponse.json({ success: true, coupon });
   } catch (err: any) {

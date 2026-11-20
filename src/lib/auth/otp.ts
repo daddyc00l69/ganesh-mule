@@ -33,22 +33,44 @@ if (!globalCache.__CUSTOMER_SESSION_CACHE__) {
   globalCache.__CUSTOMER_SESSION_CACHE__ = new Map();
 }
 
+const CUSTOMER_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+function pruneExpiredAuthCaches(): void {
+  const now = Date.now();
+  if (globalCache.__OTP_CACHE__) {
+    for (const [key, entry] of globalCache.__OTP_CACHE__.entries()) {
+      if (now > entry.expiresAt) {
+        globalCache.__OTP_CACHE__.delete(key);
+      }
+    }
+  }
+  if (globalCache.__CUSTOMER_SESSION_CACHE__) {
+    for (const [key, session] of globalCache.__CUSTOMER_SESSION_CACHE__.entries()) {
+      if (now - session.createdAt > CUSTOMER_SESSION_TTL_MS) {
+        globalCache.__CUSTOMER_SESSION_CACHE__.delete(key);
+      }
+    }
+  }
+}
+
 /**
  * Generates and dispatches a secure 6-digit OTP via Resend email
  */
 export async function sendCustomerOtp(
   email: string
 ): Promise<{ success: boolean; message: string; testOtpHint?: string }> {
+  pruneExpiredAuthCaches();
   const cleanEmail = email.trim().toLowerCase();
   if (!cleanEmail.includes('@') || !cleanEmail.includes('.')) {
     throw new Error('Please provide a valid email address.');
   }
 
   const isTestEmail =
-    cleanEmail === 'tushar0p.verify@gmail.com' ||
-    cleanEmail.includes('test') ||
-    cleanEmail.includes('verify') ||
-    cleanEmail.endsWith('@devtushar.uk');
+    process.env.NODE_ENV !== 'production' &&
+    (cleanEmail === 'tushar0p.verify@gmail.com' ||
+      cleanEmail.includes('test') ||
+      cleanEmail.includes('verify') ||
+      cleanEmail.endsWith('@devtushar.uk'));
 
   // For test customer tushar0p.verify@gmail.com, allow 123456 or generated otp
   const otp = isTestEmail ? '123456' : Math.floor(100000 + Math.random() * 900000).toString();
@@ -137,10 +159,11 @@ export async function verifyCustomerOtp(
   const cleanOtp = enteredOtp.trim();
 
   const isTestAccount =
-    cleanEmail === 'tushar0p.verify@gmail.com' ||
-    cleanEmail.includes('test') ||
-    cleanEmail.includes('verify') ||
-    cleanEmail.endsWith('@devtushar.uk');
+    process.env.NODE_ENV !== 'production' &&
+    (cleanEmail === 'tushar0p.verify@gmail.com' ||
+      cleanEmail.includes('test') ||
+      cleanEmail.includes('verify') ||
+      cleanEmail.endsWith('@devtushar.uk'));
 
   const isMasterTestOtp = cleanOtp === '123456' && isTestAccount;
   const record = globalCache.__OTP_CACHE__?.get(cleanEmail);

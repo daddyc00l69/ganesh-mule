@@ -5,11 +5,14 @@
  * pincode serviceability check, shipping label generation, and live package tracking.
  */
 
-import fs from 'fs';
-import path from 'path';
 import { OrderRecord, DelhiverySettings, DelhiveryShipmentResult } from '@/types';
 import { updateLiveOrderStatus, getLiveOrderById, getLiveOrders } from '@/lib/orders/store';
 import { guessCityStateFromPin, isValidIndianPin } from '@/lib/constants/india';
+import {
+  isTestStorageBypassed,
+  readPersistedJson,
+  writePersistedJson,
+} from '@/lib/storage/json-store';
 
 // Official Delhivery One Endpoints
 export const DELHIVERY_URLS = {
@@ -32,10 +35,10 @@ export const DEFAULT_DELHIVERY_SETTINGS: DelhiverySettings = {
   insuredPackaging: true,
 };
 
-const isTestEnv = process.env.NODE_ENV === 'test' || Boolean(process.env.VITEST);
+const isTestEnv = isTestStorageBypassed();
 
-// In-memory + file-backed settings store
-const SETTINGS_FILE_PATH = path.join(process.cwd(), '.data', 'delhivery-settings.json');
+// In-memory + atomic file-backed settings store
+const DELHIVERY_SETTINGS_FILENAME = 'delhivery-settings.json';
 
 const globalStore = globalThis as unknown as {
   __DELHIVERY_SETTINGS__?: DelhiverySettings;
@@ -53,14 +56,11 @@ export function getDelhiverySettings(): DelhiverySettings {
   }
 
   try {
-    if (fs.existsSync(SETTINGS_FILE_PATH)) {
-      const data = fs.readFileSync(SETTINGS_FILE_PATH, 'utf-8').trim();
-      if (data) {
-        const parsed = JSON.parse(data);
-        const merged: DelhiverySettings = { ...DEFAULT_DELHIVERY_SETTINGS, ...parsed };
-        globalStore.__DELHIVERY_SETTINGS__ = merged;
-        return merged;
-      }
+    const parsed = readPersistedJson<Partial<DelhiverySettings>>(DELHIVERY_SETTINGS_FILENAME);
+    if (parsed) {
+      const merged: DelhiverySettings = { ...DEFAULT_DELHIVERY_SETTINGS, ...parsed };
+      globalStore.__DELHIVERY_SETTINGS__ = merged;
+      return merged;
     }
   } catch (err) {
     console.warn('[Delhivery Settings] Read error, using defaults:', err);
@@ -80,15 +80,7 @@ export function saveDelhiverySettings(updates: Partial<DelhiverySettings>): Delh
     return updated;
   }
 
-  try {
-    const dir = path.dirname(SETTINGS_FILE_PATH);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-    fs.writeFileSync(SETTINGS_FILE_PATH, JSON.stringify(updated, null, 2), 'utf-8');
-  } catch (err) {
-    console.warn('[Delhivery Settings] Write error, saved in-memory only:', err);
-  }
+  writePersistedJson(DELHIVERY_SETTINGS_FILENAME, updated);
 
   return updated;
 }

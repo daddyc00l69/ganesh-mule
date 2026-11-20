@@ -9,12 +9,17 @@ import {
 } from '@/lib/email/templates';
 import { OrderStatus } from '@/types';
 import { createDelhiveryShipment } from '@/lib/shipping/delhivery';
+import { requireAuthInProduction } from '@/lib/auth/server';
+import { PERMISSIONS } from '@/lib/permissions';
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAuthInProduction('MANAGER', PERMISSIONS.ORDERS_UPDATE);
+    if ('response' in auth) return auth.response;
+
     const { id } = await params;
     const body = await req.json();
     const { status, carrier, trackingNumber, notes } = body as {

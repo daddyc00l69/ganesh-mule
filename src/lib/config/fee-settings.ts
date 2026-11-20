@@ -1,6 +1,6 @@
 /**
  * Operational fee and shipping configuration with statutory GST breakdowns
- * Manageable by Managers and Super Admins
+ * Manageable by Managers and Super Admins (browser-safe; disk persistence lives in fee-settings-server.ts)
  */
 
 export interface FeeSettings {
@@ -48,21 +48,27 @@ export const DEFAULT_FEE_SETTINGS: FeeSettings = {
   updatedBy: 'Developer Platform Setup',
 };
 
-// Global in-memory singleton for runtime persistence
-let activeFeeSettings: FeeSettings = { ...DEFAULT_FEE_SETTINGS };
+const globalFeeStore = globalThis as unknown as {
+  __FEE_SETTINGS__?: FeeSettings;
+};
 
 export function getFeeSettings(): FeeSettings {
-  return { ...activeFeeSettings };
+  if (!globalFeeStore.__FEE_SETTINGS__) {
+    globalFeeStore.__FEE_SETTINGS__ = { ...DEFAULT_FEE_SETTINGS };
+  }
+  return { ...globalFeeStore.__FEE_SETTINGS__ };
 }
 
 export function updateFeeSettings(updates: Partial<FeeSettings>, updatedBy: string = 'Manager'): FeeSettings {
-  activeFeeSettings = {
-    ...activeFeeSettings,
+  const current = getFeeSettings();
+  const next: FeeSettings = {
+    ...current,
     ...updates,
     updatedAt: new Date().toISOString(),
     updatedBy,
   };
-  return { ...activeFeeSettings };
+  globalFeeStore.__FEE_SETTINGS__ = next;
+  return { ...next };
 }
 
 export interface FeeCalculationResult {
@@ -114,7 +120,7 @@ export interface FeeCalculationResult {
 export function calculateOrderFees(
   subtotalPaise: number,
   discountPaise: number = 0,
-  settings: FeeSettings = activeFeeSettings,
+  settings: FeeSettings = getFeeSettings(),
   customShippingBasePaise?: number,
   customShippingTotalPaise?: number
 ): FeeCalculationResult {

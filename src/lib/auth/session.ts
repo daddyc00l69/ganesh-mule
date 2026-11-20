@@ -5,7 +5,15 @@ import type { SafeUser } from '@/types';
 export const SESSION_COOKIE_NAME = 'sg_session';
 export const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days in seconds
 
-const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-fallback-session-secret-min-32-chars-long';
+const DEFAULT_DEV_SECRET = 'dev-fallback-session-secret-min-32-chars-long';
+const SESSION_SECRET = process.env.SESSION_SECRET || DEFAULT_DEV_SECRET;
+
+if (
+  process.env.NODE_ENV === 'production' &&
+  (!process.env.SESSION_SECRET || process.env.SESSION_SECRET === DEFAULT_DEV_SECRET || process.env.SESSION_SECRET.includes('replace-with'))
+) {
+  console.warn('[Auth Security Warning] SESSION_SECRET is not set to a strong random value in production!');
+}
 
 interface StatelessSessionPayload {
   user: SafeUser;
@@ -119,9 +127,14 @@ export async function setSessionCookie(rawTokenOrUser: string | SafeUser): Promi
       ? tokenToStore
       : signSessionToken(tokenToStore);
 
+    const isSecureCookie =
+      process.env.COOKIE_SECURE !== undefined
+        ? process.env.COOKIE_SECURE !== 'false'
+        : process.env.NODE_ENV === 'production';
+
     cookieStore.set(SESSION_COOKIE_NAME, finalValue, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isSecureCookie,
       sameSite: 'lax',
       path: '/',
       maxAge: SESSION_MAX_AGE,

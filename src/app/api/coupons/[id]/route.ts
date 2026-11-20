@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/auth/server';
-import { MOCK_COUPONS, MOCK_MANAGERS } from '@/lib/mock-data';
+import { MOCK_MANAGERS } from '@/lib/mock-data';
+import { getLiveCouponById, updateLiveCoupon, deleteLiveCoupon } from '@/lib/coupons/store';
+import { DiscountCoupon } from '@/types';
 
 const UpdateCouponSchema = z.object({
   description: z.string().optional(),
@@ -33,29 +35,29 @@ export async function PATCH(
       return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Invalid data' }, { status: 400 });
     }
 
-    const coupon = MOCK_COUPONS.find((c) => c.id === id);
-    if (!coupon) {
+    const existing = getLiveCouponById(id);
+    if (!existing) {
       return NextResponse.json({ error: 'Coupon not found' }, { status: 404 });
     }
 
-    // Apply updates
-    if (parsed.data.description !== undefined) coupon.description = parsed.data.description;
-    if (parsed.data.discountType !== undefined) coupon.discountType = parsed.data.discountType;
-    if (parsed.data.value !== undefined) coupon.value = parsed.data.value;
-    if (parsed.data.minOrderAmount !== undefined) coupon.minOrderAmount = parsed.data.minOrderAmount;
-    if (parsed.data.maxDiscountAmount !== undefined) coupon.maxDiscountAmount = parsed.data.maxDiscountAmount;
-    if (parsed.data.expiresAt !== undefined) coupon.expiresAt = parsed.data.expiresAt;
-    if (parsed.data.usageLimit !== undefined) coupon.usageLimit = parsed.data.usageLimit;
-    if (parsed.data.isActive !== undefined) coupon.isActive = parsed.data.isActive;
+    const updates: Partial<DiscountCoupon> = {};
+    if (parsed.data.description !== undefined) updates.description = parsed.data.description;
+    if (parsed.data.discountType !== undefined) updates.discountType = parsed.data.discountType;
+    if (parsed.data.value !== undefined) updates.value = parsed.data.value;
+    if (parsed.data.minOrderAmount !== undefined) updates.minOrderAmount = parsed.data.minOrderAmount;
+    if (parsed.data.maxDiscountAmount !== undefined) updates.maxDiscountAmount = parsed.data.maxDiscountAmount;
+    if (parsed.data.expiresAt !== undefined) updates.expiresAt = parsed.data.expiresAt;
+    if (parsed.data.usageLimit !== undefined) updates.usageLimit = parsed.data.usageLimit;
+    if (parsed.data.isActive !== undefined) updates.isActive = parsed.data.isActive;
 
     if (parsed.data.assignedManagerIds !== undefined) {
-      coupon.assignedManagerIds = parsed.data.assignedManagerIds;
-      coupon.assignedManagerNames = parsed.data.assignedManagerIds
+      updates.assignedManagerIds = parsed.data.assignedManagerIds;
+      updates.assignedManagerNames = parsed.data.assignedManagerIds
         .map((mId) => MOCK_MANAGERS.find((m) => m.userId === mId)?.name)
         .filter(Boolean) as string[];
     }
 
-    coupon.updatedAt = new Date().toISOString();
+    const coupon = updateLiveCoupon(id, updates);
 
     return NextResponse.json({ success: true, coupon });
   } catch (err: any) {
@@ -74,10 +76,7 @@ export async function DELETE(
 
   const { id } = await params;
 
-  const index = MOCK_COUPONS.findIndex((c) => c.id === id);
-  if (index !== -1) {
-    MOCK_COUPONS.splice(index, 1);
-  }
+  deleteLiveCoupon(id);
 
   return NextResponse.json({ success: true, message: 'Coupon deleted' });
 }

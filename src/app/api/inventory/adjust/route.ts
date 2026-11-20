@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requireAuth } from '@/lib/auth/server';
+import { requireAuthInProduction } from '@/lib/auth/server';
 import { PERMISSIONS } from '@/lib/permissions';
 import { prisma } from '@/lib/db';
 import { adjustProductStock } from '@/lib/inventory/store';
@@ -25,9 +25,10 @@ const AdjustmentSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAuth('MANAGER', PERMISSIONS.INVENTORY_UPDATE);
-  const actorId = 'error' in auth ? null : auth.user.id;
-  const actorName = 'error' in auth ? 'Vikram Mehta (Manager)' : auth.user.name;
+  const auth = await requireAuthInProduction('MANAGER', PERMISSIONS.INVENTORY_UPDATE);
+  if ('response' in auth) return auth.response;
+  const actorId = auth.user?.id ?? null;
+  const actorName = auth.user?.name ?? 'Vikram Mehta (Manager)';
 
   try {
     const body = await req.json();

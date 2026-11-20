@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { MOCK_COUPONS } from '@/lib/mock-data';
+import { getLiveCouponByCode } from '@/lib/coupons/store';
 import { prisma, isDatabaseOnline } from '@/lib/db';
 
 const ValidateCouponSchema = z.object({
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!coupon) {
-      coupon = MOCK_COUPONS.find((c) => c.code.toUpperCase() === normalizedCode);
+      coupon = getLiveCouponByCode(normalizedCode);
     }
 
     if (!coupon) {

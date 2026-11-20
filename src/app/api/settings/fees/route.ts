@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getFeeSettings, updateFeeSettings } from '@/lib/config/fee-settings';
-import { getCurrentUser } from '@/lib/auth/server';
+import {
+  getServerFeeSettings,
+  updateServerFeeSettings,
+} from '@/lib/config/fee-settings-server';
+import { requireAuthInProduction } from '@/lib/auth/server';
+import { PERMISSIONS } from '@/lib/permissions';
 
 const UpdateFeeSettingsSchema = z.object({
   shippingBaseFee: z.number().int().nonnegative().optional(), // in paise
@@ -19,7 +23,7 @@ const UpdateFeeSettingsSchema = z.object({
 
 export async function GET() {
   try {
-    const settings = getFeeSettings();
+    const settings = getServerFeeSettings();
     return NextResponse.json({ success: true, settings });
   } catch (err: any) {
     return NextResponse.json({ error: 'Failed to retrieve fee settings', details: err.message }, { status: 500 });
@@ -28,6 +32,9 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAuthInProduction('MANAGER', PERMISSIONS.SETTINGS_MANAGE);
+    if ('response' in auth) return auth.response;
+
     const body = await req.json();
     const parsed = UpdateFeeSettingsSchema.safeParse(body);
 
@@ -35,10 +42,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid fee settings data', details: parsed.error }, { status: 400 });
     }
 
-    const currentUser = await getCurrentUser();
-    const updaterName = currentUser ? `${currentUser.role} (${currentUser.name})` : 'Manager (Operations Desk)';
+    const updaterName = auth.user ? `${auth.user.role} (${auth.user.name})` : 'Manager (Operations Desk)';
 
-    const updated = updateFeeSettings(parsed.data, updaterName);
+    const updated = updateServerFeeSettings(parsed.data, updaterName);
 
     return NextResponse.json({
       success: true,

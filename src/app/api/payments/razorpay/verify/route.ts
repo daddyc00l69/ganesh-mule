@@ -26,14 +26,18 @@ export async function POST(req: NextRequest) {
 
     const { razorpayOrderId, razorpayPaymentId, razorpaySignature, orderNumber } = parsed.data;
     const secret = process.env.RAZORPAY_KEY_SECRET || 'rzp_secret_placeholder_dev';
+    const isLiveProductionRazorpay =
+      process.env.NODE_ENV === 'production' &&
+      (process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || '').startsWith('rzp_live_');
     const dbOnline = await isDatabaseOnline();
 
-    // Verify cryptographic signature
+    // Verify cryptographic signature (never permit test bypasses with live keys in production)
     let isValidSignature = false;
     if (
-      razorpayPaymentId.startsWith('pay_test_') ||
-      razorpaySignature === 'simulated_test_signature' ||
-      razorpaySignature === 'simulated_test_sig'
+      !isLiveProductionRazorpay &&
+      (razorpayPaymentId.startsWith('pay_test_') ||
+        razorpaySignature === 'simulated_test_signature' ||
+        razorpaySignature === 'simulated_test_sig')
     ) {
       // Instant development/test mode payment confirmation
       isValidSignature = true;
@@ -44,7 +48,7 @@ export async function POST(req: NextRequest) {
         razorpaySignature,
         secret,
       });
-    } else {
+    } else if (!isLiveProductionRazorpay) {
       // Test mode verification
       isValidSignature = true;
     }

@@ -3,10 +3,13 @@ import { z } from 'zod';
 import Razorpay from 'razorpay';
 import { prisma, isDatabaseOnline } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth/server';
-import { MOCK_PRODUCTS, MOCK_COUPONS, MOCK_ORDERS } from '@/lib/mock-data';
+import { MOCK_PRODUCTS, MOCK_ORDERS } from '@/lib/mock-data';
+import { getLiveCouponByCode, incrementCouponUsage } from '@/lib/coupons/store';
+import { getLiveProductById } from '@/lib/inventory/store';
 import { addLiveOrder } from '@/lib/orders/store';
 import { getGstStateCode } from '@/lib/constants/india';
 import { calculateOrderFees } from '@/lib/config/fee-settings';
+import { getServerFeeSettings } from '@/lib/config/fee-settings-server';
 import {
   calculateDelhiveryShippingCost,
   calculateConsignmentWeightGrams,
@@ -101,7 +104,7 @@ export async function POST(req: NextRequest) {
       }
 
       if (!product) {
-        product = MOCK_PRODUCTS.find((p) => p.id === item.productId);
+        product = getLiveProductById(item.productId) || MOCK_PRODUCTS.find((p) => p.id === item.productId);
       }
 
       if (!product) {
@@ -136,7 +139,7 @@ export async function POST(req: NextRequest) {
 
     if (parsed.data.couponCode) {
       const normalizedCode = parsed.data.couponCode.trim().toUpperCase();
-      const coupon = MOCK_COUPONS.find((c) => c.code.toUpperCase() === normalizedCode);
+      const coupon = getLiveCouponByCode(normalizedCode);
 
       if (coupon && coupon.isActive) {
         const notExpired = !coupon.expiresAt || new Date(coupon.expiresAt) > new Date();
@@ -156,7 +159,7 @@ export async function POST(req: NextRequest) {
             discountAmount = Math.min(coupon.value, subtotal);
           }
           // Increment coupon usage
-          coupon.usageCount += 1;
+          incrementCouponUsage(coupon.code);
         }
       }
     }
@@ -176,7 +179,7 @@ export async function POST(req: NextRequest) {
     const feeBreakdown = calculateOrderFees(
       subtotal,
       discountAmount,
-      undefined,
+      getServerFeeSettings(),
       delhiveryShippingBasePaise,
       delhiveryShippingTotalPaise
     );

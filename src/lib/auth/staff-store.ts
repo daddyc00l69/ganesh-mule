@@ -9,9 +9,10 @@ import {
 } from '@/lib/email/templates';
 import { STORE_URL } from '@/lib/constants/brand';
 import { SafeUser } from '@/types';
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
+import {
+  readPersistedJson,
+  writePersistedJson,
+} from '@/lib/storage/json-store';
 
 export interface AdminAccount {
   id: string;
@@ -63,10 +64,9 @@ const globalStaff = globalThis as unknown as {
   __STAFF_STORE__?: StaffStoreState;
 };
 
-// Persisted disk file fallback (.data on dev, os.tmpdir() on Vercel serverless)
-const DATA_DIR = path.join(process.cwd(), '.data');
-const DATA_FILE = path.join(DATA_DIR, 'staff-registry.json');
-const TMP_FILE = path.join(os.tmpdir(), 'staff-registry-vercel.json');
+// Persisted disk file store (DATA_DIR on VPS, os.tmpdir() fallback if read-only)
+const STAFF_REGISTRY_FILENAME = 'staff-registry.json';
+const STAFF_TMP_FILENAME = 'staff-registry-vercel.json';
 
 // Default Master Administrator template (used as fallback reference only)
 export const DEFAULT_ROOT_ADMIN: AdminAccount = {
@@ -108,19 +108,21 @@ export const DEFAULT_STORE_MANAGER: StoredManager = {
 
 function loadPersistedState(): { admin: AdminAccount | null; managers: StoredManager[]; invites: ManagerInvite[] } {
   try {
-    for (const filePath of [TMP_FILE, DATA_FILE]) {
-      if (fs.existsSync(filePath)) {
-        const raw = fs.readFileSync(filePath, 'utf-8');
-        const parsed = JSON.parse(raw);
-        const managersList = Array.isArray(parsed.managers) && parsed.managers.length > 0
+    const parsed = readPersistedJson<{
+      admin?: AdminAccount | null;
+      managers?: StoredManager[];
+      invites?: ManagerInvite[];
+    }>(STAFF_REGISTRY_FILENAME, STAFF_TMP_FILENAME);
+    if (parsed) {
+      const managersList =
+        Array.isArray(parsed.managers) && parsed.managers.length > 0
           ? parsed.managers
           : [DEFAULT_STORE_MANAGER];
-        return {
-          admin: parsed.admin || DEFAULT_ROOT_ADMIN,
-          managers: managersList,
-          invites: Array.isArray(parsed.invites) ? parsed.invites : [],
-        };
-      }
+      return {
+        admin: parsed.admin || DEFAULT_ROOT_ADMIN,
+        managers: managersList,
+        invites: Array.isArray(parsed.invites) ? parsed.invites : [],
+      };
     }
   } catch {}
   return { admin: DEFAULT_ROOT_ADMIN, managers: [DEFAULT_STORE_MANAGER], invites: [] };
@@ -135,20 +137,7 @@ function persistState() {
         : [DEFAULT_STORE_MANAGER],
     invites: globalStaff.__STAFF_STORE__?.invites || [],
   };
-  const jsonStr = JSON.stringify(data, null, 2);
-
-  // 1. Try writing to tmp dir (always writable on Vercel)
-  try {
-    fs.writeFileSync(TMP_FILE, jsonStr, 'utf-8');
-  } catch {}
-
-  // 2. Try writing to local .data (local development)
-  try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-    fs.writeFileSync(DATA_FILE, jsonStr, 'utf-8');
-  } catch {}
+  writePersistedJson(STAFF_REGISTRY_FILENAME, data, STAFF_TMP_FILENAME);
 }
 
 if (!globalStaff.__STAFF_STORE__) {
@@ -730,6 +719,11 @@ export async function directSetAdminAccount(params: {
   phone?: string;
   password?: string;
 }): Promise<{ success: boolean; user: SafeUser; token: string }> {
+  // Security guard: Prevent unauthorized overwrite of an existing root administrator
+  if (store.admin && store.admin.email) {
+    throw new Error('Admin account is already configured. Please sign in via the Staff Portal.');
+  }
+
   const cleanEmail = params.email.trim().toLowerCase();
   const cleanName = params.name.trim();
   const phone = params.phone?.trim() || '+91 98220 00000';

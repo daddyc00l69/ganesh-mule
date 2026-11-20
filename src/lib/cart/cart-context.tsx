@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { CartItem, ProductItem } from '@/types';
 
 interface CartContextType {
@@ -67,7 +67,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [items, isLoaded]);
 
-  const addToCart = (product: ProductItem, quantity = 1) => {
+  const addToCart = useCallback((product: ProductItem, quantity = 1) => {
     setItems((prev) => {
       const existing = prev.find((i) => i.productId === product.id);
       if (existing) {
@@ -93,15 +93,15 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ];
     });
     setIsCartOpen(true);
-  };
+  }, []);
 
-  const removeFromCart = (productId: string) => {
+  const removeFromCart = useCallback((productId: string) => {
     setItems((prev) => prev.filter((i) => i.productId !== productId));
-  };
+  }, []);
 
-  const updateQuantity = (productId: string, quantity: number) => {
+  const updateQuantity = useCallback((productId: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      setItems((prev) => prev.filter((i) => i.productId !== productId));
       return;
     }
     setItems((prev) =>
@@ -111,17 +111,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           : i
       )
     );
-  };
+  }, []);
 
-  const clearCart = () => {
-    setItems([]);
-    try {
-      localStorage.removeItem('sg_cart');
-      localStorage.setItem('sg_cart', '[]');
-      window.dispatchEvent(new Event('storage'));
-      window.dispatchEvent(new CustomEvent('cart-cleared'));
-    } catch {}
-  };
+  const clearCart = useCallback(() => {
+    setItems((prev) => {
+      if (prev.length === 0) return prev;
+      try {
+        localStorage.removeItem('sg_cart');
+        localStorage.setItem('sg_cart', '[]');
+        window.dispatchEvent(new Event('storage'));
+        window.dispatchEvent(new CustomEvent('cart-cleared'));
+      } catch {}
+      return [];
+    });
+  }, []);
 
   const totalItems = items.reduce((acc, i) => acc + i.quantity, 0);
   const subtotal = items.reduce((acc, i) => acc + i.price * i.quantity, 0);

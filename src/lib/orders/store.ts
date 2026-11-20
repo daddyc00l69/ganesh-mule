@@ -4,22 +4,27 @@
  * separate browsers, incognito sessions, Checkout, Admin, and Manager consoles.
  */
 
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
 import { OrderRecord, OrderStatus, PaymentStatus } from '@/types';
 import { MOCK_ORDERS } from '@/lib/mock-data';
+import {
+  getDataFilePath,
+  getTmpFilePath,
+  isTestStorageBypassed,
+  readJsonFile,
+  writePersistedJson,
+} from '@/lib/storage/json-store';
 
-const DATA_DIR = path.join(process.cwd(), '.data');
-const ORDERS_FILE_PATH = path.join(DATA_DIR, 'orders.json');
-const TMP_ORDERS_FILE_PATH = path.join(os.tmpdir(), 'orders-solidglass.json');
+const ORDERS_FILENAME = 'orders.json';
+const TMP_ORDERS_FILENAME = 'orders-solidglass.json';
+const ORDERS_FILE_PATH = getDataFilePath(ORDERS_FILENAME);
+const TMP_ORDERS_FILE_PATH = getTmpFilePath(TMP_ORDERS_FILENAME);
 
 // Persistent in-memory cache
 const globalStore = globalThis as unknown as {
   __LIVE_ORDERS__?: OrderRecord[];
 };
 
-const isTestEnv = process.env.NODE_ENV === 'test' || Boolean(process.env.VITEST);
+const isTestEnv = isTestStorageBypassed();
 
 function readOrdersFromDisk(): OrderRecord[] {
   if (isTestEnv) {
@@ -31,32 +36,27 @@ function readOrdersFromDisk(): OrderRecord[] {
   // Helper to load file into map
   const loadFromFile = (filePath: string) => {
     try {
-      if (fs.existsSync(filePath)) {
-        const content = fs.readFileSync(filePath, 'utf-8').trim();
-        if (content) {
-          const parsed = JSON.parse(content);
-          if (Array.isArray(parsed)) {
-            for (const o of parsed) {
-              if (o && (o.id || o.orderNumber)) {
-                const key = (o.orderNumber || o.id).toLowerCase();
-                // Later files or more recent entries take precedence
-                if (!orderMap.has(key)) {
-                  orderMap.set(key, o);
-                } else {
-                  // Merge fields if existing, preserving live cancellations and real AWBs
-                  const prev = orderMap.get(key)!;
-                  const merged = { ...prev, ...o };
-                  if (prev.orderStatus === 'CANCELLED' && o.orderStatus !== 'CANCELLED') {
-                    merged.orderStatus = 'CANCELLED';
-                    merged.delhiveryStatus = prev.delhiveryStatus || o.delhiveryStatus;
-                  }
-                  if (prev.trackingNumber && !prev.trackingNumber.startsWith('143') && o.trackingNumber?.startsWith('143')) {
-                    merged.trackingNumber = prev.trackingNumber;
-                    merged.delhiveryWaybill = prev.delhiveryWaybill || prev.trackingNumber;
-                  }
-                  orderMap.set(key, merged);
-                }
+      const parsed = readJsonFile<OrderRecord[]>(filePath);
+      if (Array.isArray(parsed)) {
+        for (const o of parsed) {
+          if (o && (o.id || o.orderNumber)) {
+            const key = (o.orderNumber || o.id).toLowerCase();
+            // Later files or more recent entries take precedence
+            if (!orderMap.has(key)) {
+              orderMap.set(key, o);
+            } else {
+              // Merge fields if existing, preserving live cancellations and real AWBs
+              const prev = orderMap.get(key)!;
+              const merged = { ...prev, ...o };
+              if (prev.orderStatus === 'CANCELLED' && o.orderStatus !== 'CANCELLED') {
+                merged.orderStatus = 'CANCELLED';
+                merged.delhiveryStatus = prev.delhiveryStatus || o.delhiveryStatus;
               }
+              if (prev.trackingNumber && !prev.trackingNumber.startsWith('143') && o.trackingNumber?.startsWith('143')) {
+                merged.trackingNumber = prev.trackingNumber;
+                merged.delhiveryWaybill = prev.delhiveryWaybill || prev.trackingNumber;
+              }
+              orderMap.set(key, merged);
             }
           }
         }
@@ -66,11 +66,9 @@ function readOrdersFromDisk(): OrderRecord[] {
     }
   };
 
-  // 1. Read from local .data/orders.json
-  loadFromFile(ORDERS_FILE_PATH);
-
-  // 2. Read from os.tmpdir()/orders-solidglass.json (Vercel serverless / persistent scratch)
+  // 1. Read tmp fallback first (if any), then let VPS persistent DATA_DIR take precedence
   loadFromFile(TMP_ORDERS_FILE_PATH);
+  loadFromFile(ORDERS_FILE_PATH);
 
   if (orderMap.size > 0) {
     return Array.from(orderMap.values());
@@ -81,24 +79,7 @@ function readOrdersFromDisk(): OrderRecord[] {
 
 function writeOrdersToDisk(orders: OrderRecord[]): void {
   if (isTestEnv) return;
-  const jsonStr = JSON.stringify(orders, null, 2);
-
-  // 1. Write to local .data directory
-  try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-    fs.writeFileSync(ORDERS_FILE_PATH, jsonStr, 'utf-8');
-  } catch (err) {
-    // Read-only filesystem fallback on serverless runtimes
-  }
-
-  // 2. Write to os.tmpdir() (always writable across cloud runtimes)
-  try {
-    fs.writeFileSync(TMP_ORDERS_FILE_PATH, jsonStr, 'utf-8');
-  } catch (err) {
-    console.warn('[Orders Store] Failed to write orders to tmpdir:', err);
-  }
+  writePersistedJson(ORDERS_FILENAME, orders, TMP_ORDERS_FILENAME);
 }
 
 // Initial hydration from disk

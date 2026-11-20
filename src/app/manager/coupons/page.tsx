@@ -47,10 +47,15 @@ export default function ManagerCouponsPage() {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
+  const getPublicOrigin = () => {
+    if (typeof window !== 'undefined' && window.location?.origin) {
+      return window.location.origin;
+    }
+    return (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/+$/, '');
+  };
+
   const handleCopyLink = (code: string) => {
-    const origin = typeof window !== 'undefined' && !window.location.origin.includes('localhost')
-      ? window.location.origin
-      : 'https://ganesh-mule.vercel.app';
+    const origin = getPublicOrigin();
     const link = `${origin}/checkout?coupon=${code}`;
     navigator.clipboard.writeText(link);
     setCopiedLink(code);
@@ -58,9 +63,7 @@ export default function ManagerCouponsPage() {
   };
 
   const handleCopySnippet = (coupon: DiscountCoupon) => {
-    const origin = typeof window !== 'undefined' && !window.location.origin.includes('localhost')
-      ? window.location.origin
-      : 'https://ganesh-mule.vercel.app';
+    const origin = getPublicOrigin();
     const offer =
       coupon.discountType === 'PERCENTAGE'
         ? `${coupon.value}% off`

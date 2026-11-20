@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requireAuth } from '@/lib/auth/server';
+import { requireAuthInProduction } from '@/lib/auth/server';
 import { PERMISSIONS } from '@/lib/permissions';
 import { prisma } from '@/lib/db';
 
@@ -11,8 +11,9 @@ const RefundSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAuth('MANAGER', PERMISSIONS.REFUNDS_APPROVE);
-  const actorId = 'error' in auth ? null : auth.user.id;
+  const auth = await requireAuthInProduction('MANAGER', PERMISSIONS.REFUNDS_APPROVE);
+  if ('response' in auth) return auth.response;
+  const actorId = auth.user?.id ?? null;
 
   try {
     const body = await req.json();

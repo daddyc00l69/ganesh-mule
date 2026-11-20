@@ -1,23 +1,45 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDelhiverySettings, saveDelhiverySettings } from '@/lib/shipping/delhivery';
-import { getCurrentUser } from '@/lib/auth/server';
+import { getCurrentUser, requireAuthInProduction } from '@/lib/auth/server';
+import { PERMISSIONS } from '@/lib/permissions';
+import { DelhiverySettings } from '@/types';
+
+function sanitizeDelhiverySettings(settings: DelhiverySettings) {
+  const maskedKey = settings.apiKey
+    ? settings.apiKey.length > 8
+      ? `${settings.apiKey.slice(0, 4)}••••••••${settings.apiKey.slice(-4)}`
+      : '••••••••'
+    : '';
+  const { apiKey: _omitApiKey, ...safeSettings } = settings;
+  return {
+    ...safeSettings,
+    apiKeyMasked: maskedKey,
+  };
+}
 
 export async function GET() {
   try {
+    const user = await getCurrentUser();
+    const isStaff = Boolean(user && (user.role === 'ADMIN' || user.role === 'MANAGER'));
     const settings = getDelhiverySettings();
-    // Mask API key for UI security
-    const maskedKey = settings.apiKey
-      ? settings.apiKey.length > 8
-        ? `${settings.apiKey.slice(0, 4)}••••••••${settings.apiKey.slice(-4)}`
-        : '••••••••'
-      : '';
+
+    // Unauthenticated public callers (e.g. checkout) only receive non-sensitive shipping mode metadata
+    if (process.env.NODE_ENV === 'production' && !isStaff) {
+      return NextResponse.json({
+        success: true,
+        settings: {
+          shippingMode: settings.shippingMode,
+          originPincode: settings.originPincode,
+          originCity: settings.originCity,
+          originState: settings.originState,
+          insuredPackaging: settings.insuredPackaging,
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,
-      settings: {
-        ...settings,
-        apiKeyMasked: maskedKey,
-      },
+      settings: sanitizeDelhiverySettings(settings),
     });
   } catch (error: any) {
     return NextResponse.json(
@@ -29,6 +51,9 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAuthInProduction('MANAGER', PERMISSIONS.SETTINGS_MANAGE);
+    if ('response' in auth) return auth.response;
+
     const user = await getCurrentUser();
     // Allow admin or manager to update settings
     if (user && user.role !== 'ADMIN' && user.role !== 'MANAGER') {
@@ -49,18 +74,9 @@ export async function POST(req: NextRequest) {
       apiKey: newApiKey,
     });
 
-    const maskedKey = updated.apiKey
-      ? updated.apiKey.length > 8
-        ? `${updated.apiKey.slice(0, 4)}••••••••${updated.apiKey.slice(-4)}`
-        : '••••••••'
-      : '';
-
     return NextResponse.json({
       success: true,
-      settings: {
-        ...updated,
-        apiKeyMasked: maskedKey,
-      },
+      settings: sanitizeDelhiverySettings(updated),
       message: 'Delhivery One settings updated successfully.',
     });
   } catch (error: any) {

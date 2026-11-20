@@ -212,16 +212,12 @@ function CheckoutContent() {
     document.body.appendChild(script);
   }, []);
 
-  // Automatically purge cart on completed order
+  // Automatically purge cart on completed order (strictly once)
+  const hasPurgedCartRef = useRef(false);
   useEffect(() => {
-    if (completedOrder) {
+    if (completedOrder && !hasPurgedCartRef.current) {
+      hasPurgedCartRef.current = true;
       clearCart();
-      try {
-        localStorage.removeItem('sg_cart');
-        localStorage.setItem('sg_cart', '[]');
-        window.dispatchEvent(new Event('storage'));
-        window.dispatchEvent(new CustomEvent('cart-cleared'));
-      } catch {}
     }
   }, [completedOrder, clearCart]);
 
