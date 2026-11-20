@@ -51,3 +51,6 @@ delhivery-local-test.html
 local-test/
 local-tester/
 
+
+.vercel
+.env*

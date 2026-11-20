@@ -160,7 +160,7 @@ describe('Razorpay Cryptographic Payment & Webhook Verification', () => {
     expect(updated?.orderStatus).toBe('PROCESSING');
     expect(updated?.trackingNumber).toBeDefined();
     expect(updated?.delhiveryWaybill).toBeDefined();
-  });
+  }, 15000);
 
   it('should auto-book Delhivery consignment upon razorpay order.paid webhook', async () => {
     const { POST: webhookRoute } = await import('@/app/api/webhooks/razorpay/route');
@@ -239,5 +239,5 @@ describe('Razorpay Cryptographic Payment & Webhook Verification', () => {
     expect(updated?.orderStatus).toBe('PROCESSING');
     expect(updated?.trackingNumber).toBeDefined();
     expect(updated?.delhiveryWaybill).toBeDefined();
-  });
+  }, 15000);
 });

@@ -12,37 +12,49 @@ async function hashPassword(password: string): Promise<string> {
 }
 
 async function main() {
-  console.log('🌱 Starting Solid Glass E-Commerce Database Seed...');
+  console.log('🌱 Starting Ganesh Mule Raw Honey Database Seed...');
 
   // 1. Initial Store Settings
   await prisma.storeSettings.upsert({
     where: { id: 'singleton' },
-    update: {},
-    create: {
-      id: 'singleton',
-      storeName: 'Solid Glass Commerce',
+    update: {
+      storeName: 'Ganesh Mule Pure Honey',
       currency: 'INR',
       currencySymbol: '₹',
-      supportEmail: 'support@solidglass.com',
-      taxRatePercent: 18.0,
-      shippingFlatRate: 5000, // ₹50.00
-      freeShippingAbove: 99900, // ₹999.00
+      supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@devtushar.uk',
+      taxRatePercent: 5.0, // 5% GST for raw natural honey in India
+      shippingFlatRate: 4900, // ₹49.00
+      freeShippingAbove: 99900, // Free delivery above ₹999
+      chatwootEnabled: true,
+    },
+    create: {
+      id: 'singleton',
+      storeName: 'Ganesh Mule Pure Honey',
+      currency: 'INR',
+      currencySymbol: '₹',
+      supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'support@devtushar.uk',
+      taxRatePercent: 5.0,
+      shippingFlatRate: 4900,
+      freeShippingAbove: 99900,
       chatwootEnabled: true,
     },
   });
-  console.log('✔ Initialized Store Settings');
+  console.log('✔ Initialized Ganesh Mule Store Settings');
 
-  // 2. Initial Admin Account Provisioning
-  const adminEmail = process.env.INITIAL_ADMIN_EMAIL || 'admin@solidglass.com';
+  // 2. Super Admin Account
+  const adminEmail = (process.env.ADMIN_EMAIL || 'admin@devtushar.uk').toLowerCase();
   const adminPassword = process.env.INITIAL_ADMIN_PASSWORD || 'Admin@123456';
   const adminHash = await hashPassword(adminPassword);
 
   const admin = await prisma.user.upsert({
     where: { email: adminEmail },
-    update: {},
+    update: {
+      role: 'ADMIN',
+      isActive: true,
+    },
     create: {
       email: adminEmail,
-      name: 'Super Administrator',
+      name: 'Tushar (Super Administrator)',
       passwordHash: adminHash,
       role: 'ADMIN',
       isActive: true,
@@ -50,169 +62,144 @@ async function main() {
   });
   console.log(`✔ Seeded Admin account: ${admin.email}`);
 
-  // 3. Initial Manager Account Provisioning
-  const managerEmail = 'operations@solidglass.com';
+  // 3. Store Manager Account
+  const managerEmail = 'manager@devtushar.uk';
   const managerPassword = 'Manager@123456';
   const managerHash = await hashPassword(managerPassword);
 
   const manager = await prisma.user.upsert({
     where: { email: managerEmail },
-    update: {},
+    update: {
+      role: 'MANAGER',
+      isActive: true,
+    },
     create: {
       email: managerEmail,
-      name: 'Vikram Mehta',
+      name: 'Operations Manager',
       passwordHash: managerHash,
       role: 'MANAGER',
       isActive: true,
       managerProfile: {
         create: {
-          department: 'Fulfillment & Logistics',
+          department: 'Fulfillment & Operations',
           permissions: [
             'orders.read',
             'orders.update',
             'inventory.read',
             'inventory.update',
+            'coupons.read',
+            'coupons.manage',
             'support.manage',
-            'refunds.request',
+            'reports.view',
           ],
-          notes: 'Lead warehouse operations supervisor',
+          notes: 'Lead warehouse and logistics operations supervisor',
         },
       },
     },
   });
   console.log(`✔ Seeded Manager account: ${manager.email}`);
 
-  // 4. Initial Categories
-  const categories = [
-    {
-      id: 'cat-1',
-      slug: 'mechanical-keyboards',
-      name: 'Mechanical Keyboards',
-      description: 'Precision engineered custom typing instruments with smoky acrylic and frosted polycarbonate cases.',
+  // 4. Categories
+  const category = await prisma.category.upsert({
+    where: { slug: 'wild-forest-raw' },
+    update: {
+      name: 'Wild Forest Raw Honey',
+      description:
+        'Cold-extracted multifloral nectar gathered by wild forest bees in deep alpine and deciduous reserves.',
+      isVisible: true,
     },
-    {
-      id: 'cat-2',
-      slug: 'desk-pads',
-      name: 'Felt & Glass Desk Pads',
-      description: 'High-density micro-etched tempered glass and natural merino wool desk mats.',
+    create: {
+      id: 'cat-wild-forest',
+      slug: 'wild-forest-raw',
+      name: 'Wild Forest Raw Honey',
+      description:
+        'Cold-extracted multifloral nectar gathered by wild forest bees in deep alpine and deciduous reserves.',
+      isVisible: true,
     },
-    {
-      id: 'cat-3',
-      slug: 'audio-monitors',
-      name: 'Studio Audio Monitors',
-      description: 'Acoustically neutral planar magnetic monitors and frosted aluminum headphone stands.',
-    },
-    {
-      id: 'cat-4',
-      slug: 'workspace-lighting',
-      name: 'Diffused Workspace Lighting',
-      description: 'High CRI 98+ linear beam light bars with brass and glass counterweights.',
-    },
-  ];
+  });
+  console.log(`✔ Seeded Category: ${category.name}`);
 
-  for (const cat of categories) {
-    await prisma.category.upsert({
-      where: { slug: cat.slug },
-      update: {},
-      create: cat,
-    });
-  }
-  console.log(`✔ Seeded ${categories.length} Categories`);
-
-  // 5. Initial Products
+  // 5. Products in Heavy Solid Glass
   const products = [
     {
-      id: 'prod-1',
-      slug: 'lumina-65-smoky-glass-keyboard',
-      sku: 'LUM-65-SMK',
-      name: 'Lumina 65 Smoky Glass Custom Keyboard',
+      id: 'prod-wild-forest-300g',
+      slug: 'wild-forest-raw-honey-300g',
+      sku: 'HNY-WLD-300G',
+      name: 'Wild Forest Raw Honey (300g)',
       description:
-        'Gasket-mounted 65% mechanical keyboard featuring semi-translucent CNC smoked polycarbonate chassis, brass weight bar, and custom tuned linear switches.',
-      price: 1899900, // ₹18,999.00
-      compareAtPrice: 2249900,
-      costPrice: 950000,
-      categoryId: 'cat-1',
-      stockQuantity: 18,
-      reservedQuantity: 2,
-      lowStockThreshold: 5,
-      isPublished: true,
-    },
-    {
-      id: 'prod-2',
-      slug: 'aurora-etched-glass-mousepad',
-      sku: 'AUR-GLS-PAD',
-      name: 'Aurora Etched Tempered Glass Mousepad',
-      description:
-        'Ultra-smooth micro-textured silica surface for pixel-perfect tracking speed with minimal friction. Full silicone damping base.',
-      price: 549900, // ₹5,499.00
-      compareAtPrice: 699900,
-      costPrice: 220000,
-      categoryId: 'cat-2',
-      stockQuantity: 42,
-      reservedQuantity: 4,
+        'Pure cold-extracted raw honey gathered from wild Apis dorsata cliff bees in pristine deciduous forest canopies. Bottled exclusively in thick, food-grade solid glass to safeguard delicate aromatic polyphenols and active living enzymes.',
+      price: 44900, // ₹449.00
+      compareAtPrice: 59900,
+      costPrice: 24000,
+      categoryId: category.id,
+      stockQuantity: 65,
+      reservedQuantity: 0,
       lowStockThreshold: 10,
       isPublished: true,
+      imageUrl: '/images/products/wild-forest-honey.jpg',
     },
     {
-      id: 'prod-3',
-      slug: 'chroma-linear-desk-light',
-      sku: 'CHR-LGT-01',
-      name: 'Chroma Horizon Linear Light Bar',
+      id: 'prod-wild-forest-750g',
+      slug: 'wild-forest-raw-honey-750g',
+      sku: 'HNY-WLD-750G',
+      name: 'Wild Forest Raw Honey (750g)',
       description:
-        'Asymmetric optical light bar with 98+ CRI daylight reproduction, touch sensor brass dimmer, and dual ambient backlight.',
-      price: 899900, // ₹8,999.00
-      compareAtPrice: 1099900,
-      costPrice: 420000,
-      categoryId: 'cat-4',
-      stockQuantity: 4,
-      reservedQuantity: 1,
-      lowStockThreshold: 6,
-      isPublished: true,
-    },
-    {
-      id: 'prod-4',
-      slug: 'planar-reference-headphones',
-      sku: 'PLN-AUD-REF',
-      name: 'Vessel Open-Back Planar Headphones',
-      description:
-        'Audiophile-grade open-back planar magnetic transducers housed in machined anodized aluminum and memory-foam velour cushions.',
-      price: 2999900, // ₹29,999.00
-      compareAtPrice: 3499900,
-      costPrice: 1600000,
-      categoryId: 'cat-3',
-      stockQuantity: 9,
+        'Our flagship harvest. Unpasteurized, unfiltered, cold-extracted raw honey gathered from wild Apis dorsata cliff bees in pristine deciduous forest canopies. Rich in natural bio-active enzymes, pollen, and propolis with a warm floral body and deep butterscotch finish in solid glass packaging.',
+      price: 89900, // ₹899.00
+      compareAtPrice: 119900,
+      costPrice: 48000,
+      categoryId: category.id,
+      stockQuantity: 92,
       reservedQuantity: 0,
-      lowStockThreshold: 3,
+      lowStockThreshold: 15,
       isPublished: true,
+      imageUrl: '/images/products/himalayan-acacia-honey.jpg',
     },
     {
-      id: 'prod-5',
-      slug: 'solis-solid-brass-knob',
-      sku: 'SOL-BRS-KNB',
-      name: 'Solis Machined Brass Rotary Dial',
+      id: 'prod-wild-forest-1050g',
+      slug: 'wild-forest-raw-honey-1050g',
+      sku: 'HNY-WLD-1050G',
+      name: 'Wild Forest Raw Honey (1050g)',
       description:
-        'Heavy solid brass volume controller with high-precision stepped optical encoder and braided silicone USB-C cable.',
-      price: 349900, // ₹3,499.00
-      compareAtPrice: 429900,
-      costPrice: 130000,
-      categoryId: 'cat-1',
-      stockQuantity: 2,
+        'Grand Harvest Reserve (1.05 kg) in heavy handcrafted solid glass. Perfect for daily family Ayurvedic wellness, tea, and warm morning elixirs. Coarsely strained through cheesecloth to retain living bio-enzymes, polyphenols, and wildflower pollen.',
+      price: 119900, // ₹1,199.00
+      compareAtPrice: 159900,
+      costPrice: 62000,
+      categoryId: category.id,
+      stockQuantity: 44,
       reservedQuantity: 0,
-      lowStockThreshold: 5,
+      lowStockThreshold: 10,
       isPublished: true,
+      imageUrl: '/images/products/sunderbans-honey.jpg',
     },
   ];
 
   for (const prod of products) {
-    await prisma.product.upsert({
-      where: { sku: prod.sku },
-      update: {},
-      create: prod,
+    const { imageUrl, ...prodData } = prod;
+    const upserted = await prisma.product.upsert({
+      where: { sku: prodData.sku },
+      update: prodData,
+      create: prodData,
     });
-  }
-  console.log(`✔ Seeded ${products.length} Products`);
 
-  console.log('✅ Seed complete!');
+    // Seed product image
+    const existingImg = await prisma.productImage.findFirst({
+      where: { productId: upserted.id },
+    });
+    if (!existingImg) {
+      await prisma.productImage.create({
+        data: {
+          productId: upserted.id,
+          url: imageUrl,
+          altText: upserted.name,
+          position: 0,
+        },
+      });
+    }
+  }
+  console.log(`✔ Seeded ${products.length} Ganesh Mule Raw Honey Products`);
+
+  console.log('✅ Ganesh Mule Database Seed complete!');
 }
 
 main()
