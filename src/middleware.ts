@@ -13,12 +13,7 @@ export function middleware(req: NextRequest) {
     }
   }
 
-  // 2. Direct Root Visits to Shop Catalogue (hide homepage)
-  if (pathname === '/') {
-    return NextResponse.redirect(new URL('/shop', req.url));
-  }
-
-  // 3. Strict Security Route Guard for Staff Portals (/manager and /admin)
+  // 2. Strict Security Route Guard for Staff Portals (/manager and /admin)
   // Prevents unauthorized visitors from seeing or accessing manager/admin interfaces
   if (pathname.startsWith('/manager') || pathname.startsWith('/admin')) {
     if (pathname === '/manager/login' || pathname === '/admin/login') {
