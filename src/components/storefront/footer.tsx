@@ -24,33 +24,33 @@ export const StorefrontFooter: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/product/forest-honey-500g" className="hover:text-stone-950 transition-colors">
-                  Wild Forest Honey (500g)
+                <Link href="/product/forest-honey" className="hover:text-stone-950 transition-colors">
+                  Wild Forest Honey
                 </Link>
               </li>
               <li>
-                <Link href="/product/sesame-honey-500g" className="hover:text-stone-950 transition-colors">
-                  Sesame Blossom Honey (500g)
+                <Link href="/product/sesame-honey" className="hover:text-stone-950 transition-colors">
+                  Sesame Blossom Honey
                 </Link>
               </li>
               <li>
-                <Link href="/product/ajwain-honey-500g" className="hover:text-stone-950 transition-colors">
-                  Ajwain (Carom) Honey (500g)
+                <Link href="/product/ajwain-honey" className="hover:text-stone-950 transition-colors">
+                  Ajwain (Carom) Honey
                 </Link>
               </li>
               <li>
-                <Link href="/product/multiflora-honey-500g" className="hover:text-stone-950 transition-colors">
-                  Wild Multiflora Honey (500g)
+                <Link href="/product/multiflora-honey" className="hover:text-stone-950 transition-colors">
+                  Wild Multiflora Honey
                 </Link>
               </li>
               <li>
-                <Link href="/product/ber-honey-500g" className="hover:text-stone-950 transition-colors">
-                  Raw Ber (Sidr) Honey (500g)
+                <Link href="/product/ber-honey" className="hover:text-stone-950 transition-colors">
+                  Raw Ber (Sidr) Honey
                 </Link>
               </li>
               <li>
-                <Link href="/product/sheesham-honey-500g" className="hover:text-stone-950 transition-colors">
-                  Sheesham Honey (500g)
+                <Link href="/product/sheesham-honey" className="hover:text-stone-950 transition-colors">
+                  Sheesham (Rosewood) Honey
                 </Link>
               </li>
             </ul>

@@ -72,14 +72,14 @@ export const ChatwootWidget: React.FC = () => {
             Need advice on single-origin floral notes, natural crystallization, or custom gifting hampers? Our specialists are here to guide you.
           </p>
 
-          <div className="p-3 rounded-[16px] bg-[#f5f5f7] text-xs space-y-1">
-            <div className="flex items-center gap-1.5 font-medium text-[#1d1d1f]">
-              <Droplets className="w-3.5 h-3.5 text-[#0071e3]" />
+          <div className="p-3 rounded-[16px] bg-stone-50 text-xs space-y-1">
+            <div className="flex items-center gap-1.5 font-medium text-stone-900">
+              <Droplets className="w-3.5 h-3.5 text-amber-700" />
               <span>Priority Specialist Email:</span>
             </div>
             <a
               href="mailto:support@ganeshmule.com"
-              className="text-xs font-semibold text-[#0066cc] hover:underline block"
+              className="text-xs font-semibold text-amber-800 hover:underline block"
             >
               support@ganeshmule.com
             </a>
@@ -87,7 +87,7 @@ export const ChatwootWidget: React.FC = () => {
 
           <a
             href="mailto:support@ganeshmule.com"
-            className="block w-full py-2.5 rounded-full text-center text-xs font-medium bg-[#0071e3] hover:bg-[#0077ed] text-white transition-all shadow-xs"
+            className="block w-full py-2.5 rounded-full text-center text-xs font-medium bg-stone-900 hover:bg-amber-800 text-white transition-all shadow-xs"
           >
             Send Message to Specialist
           </a>

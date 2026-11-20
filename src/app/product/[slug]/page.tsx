@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { StoreProvider } from '@/components/storefront/store-provider';
 import { ProductCard } from '@/components/storefront/product-card';
-import { MOCK_PRODUCTS } from '@/lib/mock-data';
+import { MOCK_PRODUCTS, MOCK_CATEGORIES } from '@/lib/mock-data';
+import { ProductItem } from '@/types';
 import { formatCurrency } from '@/lib/utils';
 import { useCart } from '@/lib/cart/cart-context';
 import { guessCityStateFromPin } from '@/lib/constants/india';
@@ -21,9 +22,6 @@ import {
   Sparkles,
   Award,
   ShoppingBag,
-  Leaf,
-  FileCheck2,
-  Clock,
   RotateCcw,
   Share2,
   ThumbsUp,
@@ -31,93 +29,266 @@ import {
   CheckCircle2,
   MapPin,
   Zap,
-  CheckCircle,
+  Clock,
 } from 'lucide-react';
+
+// Resolves category metadata from either category slug (/product/forest-honey) or variant slug (/product/forest-honey-500g)
+function resolveCategoryFromSlug(slug: string) {
+  const clean = slug ? slug.replace(/-(250g|500g|1kg|300g|750g|1050g)$/, '') : 'forest-honey';
+
+  if (clean === 'forest-honey' || clean === 'wild-forest-raw-honey' || clean === 'wild-forest-raw') {
+    return {
+      categoryId: 'cat-forest',
+      baseSlug: 'forest-honey',
+      varietyName: 'Wild Forest Raw Honey',
+      folderName: 'Forest Honey',
+      floralOrigin: 'Western Ghats Deciduous Canopies, Maharashtra',
+      flavourNotes: 'Multifloral blossom with warm floral caramel finish',
+      description:
+        'Pure cold-extracted raw honey gathered from wild Apis dorsata cliff bees in deep deciduous forest canopies. Bottled exclusively in thick, food-grade solid glass to safeguard delicate aromatic polyphenols and active living enzymes.',
+    };
+  }
+  if (clean === 'sesame-honey') {
+    return {
+      categoryId: 'cat-sesame',
+      baseSlug: 'sesame-honey',
+      varietyName: 'Pure Sesame Blossom Honey',
+      folderName: 'Sesame Honey',
+      floralOrigin: 'Organic Sesame Plains, Maharashtra',
+      flavourNotes: 'Warm nutty undertones with delicate amber sweetness',
+      description:
+        'Single-origin unheated honey harvested during peak sesame flowering. Naturally high in bio-available zinc, calcium minerals, and antioxidant flavonoids.',
+    };
+  }
+  if (clean === 'ajwain-honey') {
+    return {
+      categoryId: 'cat-ajwain',
+      baseSlug: 'ajwain-honey',
+      varietyName: 'Organic Ajwain (Carom) Honey',
+      folderName: 'Ajwain Honey',
+      floralOrigin: 'Carom Flowering Fields, Rajasthan',
+      flavourNotes: 'Herbal, pungent & warm digestive carom notes',
+      description:
+        'Distinctive raw monofloral honey harvested from white carom flowers. Celebrated in Ayurveda for respiratory comfort, gut health, and soothing digestion.',
+    };
+  }
+  if (clean === 'multiflora-honey') {
+    return {
+      categoryId: 'cat-multiflora',
+      baseSlug: 'multiflora-honey',
+      varietyName: 'Wild Multiflora Raw Honey',
+      folderName: 'Multiflora Honey',
+      floralOrigin: 'Biodiverse Alpine Foothills',
+      flavourNotes: 'Rich botanical bouquet with golden nectar finish',
+      description:
+        'Harmonious multifloral nectar gathered by bees foraging across dozens of seasonal medicinal herbs and seasonal forest blossoms.',
+    };
+  }
+  if (clean === 'ber-honey') {
+    return {
+      categoryId: 'cat-ber',
+      baseSlug: 'ber-honey',
+      varietyName: 'Raw Ber (Sidr / Jujube) Honey',
+      folderName: 'Ber Honey',
+      floralOrigin: 'Arid Jujube Woodlands, Rajasthan',
+      flavourNotes: 'Thick butterscotch aroma with deep lingering sweetness',
+      description:
+        'Revered ancient Sidr honey harvested from thorny desert jujube trees. Uniquely dense in bio-active polyphenols and amber antioxidants.',
+    };
+  }
+  if (clean === 'sheesham-honey') {
+    return {
+      categoryId: 'cat-sheesham',
+      baseSlug: 'sheesham-honey',
+      varietyName: 'Raw Sheesham (Rosewood) Honey',
+      folderName: 'Sheesham Honey',
+      floralOrigin: 'Rosewood River Valleys, North India',
+      flavourNotes: 'Mild floral notes with subtle woody sweetness',
+      description:
+        'Rare single-origin raw honey harvested from blooming North Indian Rosewood canopies. Low glycemic index with a silky, smooth finish.',
+    };
+  }
+
+  return {
+    categoryId: 'cat-forest',
+    baseSlug: 'forest-honey',
+    varietyName: 'Wild Forest Raw Honey',
+    folderName: 'Forest Honey',
+    floralOrigin: 'Western Ghats Deciduous Canopies, Maharashtra',
+    flavourNotes: 'Multifloral blossom with warm floral caramel finish',
+    description:
+      'Pure cold-extracted raw honey gathered from wild Apis dorsata cliff bees in deep deciduous forest canopies. Bottled exclusively in thick, food-grade solid glass to safeguard delicate aromatic polyphenols and active living enzymes.',
+  };
+}
 
 export default function ProductDetailPage() {
   const params = useParams();
-  const slug = params?.slug as string;
+  const rawSlug = (params?.slug as string) || 'forest-honey';
   const router = useRouter();
   const { addToCart, setIsCartOpen } = useCart();
 
-  const initialProduct =
-    MOCK_PRODUCTS.find((p) => p.slug === slug) || MOCK_PRODUCTS[0];
+  const categoryMeta = useMemo(() => resolveCategoryFromSlug(rawSlug), [rawSlug]);
 
-  const baseSlug =
-    initialProduct.slug.replace(/-(250g|500g|1kg|300g|750g|1050g)$/, '') === 'wild-forest-raw-honey'
-      ? 'forest-honey'
-      : initialProduct.slug.replace(/-(250g|500g|1kg|300g|750g|1050g)$/, '');
+  // Clean variety title without "(500g)" or "(250g)"
+  const cleanName = categoryMeta.varietyName.replace(/ Raw Honey| Blossom Honey/g, ' Honey');
 
-  // Clean title without baked-in "(500g)" or "(250g)"
-  const cleanName = initialProduct.name
-    .replace(/\s*\((250g|500g|1kg|300g|750g|1050g)\)/i, '')
-    .trim();
+  // Database-backed variant records
+  const [dbVariants, setDbVariants] = useState<ProductItem[]>([]);
+  const [isLoadingVariants, setIsLoadingVariants] = useState(true);
 
-  const defaultVariant =
-    initialProduct.weightGrams === 1000 ? '1kg' : initialProduct.weightGrams === 250 ? '250g' : '500g';
-  const [selectedVariant, setSelectedVariant] = useState(defaultVariant);
+  // Initial selected weight determination from URL
+  const initialWeight = rawSlug.includes('250g')
+    ? '250g'
+    : rawSlug.includes('1kg')
+    ? '1kg'
+    : '500g';
+  const [selectedWeight, setSelectedWeight] = useState<'250g' | '500g' | '1kg'>(initialWeight);
 
-  // iPhone-Style Storage / Jar Size Variant Configurations
-  const variantOptions = [
-    {
-      weight: '250g',
-      label: 'Solid Glass Sampler',
-      badge: null,
-      description: 'Ideal for first-time taste trials, tea sweeteners, or sharing distinct monofloral flavours.',
-      weightGrams: 250,
-      slug: `${baseSlug}-250g`,
-      id: `prod-${baseSlug}-250g`,
-      price: 19900,
-      compareAtPrice: 27500,
-      discountText: '28% OFF',
-      savings: 'Save ₹76',
-      pricePerKg: '₹796 / kg',
-    },
-    {
-      weight: '500g',
-      label: 'Solid Glass Standard Jar',
-      badge: 'Most Popular · Daily Routine',
-      description: 'Perfect 30-day supply for morning warm lemon water, Ayurvedic digestive therapy & daily immunity.',
-      weightGrams: 500,
-      slug: `${baseSlug}-500g`,
-      id: `prod-${baseSlug}-500g`,
-      price: 39900,
-      compareAtPrice: 54900,
-      discountText: '27% OFF',
-      savings: 'Save ₹150',
-      pricePerKg: '₹798 / kg',
-    },
-    {
-      weight: '1kg',
-      label: 'Grand Reserve Jar',
-      badge: 'Best Value · Lowest Rate',
-      description: 'Heavy solid glass reserve jar. Maximum family economy for full Ayurvedic therapies & natural baking.',
-      weightGrams: 1000,
-      slug: `${baseSlug}-1kg`,
-      id: `prod-${baseSlug}-1kg`,
-      price: 74900,
-      compareAtPrice: 99900,
-      discountText: '25% OFF',
-      savings: 'Save ₹250',
-      pricePerKg: '₹749 / kg (Lowest Rate)',
-    },
-  ];
+  // Fetch size options directly from Database via /api/products
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchDatabaseVariants() {
+      setIsLoadingVariants(true);
+      try {
+        const res = await fetch(`/api/products?categoryId=${categoryMeta.categoryId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.products && Array.isArray(data.products) && data.products.length > 0) {
+            const activeOnly = data.products.filter((p: any) => p.isPublished !== false);
+            if (activeOnly.length > 0 && isMounted) {
+              setDbVariants(activeOnly);
+              setIsLoadingVariants(false);
+              return;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Falling back to authoritative local products', err);
+      }
 
-  const currentVariantObj =
-    variantOptions.find((v) => v.weight === selectedVariant) ||
-    variantOptions.find((v) => v.weight === defaultVariant) ||
-    variantOptions[1];
+      // Authoritative Fallback from MOCK_PRODUCTS if offline or loading
+      if (isMounted) {
+        const fallback = MOCK_PRODUCTS.filter(
+          (p) => p.categoryId === categoryMeta.categoryId && p.isPublished !== false
+        );
+        setDbVariants(fallback);
+        setIsLoadingVariants(false);
+      }
+    }
 
-  const product =
-    MOCK_PRODUCTS.find((p) => p.slug === currentVariantObj.slug) ||
-    initialProduct;
+    fetchDatabaseVariants();
+    return () => {
+      isMounted = false;
+    };
+  }, [categoryMeta.categoryId]);
+
+  // Build the 3 Selectable Size Configurations from the Database
+  const sizeOptions = useMemo(() => {
+    const findVariant = (targetWeight: number, defaultSlugSuffix: string) => {
+      return (
+        dbVariants.find((p) => p.weightGrams === targetWeight) ||
+        MOCK_PRODUCTS.find(
+          (p) =>
+            p.categoryId === categoryMeta.categoryId &&
+            (p.weightGrams === targetWeight || p.slug.endsWith(defaultSlugSuffix))
+        )
+      );
+    };
+
+    const v250 = findVariant(250, '250g');
+    const v500 = findVariant(500, '500g');
+    const v1kg = findVariant(1000, '1kg');
+
+    return [
+      {
+        weight: '250g' as const,
+        label: 'Glass Sampler',
+        badge: null,
+        description: 'Ideal for first-time taste trials, tea sweeteners, or gourmet gifting.',
+        weightGrams: 250,
+        price: v250?.price ?? 19900,
+        compareAtPrice: v250?.compareAtPrice ?? 27500,
+        stockQuantity: v250?.stockQuantity ?? 80,
+        lowStockThreshold: v250?.lowStockThreshold ?? 10,
+        sku: v250?.sku ?? `GM-${categoryMeta.baseSlug.substring(0, 3).toUpperCase()}-250G`,
+        productRecord: v250,
+        pricePerKg: '₹796 / kg',
+        discountPercent: 28,
+        savingsText: 'Save ₹76',
+      },
+      {
+        weight: '500g' as const,
+        label: 'Solid Glass Standard Jar',
+        badge: 'Most Popular · Daily Routine',
+        description:
+          'Perfect 30-day supply for morning warm lemon water, Ayurvedic digestive therapy & daily immunity.',
+        weightGrams: 500,
+        price: v500?.price ?? 39900,
+        compareAtPrice: v500?.compareAtPrice ?? 54900,
+        stockQuantity: v500?.stockQuantity ?? 120,
+        lowStockThreshold: v500?.lowStockThreshold ?? 15,
+        sku: v500?.sku ?? `GM-${categoryMeta.baseSlug.substring(0, 3).toUpperCase()}-500G`,
+        productRecord: v500,
+        pricePerKg: '₹798 / kg',
+        discountPercent: 27,
+        savingsText: 'Save ₹150',
+      },
+      {
+        weight: '1kg' as const,
+        label: 'Grand Reserve Jar',
+        badge: 'Best Value · Lowest Rate',
+        description:
+          'Heavy solid glass reserve jar. Maximum family economy for full Ayurvedic therapies & natural baking.',
+        weightGrams: 1000,
+        price: v1kg?.price ?? 74900,
+        compareAtPrice: v1kg?.compareAtPrice ?? 99900,
+        stockQuantity: v1kg?.stockQuantity ?? 65,
+        lowStockThreshold: v1kg?.lowStockThreshold ?? 10,
+        sku: v1kg?.sku ?? `GM-${categoryMeta.baseSlug.substring(0, 3).toUpperCase()}-1KG`,
+        productRecord: v1kg,
+        pricePerKg: '₹749 / kg (Lowest Rate)',
+        discountPercent: 25,
+        savingsText: 'Save ₹250',
+      },
+    ];
+  }, [dbVariants, categoryMeta]);
+
+  // Current active variant based on customer selection
+  const currentOption =
+    sizeOptions.find((opt) => opt.weight === selectedWeight) || sizeOptions[1];
+
+  // Dynamic Image Gallery switching based on selected size
+  const galleryImages = useMemo(() => {
+    const folder = categoryMeta.folderName;
+    const size = selectedWeight;
+    return [
+      {
+        id: 'img-1',
+        url: `/images/honey-brand/${folder}/${size}/image_1_amazon_main.jpg`,
+        altText: `${cleanName} ${size} Solid Glass Jar Front View`,
+      },
+      {
+        id: 'img-2',
+        url: `/images/honey-brand/${folder}/${size}/image_2_lifestyle.jpg`,
+        altText: `${cleanName} ${size} Pure Honey Lifestyle Pour`,
+      },
+      {
+        id: 'img-3',
+        url: `/images/honey-brand/${folder}/${size}/image_3_texture.jpg`,
+        altText: `${cleanName} Micro-Texture and Golden Consistency`,
+      },
+      {
+        id: 'img-4',
+        url: `/images/honey-brand/${folder}/${size}/image_6_size_comparison.jpg`,
+        altText: `Ganesh Mule Solid Glass Tri-Pack Size Comparison`,
+      },
+    ];
+  }, [categoryMeta.folderName, selectedWeight, cleanName]);
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
   const [activeTab, setActiveTab] = useState<'STORY' | 'SPECS' | 'PURITY' | 'QA'>('STORY');
-  const [helpfulVotes, setHelpfulVotes] = useState<Record<string, number>>({});
-  const [votedIds, setVotedIds] = useState<Record<string, boolean>>({});
   const [copiedLink, setCopiedLink] = useState(false);
   const [showStickyBar, setShowStickyBar] = useState(false);
 
@@ -127,65 +298,50 @@ export default function ProductDetailPage() {
   const [pinState, setPinState] = useState('');
   const [pinChecked, setPinChecked] = useState(false);
 
-  // Combo Offer State
-  const comboPair = MOCK_PRODUCTS.find(
-    (p) => p.categoryId !== product.categoryId && (p.weightGrams === 500 || p.weightGrams === 250)
-  );
-  const [comboAdded, setComboAdded] = useState(false);
-
-  const activePrice = currentVariantObj.price;
-  const activeCompareAtPrice = currentVariantObj.compareAtPrice;
-
-  const discountPercent = activeCompareAtPrice
-    ? Math.round(((activeCompareAtPrice - activePrice) / activeCompareAtPrice) * 100)
-    : 0;
-
-  const isOutOfStock = product.stockQuantity <= 0;
-  const isLowStock = product.stockQuantity > 0 && product.stockQuantity <= product.lowStockThreshold;
-
-  const rating = product.rating || 4.9;
-  const ratingCount = product.ratingCount || 1420;
-
-  const relatedProducts = MOCK_PRODUCTS.filter(
-    (p) => p.id !== product.id && p.categoryId !== product.categoryId
-  ).slice(0, 3);
+  // Stock status from database
+  const isOutOfStock = currentOption.stockQuantity <= 0;
+  const isLowStock =
+    currentOption.stockQuantity > 0 &&
+    currentOption.stockQuantity <= currentOption.lowStockThreshold;
 
   // Monitor scroll for sticky bottom bar
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 480) {
-        setShowStickyBar(true);
-      } else {
-        setShowStickyBar(false);
-      }
+      setShowStickyBar(window.scrollY > 480);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const handleAddToCart = () => {
-    const matched =
-      MOCK_PRODUCTS.find((p) => p.slug === currentVariantObj.slug) ||
-      MOCK_PRODUCTS.find((p) => p.id === currentVariantObj.id);
-
-    const customizedItem: any = matched
+    const itemToAdd = currentOption.productRecord
       ? {
-          ...matched,
-          name: `${cleanName} (${currentVariantObj.weight})`,
-          price: activePrice,
-          compareAtPrice: activeCompareAtPrice,
+          ...currentOption.productRecord,
+          name: `${cleanName} (${currentOption.weight})`,
+          price: currentOption.price,
+          compareAtPrice: currentOption.compareAtPrice,
+          weightGrams: currentOption.weightGrams,
         }
       : {
-          ...product,
-          id: currentVariantObj.id || `${product.id}-${currentVariantObj.weight}`,
-          sku: `${product.sku}-${currentVariantObj.weight.toUpperCase()}`,
-          name: `${cleanName} (${currentVariantObj.weight})`,
-          price: activePrice,
-          compareAtPrice: activeCompareAtPrice,
-          weightGrams: currentVariantObj.weightGrams || product.weightGrams,
+          id: `prod-${categoryMeta.baseSlug}-${currentOption.weight}`,
+          slug: `${categoryMeta.baseSlug}-${currentOption.weight}`,
+          sku: currentOption.sku,
+          name: `${cleanName} (${currentOption.weight})`,
+          price: currentOption.price,
+          compareAtPrice: currentOption.compareAtPrice,
+          categoryId: categoryMeta.categoryId,
+          category: {
+            id: categoryMeta.categoryId,
+            slug: categoryMeta.baseSlug,
+            name: categoryMeta.varietyName,
+            isVisible: true,
+          },
+          stockQuantity: currentOption.stockQuantity,
+          weightGrams: currentOption.weightGrams,
+          images: galleryImages,
         };
 
-    addToCart(customizedItem, quantity);
+    addToCart(itemToAdd as any, quantity);
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2000);
   };
@@ -196,14 +352,6 @@ export default function ProductDetailPage() {
     router.push('/checkout');
   };
 
-  const handleAddCombo = () => {
-    if (!comboPair) return;
-    handleAddToCart();
-    addToCart(comboPair, 1);
-    setComboAdded(true);
-    setTimeout(() => setComboAdded(false), 2500);
-  };
-
   const handleCheckPincode = (e: React.FormEvent) => {
     e.preventDefault();
     if (pincode.length === 6 && /^\d{6}$/.test(pincode)) {
@@ -212,15 +360,6 @@ export default function ProductDetailPage() {
       setPinState(resolved?.state || 'India');
       setPinChecked(true);
     }
-  };
-
-  const handleUpvoteReview = (reviewId: string, currentCount: number) => {
-    if (votedIds[reviewId]) return;
-    setVotedIds((prev) => ({ ...prev, [reviewId]: true }));
-    setHelpfulVotes((prev) => ({
-      ...prev,
-      [reviewId]: (prev[reviewId] ?? currentCount) + 1,
-    }));
   };
 
   const handleShare = () => {
@@ -235,7 +374,7 @@ export default function ProductDetailPage() {
     <StoreProvider>
       <div className="bg-[#FAF9F5] min-h-screen pb-24 text-stone-900 selection:bg-amber-500/20 selection:text-amber-900">
         
-        {/* Sub-Navbar Breadcrumb & Share */}
+        {/* Apple-Style Minimalist Breadcrumb Bar */}
         <div className="border-b border-stone-200/70 bg-[#FCFBF7]/90 backdrop-blur-md sticky top-11 sm:top-12 z-30">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between text-xs">
             <Link
@@ -243,7 +382,7 @@ export default function ProductDetailPage() {
               className="inline-flex items-center gap-1.5 text-stone-700 hover:text-amber-900 font-medium transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to The Shop</span>
+              <span>Back to The 6 Harvests</span>
             </Link>
 
             <div className="flex items-center gap-3">
@@ -266,33 +405,26 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {/* Product Showcase */}
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        {/* Studio Product Configuration (Apple Store 2-Col Experience) */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-14">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
             
             {/* Gallery Column (6 Cols) */}
             <div className="lg:col-span-6 space-y-4 lg:sticky lg:top-28">
-              <div className="relative aspect-square rounded-[28px] overflow-hidden bg-white border border-stone-200/80 flex items-center justify-center p-8 sm:p-12 shadow-sm group">
-                {product.images[selectedImage] ? (
-                  <img
-                    src={product.images[selectedImage].url}
-                    alt={`${cleanName} ${currentVariantObj.weight}`}
-                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700 ease-out drop-shadow-md"
-                  />
-                ) : (
-                  <div className="text-stone-400 font-mono">{product.sku}</div>
-                )}
+              <div className="relative aspect-square rounded-[32px] overflow-hidden bg-white border border-stone-200/80 flex items-center justify-center p-8 sm:p-12 shadow-sm group">
+                <Image
+                  src={galleryImages[selectedImage]?.url || galleryImages[0].url}
+                  alt={galleryImages[selectedImage]?.altText || cleanName}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 540px"
+                  priority
+                  className="object-contain group-hover:scale-105 transition-transform duration-700 ease-out drop-shadow-md p-6"
+                />
 
                 {/* Floating Badges */}
                 <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
-                  {product.badge && (
-                    <span className="text-[11px] font-semibold tracking-wide px-3 py-1 rounded-full border shadow-2xs backdrop-blur-md flex items-center gap-1.5 bg-amber-500/20 text-amber-950 border-amber-500/40">
-                      <Sparkles className="w-3 h-3 text-amber-600" />
-                      <span>{product.badge}</span>
-                    </span>
-                  )}
                   <span className="bg-stone-900 text-white text-[11px] font-medium tracking-wider px-3 py-1 rounded-full shadow-2xs">
-                    {product.batchNumber || 'FLAGSHIP HARVEST'}
+                    {currentOption.weight} Solid Glass Jar
                   </span>
                   <span className="bg-emerald-50 text-emerald-800 text-[10px] font-medium px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1 shadow-2xs">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
@@ -301,46 +433,50 @@ export default function ProductDetailPage() {
                 </div>
 
                 <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-xs px-3 py-1 rounded-full text-[11px] text-stone-500 border border-stone-200 shadow-2xs">
-                  {selectedImage + 1} of {product.images.length}
+                  {selectedImage + 1} of {galleryImages.length}
                 </div>
               </div>
 
               {/* Thumbnails */}
-              {product.images.length > 1 && (
-                <div className="flex items-center gap-3 overflow-x-auto pb-1">
-                  {product.images.map((img, idx) => (
-                    <button
-                      key={img.id || idx}
-                      onClick={() => setSelectedImage(idx)}
-                      className={`w-20 h-20 rounded-[18px] overflow-hidden border-2 bg-white p-2 cursor-pointer transition-all shrink-0 ${
-                        selectedImage === idx
-                          ? 'border-amber-700 ring-2 ring-amber-700/20 shadow-xs'
-                          : 'border-stone-200 hover:border-stone-400 opacity-80 hover:opacity-100'
-                      }`}
-                    >
-                      <img src={img.url} alt="" className="w-full h-full object-contain" />
-                    </button>
-                  ))}
-                </div>
-              )}
+              <div className="flex items-center gap-3 overflow-x-auto pb-1">
+                {galleryImages.map((img, idx) => (
+                  <button
+                    key={img.id}
+                    onClick={() => setSelectedImage(idx)}
+                    className={`w-20 h-20 rounded-2xl overflow-hidden border-2 bg-white p-2 cursor-pointer transition-all shrink-0 relative ${
+                      selectedImage === idx
+                        ? 'border-amber-800 ring-2 ring-amber-800/20 shadow-xs'
+                        : 'border-stone-200 hover:border-stone-400 opacity-80 hover:opacity-100'
+                    }`}
+                  >
+                    <Image
+                      src={img.url}
+                      alt=""
+                      fill
+                      sizes="80px"
+                      className="object-contain p-1"
+                    />
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Product Purchase & Configurator Column (6 Cols) */}
+            {/* Product Configuration Column (6 Cols) */}
             <div className="lg:col-span-6 space-y-6">
+              
+              {/* Product Header */}
               <div>
                 <div className="flex items-center gap-2 text-xs font-semibold tracking-wider uppercase text-amber-800 flex-wrap">
-                  {product.badge && (
-                    <span className="px-2.5 py-0.5 rounded-full border text-[10px] font-bold tracking-normal bg-amber-100 text-amber-900 border-amber-300">
-                      {product.badge}
-                    </span>
-                  )}
-                  <span>{product.category?.name || 'Raw Wild Honey'}</span>
+                  <span className="px-2.5 py-0.5 rounded-full border text-[10px] font-bold tracking-normal bg-amber-100 text-amber-900 border-amber-300">
+                    Flagship Harvest
+                  </span>
+                  <span>{categoryMeta.varietyName}</span>
                   <span>•</span>
-                  <span>{product.origin || 'Western Ghats'}</span>
+                  <span>{categoryMeta.floralOrigin}</span>
                 </div>
                 
                 {/* Clean Product Name without baked-in 500g */}
-                <h1 className="text-3xl sm:text-4xl font-serif font-bold text-stone-950 mt-1.5 leading-tight tracking-tight">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-stone-950 mt-2 leading-tight tracking-tight">
                   {cleanName}
                 </h1>
 
@@ -348,42 +484,36 @@ export default function ProductDetailPage() {
                 <div className="flex items-center gap-3 mt-3">
                   <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-white border border-stone-200 text-xs font-semibold text-stone-900 shadow-2xs">
                     <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
-                    <span>{rating}</span>
-                    <span className="text-stone-500 font-normal">({ratingCount} reviews)</span>
+                    <span>4.9</span>
+                    <span className="text-stone-500 font-normal">(783 verified reviews)</span>
                   </div>
                   <span className="text-xs text-stone-300">•</span>
                   <span className="text-xs text-emerald-800 font-medium flex items-center gap-1">
                     <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    Batch {product.batchNumber || '2026'} NMR Passed
+                    NMR Batch Verified
                   </span>
                 </div>
               </div>
 
-              {/* Price Presentation */}
+              {/* Dynamic Price Display */}
               <div className="pt-2 border-t border-stone-200/80 space-y-1">
                 <div className="flex items-baseline gap-3">
                   <span className="text-3xl sm:text-4xl font-bold text-stone-950 tracking-tight">
-                    {formatCurrency(activePrice)}
+                    {formatCurrency(currentOption.price)}
                   </span>
-                  {activeCompareAtPrice && (
-                    <span className="text-base text-stone-400 line-through">
-                      MRP: {formatCurrency(activeCompareAtPrice)}
-                    </span>
-                  )}
-                  {discountPercent > 0 && (
-                    <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                      {discountPercent}% OFF
-                    </span>
-                  )}
+                  <span className="text-base text-stone-400 line-through">
+                    MRP: {formatCurrency(currentOption.compareAtPrice)}
+                  </span>
+                  <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                    {currentOption.discountPercent}% OFF
+                  </span>
                 </div>
-                {activeCompareAtPrice && activeCompareAtPrice > activePrice && (
-                  <p className="text-xs font-semibold text-emerald-700">
-                    You Save: {formatCurrency(activeCompareAtPrice - activePrice)} ·{' '}
-                    <span className="text-stone-600 font-normal">{currentVariantObj.pricePerKg}</span>
-                  </p>
-                )}
+                <p className="text-xs font-semibold text-emerald-700">
+                  {currentOption.savingsText} ·{' '}
+                  <span className="text-stone-600 font-normal">{currentOption.pricePerKg}</span>
+                </p>
                 <p className="text-xs text-stone-500">
-                  Inclusive of all taxes. Free express delivery across India on orders over ₹999.
+                  Inclusive of all taxes. Free express air delivery on orders over ₹999.
                 </p>
               </div>
 
@@ -391,7 +521,7 @@ export default function ProductDetailPage() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-4 rounded-2xl bg-white border border-stone-200/80 text-xs shadow-2xs">
                 <div>
                   <span className="text-stone-400 block text-[10px] uppercase font-semibold">Flora</span>
-                  <span className="font-semibold text-stone-900 line-clamp-1">{product.flavour?.split(' ')[0] || 'Wild'} Bloom</span>
+                  <span className="font-semibold text-stone-900 line-clamp-1">{cleanName.split(' ')[0]} Bloom</span>
                 </div>
                 <div>
                   <span className="text-stone-400 block text-[10px] uppercase font-semibold">Heat</span>
@@ -407,44 +537,50 @@ export default function ProductDetailPage() {
                 </div>
               </div>
 
-              {/* Description */}
+              {/* Short Description */}
               <p className="text-xs sm:text-sm text-stone-600 leading-relaxed">
-                {product.description}
+                {categoryMeta.description}
               </p>
 
-              {/* Apple / iPhone-Style Storage / Size Option Picker */}
-              <div className="space-y-3 pt-2 border-t border-stone-200/80">
+              {/* CRITICAL FEATURE: "Choose your preferred size" (Apple-Style Configuration) */}
+              <div className="space-y-3 pt-3 border-t border-stone-200/80">
                 <div className="space-y-1">
                   <div className="flex items-baseline justify-between">
                     <span className="text-xs font-bold uppercase tracking-wider text-amber-800">
-                      Jar Size
+                      Configuration
                     </span>
-                    <span className="text-xs font-semibold text-stone-700">
-                      Selected: <strong className="text-stone-950">{currentVariantObj.weight}</strong> ({currentVariantObj.label})
+                    <span className="text-xs font-medium text-stone-600">
+                      Selected: <strong className="text-stone-950 font-bold">{currentOption.weight}</strong> ({currentOption.label})
                     </span>
                   </div>
-                  <h3 className="text-base font-serif font-bold text-stone-950">
-                    Storage. <span className="font-sans font-normal text-stone-600">Which jar volume is right for you?</span>
+                  <h3 className="text-lg font-serif font-bold text-stone-950">
+                    Choose your preferred size
                   </h3>
                   <p className="text-xs text-stone-500">
-                    All 6 varieties share the exact same price. Bottled exclusively in thick food-grade solid glass.
+                    Sourced directly from live apiary inventory. All options bottled in thick solid glass.
                   </p>
                 </div>
 
+                {/* 3 Selectable Size Cards */}
                 <div className="grid grid-cols-1 gap-3 pt-1">
-                  {variantOptions.map((opt) => {
-                    const isSelected = selectedVariant === opt.weight;
+                  {sizeOptions.map((opt) => {
+                    const isSelected = selectedWeight === opt.weight;
+                    const isOptOutOfStock = opt.stockQuantity <= 0;
+
                     return (
                       <button
                         key={opt.weight}
                         type="button"
+                        disabled={isOptOutOfStock}
                         onClick={() => {
-                          setSelectedVariant(opt.weight);
+                          setSelectedWeight(opt.weight);
                           setSelectedImage(0);
                         }}
                         className={`p-4 sm:p-5 text-left rounded-2xl border transition-all cursor-pointer relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                           isSelected
                             ? 'border-stone-950 ring-2 ring-stone-950/20 bg-amber-50/40 shadow-sm'
+                            : isOptOutOfStock
+                            ? 'border-stone-200 bg-stone-50/50 text-stone-400 cursor-not-allowed opacity-60'
                             : 'border-stone-200 bg-white hover:border-stone-400 text-stone-700 hover:shadow-2xs'
                         }`}
                       >
@@ -460,8 +596,8 @@ export default function ProductDetailPage() {
                           </span>
                         )}
 
-                        <div className="flex items-start gap-3">
-                          {/* Radio Checkmark Circle Indicator */}
+                        <div className="flex items-start gap-3.5">
+                          {/* Radio Checkmark Circle */}
                           <div
                             className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
                               isSelected
@@ -484,6 +620,9 @@ export default function ProductDetailPage() {
                             <p className="text-xs text-stone-500 max-w-sm leading-relaxed">
                               {opt.description}
                             </p>
+                            <div className="text-[11px] font-mono text-stone-400 pt-0.5">
+                              SKU: {opt.sku}
+                            </div>
                           </div>
                         </div>
 
@@ -495,7 +634,7 @@ export default function ProductDetailPage() {
                             MRP: {formatCurrency(opt.compareAtPrice)}
                           </div>
                           <div className="text-[11px] font-semibold text-emerald-700">
-                            {opt.discountText} · {opt.savings}
+                            {opt.discountPercent}% OFF · {opt.savingsText}
                           </div>
                           <div className="text-[10px] text-stone-500">
                             {opt.pricePerKg}
@@ -523,7 +662,7 @@ export default function ProductDetailPage() {
                     <span className="font-semibold text-xs text-stone-950">{quantity}</span>
                     <button
                       type="button"
-                      onClick={() => setQuantity((q) => Math.min(product.stockQuantity, q + 1))}
+                      onClick={() => setQuantity((q) => Math.min(currentOption.stockQuantity, q + 1))}
                       className="p-1 text-stone-700 hover:text-stone-950 transition-colors cursor-pointer"
                       aria-label="Increase quantity"
                     >
@@ -531,7 +670,7 @@ export default function ProductDetailPage() {
                     </button>
                   </div>
 
-                  {/* Add to Bag */}
+                  {/* Add to Cart */}
                   <button
                     type="button"
                     disabled={isOutOfStock}
@@ -547,12 +686,12 @@ export default function ProductDetailPage() {
                     {isAdded ? (
                       <>
                         <Check className="w-4 h-4 text-white" />
-                        <span>Added to Bag</span>
+                        <span>Added to Cart</span>
                       </>
                     ) : (
                       <>
                         <ShoppingBag className="w-4 h-4" />
-                        <span>Add to Bag ({currentVariantObj.weight})</span>
+                        <span>Add to Cart ({currentOption.weight})</span>
                       </>
                     )}
                   </button>
@@ -564,15 +703,29 @@ export default function ProductDetailPage() {
                     onClick={handleBuyNow}
                     className="py-3 px-6 rounded-full font-semibold text-xs sm:text-sm bg-stone-900 hover:bg-amber-800 active:bg-amber-900 text-white transition-all cursor-pointer shadow-sm active:scale-98"
                   >
-                    Instant Buy ({currentVariantObj.weight})
+                    Instant Buy ({currentOption.weight})
                   </button>
                 </div>
 
-                {/* Stock & Express Freight Notification */}
+                {/* Stock Availability from Database */}
                 <div className="p-3.5 rounded-2xl bg-white border border-stone-200/80 flex items-center justify-between text-xs text-stone-600 shadow-2xs">
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="font-medium text-stone-900">In Stock ({product.stockQuantity} jars ready)</span>
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        isOutOfStock
+                          ? 'bg-rose-500'
+                          : isLowStock
+                          ? 'bg-amber-500 animate-pulse'
+                          : 'bg-emerald-500 animate-pulse'
+                      }`}
+                    />
+                    <span className="font-medium text-stone-900">
+                      {isOutOfStock
+                        ? 'Out of Stock'
+                        : isLowStock
+                        ? `Only ${currentOption.stockQuantity} jars remaining in stock`
+                        : `In Stock (${currentOption.stockQuantity} jars ready for dispatch)`}
+                    </span>
                   </div>
                   <div className="flex items-center gap-1.5 text-amber-900 font-medium">
                     <Clock className="w-3.5 h-3.5 text-amber-700" />
@@ -605,7 +758,7 @@ export default function ProductDetailPage() {
               <div className="pt-4 border-t border-stone-200/80 space-y-2">
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-900">
                   <MapPin className="w-3.5 h-3.5 text-amber-800" />
-                  <span>Check Delivery Date & Pincode Serviceability</span>
+                  <span>Check Delivery Date &amp; Pincode Serviceability</span>
                 </div>
                 <form onSubmit={handleCheckPincode} className="flex gap-2">
                   <input
@@ -645,67 +798,6 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* Frequently Bought Together Combo */}
-              {comboPair && (
-                <div className="pt-4 border-t border-stone-200/80 space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-stone-950">
-                    <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
-                    <span>Frequently Bought Together</span>
-                    <span className="text-[10px] font-bold text-amber-900 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-200">Save ₹50</span>
-                  </div>
-
-                  <div className="p-4 rounded-2xl bg-white border border-stone-200/80 shadow-2xs space-y-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-14 h-14 rounded-xl bg-[#F7F4EE] border border-stone-200/60 p-1 shrink-0 relative overflow-hidden">
-                        <img
-                          src={product.images[0]?.url}
-                          alt={cleanName}
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                      <span className="text-stone-400 font-bold text-sm">+</span>
-                      <div className="w-14 h-14 rounded-xl bg-[#F7F4EE] border border-stone-200/60 p-1 shrink-0 relative overflow-hidden">
-                        <img
-                          src={comboPair.images[0]?.url}
-                          alt={comboPair.name}
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-stone-900 line-clamp-1">
-                          {cleanName} ({currentVariantObj.weight}) + {comboPair.name}
-                        </p>
-                        <div className="flex items-baseline gap-2 mt-0.5">
-                          <span className="text-xs font-bold text-stone-950">
-                            {formatCurrency(activePrice + comboPair.price)}
-                          </span>
-                          <span className="text-[10px] text-stone-400 line-through">
-                            {formatCurrency((activeCompareAtPrice || 54900) + (comboPair.compareAtPrice || 27500))}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={handleAddCombo}
-                      className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold bg-stone-900 hover:bg-amber-800 text-white transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-98"
-                    >
-                      {comboAdded ? (
-                        <>
-                          <Check className="w-3.5 h-3.5" />
-                          <span>Both Added to Bag!</span>
-                        </>
-                      ) : (
-                        <>
-                          <ShoppingBag className="w-3.5 h-3.5" />
-                          <span>Add Both to Bag ({formatCurrency(activePrice + comboPair.price)})</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -719,8 +811,8 @@ export default function ProductDetailPage() {
               {[
                 { id: 'STORY', label: 'The Harvest & Origin' },
                 { id: 'SPECS', label: 'Technical Specifications' },
-                { id: 'PURITY', label: `NMR Lab Report (${product.batchNumber || 'Batch 2026'})` },
-                { id: 'QA', label: `Customer Q&A (${product.qAndA?.length || 3})` },
+                { id: 'PURITY', label: `NMR Lab Report (Batch 2026)` },
+                { id: 'QA', label: 'Customer Q&A (3)' },
               ].map((t) => (
                 <button
                   key={t.id}
@@ -747,16 +839,19 @@ export default function ProductDetailPage() {
                   Unlike commercial beekeeping operations where hives are fed sugar syrup and treated with synthetic antibiotics, our raw honey is collected directly from wild bee colonies in remote bio-reserves. We partner directly with tribal beekeeper collectives using non-destructive traditional smoke methods that keep colonies safe.
                 </p>
 
-                {product.aboutItems && (
-                  <div className="space-y-3 pt-2">
-                    {product.aboutItems.map((item, idx) => (
-                      <div key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-stone-800">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                        <span>{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <div className="space-y-3 pt-2">
+                  {[
+                    '【100% COLD-EXTRACTED RAW HONEY】: Harvested without heating above hive temperature (38°C), safeguarding living bio-enzymes.',
+                    '【GERMAN NMR 400MHz PURITY TESTED】: Molecularly fingerprinted to guarantee 0% adulteration, zero C3/C4 corn syrup, and zero antibiotics.',
+                    '【SOLID GLASS PACKAGING】: Bottled exclusively in inert food-grade solid flint glass to prevent chemical leaching and protect volatile aromas.',
+                    '【NATURAL POLLEN & ENZYMES】: Retains beneficial natural floral pollen, propolis, and bio-available polyphenols.',
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-stone-800">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-stone-200">
                   <div className="p-5 rounded-2xl bg-white border border-stone-200/70 space-y-1">
@@ -780,21 +875,22 @@ export default function ProductDetailPage() {
               <div className="bg-[#FAF9F5] rounded-3xl border border-stone-200/80 p-8 shadow-2xs animate-in fade-in space-y-6">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-serif font-bold text-stone-950">Technical Specifications</h3>
-                  <span className="text-xs font-mono text-stone-500">SKU: {product.sku}</span>
+                  <span className="text-xs font-mono text-stone-500">SKU: {currentOption.sku}</span>
                 </div>
                 
                 <div className="rounded-2xl border border-stone-200/80 overflow-hidden text-xs bg-white">
                   <table className="w-full text-left">
                     <tbody className="divide-y divide-stone-100">
-                      {Object.entries(
-                        product.technicalDetails || {
-                          'Brand': 'Ganesh Mule Pure Honey',
-                          'Flavour': product.flavour || 'Wild Forest Multifloral',
-                          'Origin': product.origin || 'Western Ghats',
-                          'Packaging': 'Heavy Solid Glass Jar',
-                          'Shelf Life': '24 Months',
-                        }
-                      ).map(([key, val], idx) => (
+                      {[
+                        ['Brand', 'Ganesh Mule Pure Honey'],
+                        ['Flavour', categoryMeta.flavourNotes],
+                        ['Origin', categoryMeta.floralOrigin],
+                        ['Packaging', 'Heavy Food-Grade Solid Glass Jar'],
+                        ['Selected Net Weight', currentOption.weight],
+                        ['Shelf Life', '24 Months (Indefinite if kept dry)'],
+                        ['Moisture Content', '< 18% (FSSAI Compliant)'],
+                        ['Diastase Activity', '> 12 Schade (Active Live Enzymes)'],
+                      ].map(([key, val], idx) => (
                         <tr key={key} className={idx % 2 === 0 ? 'bg-stone-50/50' : 'bg-white'}>
                           <td className="py-3 px-4 font-semibold text-stone-600 w-1/3">{key}</td>
                           <td className="py-3 px-4 text-stone-900 font-medium">{val}</td>
@@ -817,7 +913,7 @@ export default function ProductDetailPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <h3 className="text-xl font-serif font-bold text-stone-950">NMR Spectroscopy Batch Analysis</h3>
-                    <span className="text-xs text-stone-500 font-mono">Apiary Identifier: {product.batchNumber || 'BATCH-2026-WF04'}</span>
+                    <span className="text-xs text-stone-500 font-mono">Apiary Identifier: BATCH-2026-WF04</span>
                   </div>
                   <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 w-fit">
                     PASSED • 100% PURE RAW HONEY
@@ -849,7 +945,7 @@ export default function ProductDetailPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => alert(`Certificate for ${product.batchNumber || 'Batch 2026'} downloaded successfully (Simulated PDF).`)}
+                    onClick={() => alert(`Certificate for BATCH-2026 downloaded successfully (Simulated PDF).`)}
                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-stone-50 border border-stone-200 text-stone-900 hover:bg-stone-100 text-xs font-semibold cursor-pointer shadow-2xs shrink-0"
                   >
                     <Download className="w-3.5 h-3.5 text-amber-800" />
@@ -864,22 +960,24 @@ export default function ProductDetailPage() {
               <div className="bg-[#FAF9F5] rounded-3xl border border-stone-200/80 p-8 shadow-2xs animate-in fade-in space-y-6">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-serif font-bold text-stone-950">Questions &amp; Answers</h3>
-                  <span className="text-xs text-stone-500">{product.qAndA?.length || 3} questions answered</span>
+                  <span className="text-xs text-stone-500">3 questions answered</span>
                 </div>
 
                 <div className="space-y-4">
-                  {(product.qAndA || [
+                  {[
                     {
                       question: 'Does this raw honey crystallize in cold weather?',
                       answer: 'Yes! Natural crystallization is physical proof that the honey is 100% raw and has not been subjected to high-temperature commercial pasteurization.',
-                      votes: 24,
                     },
                     {
                       question: 'How should I store this honey once opened?',
                       answer: 'Store at room temperature with the solid glass jar lid closed tightly. Never refrigerate honey, as cold speeds up crystallization.',
-                      votes: 18,
                     },
-                  ]).map((item, idx) => (
+                    {
+                      question: 'Why do you pack in solid glass instead of squeeze bottles?',
+                      answer: 'Honey is mildly acidic (pH ~3.9). Plastic containers leach microplastics under warm temperatures. Inert solid glass protects purity and enzymes forever.',
+                    },
+                  ].map((item, idx) => (
                     <div key={idx} className="p-5 rounded-2xl bg-white border border-stone-200/70 space-y-2">
                       <div className="text-xs font-semibold text-stone-950 flex items-start gap-2">
                         <span className="text-amber-800 font-bold">Q:</span>
@@ -896,132 +994,18 @@ export default function ProductDetailPage() {
           </div>
         </section>
 
-        {/* Customer Reviews Section */}
-        <section className="py-16 bg-[#F4F1EA] border-t border-stone-200/70">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-              <div>
-                <span className="text-xs font-semibold uppercase tracking-wider text-amber-800">
-                  Verified Experiences
-                </span>
-                <h2 className="text-2xl sm:text-3xl font-serif font-bold text-stone-950 mt-1">
-                  Customer Ratings &amp; Reviews
-                </h2>
-              </div>
-              <div className="flex items-center gap-1.5 text-xs text-stone-600 font-medium">
-                <Star className="w-4 h-4 fill-amber-400 text-amber-500" />
-                <span className="font-bold text-stone-950 text-sm">{rating}</span>
-                <span>out of 5 ({ratingCount} verified customers)</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {(product.customerReviews || [
-                {
-                  id: 'rev-1',
-                  author: 'Dr. Rajesh Deshmukh',
-                  rating: 5,
-                  title: 'Remarkable authenticity and depth',
-                  date: '14 October 2026',
-                  verifiedPurchase: true,
-                  content: 'A world of difference compared to commercial supermarket honey. The floral complexity and natural velvet micro-crystals prove this is genuine raw honey.',
-                  helpfulCount: 42,
-                },
-                {
-                  id: 'rev-2',
-                  author: 'Ananya Sharma',
-                  rating: 5,
-                  title: 'Batch NMR report verified',
-                  date: '28 September 2026',
-                  verifiedPurchase: true,
-                  content: 'Arrived in sturdy protective packaging. Beautiful glass jar and wonderful caramel notes. I take one spoon daily for morning wellness.',
-                  helpfulCount: 19,
-                },
-                {
-                  id: 'rev-3',
-                  author: 'Vikram Sengupta',
-                  rating: 5,
-                  title: 'Flawless glass freight delivery',
-                  date: '02 September 2026',
-                  verifiedPurchase: true,
-                  content: 'Was skeptical about glass freight, but it was cushioned impeccably. The taste is pure, unadulterated forest nectar.',
-                  helpfulCount: 8,
-                },
-              ]).map((rev) => {
-                const currentHelpful = helpfulVotes[rev.id] ?? rev.helpfulCount;
-                const hasVoted = votedIds[rev.id];
-
-                return (
-                  <div key={rev.id} className="p-6 rounded-2xl bg-white border border-stone-200/80 space-y-3 shadow-2xs">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex text-amber-400">
-                        {[...Array(rev.rating)].map((_, i) => (
-                          <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
-                        ))}
-                      </div>
-                      <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                        Verified Purchase
-                      </span>
-                    </div>
-                    <h4 className="font-semibold text-stone-950 text-sm">{rev.title}</h4>
-                    <p className="text-xs text-stone-600 leading-relaxed italic">
-                      "{rev.content}"
-                    </p>
-                    <div className="pt-2 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-500">
-                      <div>
-                        <span className="font-semibold text-stone-900 block">{rev.author}</span>
-                        <span>{rev.date}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleUpvoteReview(rev.id, rev.helpfulCount)}
-                        className={`inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full border transition-all cursor-pointer ${
-                          hasVoted
-                            ? 'border-emerald-300 bg-emerald-50 text-emerald-800 font-semibold'
-                            : 'border-stone-200 bg-white text-stone-600 hover:text-stone-950'
-                        }`}
-                      >
-                        <ThumbsUp className="w-3 h-3" />
-                        <span>{currentHelpful}</span>
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        {/* You May Also Like / Related Harvests */}
-        {relatedProducts.length > 0 && (
-          <section className="py-16 max-w-6xl mx-auto px-4 sm:px-6">
-            <div className="flex items-end justify-between mb-8 pb-4 border-b border-stone-200">
-              <div>
-                <span className="text-xs font-semibold text-amber-800 uppercase tracking-wider">Explore More Harvests</span>
-                <h3 className="text-2xl font-serif font-bold text-stone-950 mt-1">Single-Origin Monoflorals</h3>
-              </div>
-              <Link href="/shop" className="text-xs font-semibold text-stone-800 hover:text-amber-800">
-                View All Jars →
-              </Link>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {relatedProducts.map((p) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </div>
-          </section>
-        )}
-
         {/* Floating Sticky Quick-Add Bar */}
         {showStickyBar && (
           <div className="fixed bottom-0 left-0 right-0 bg-[#FCFBF7]/95 backdrop-blur-md border-t border-stone-200/80 shadow-xl z-40 py-3 px-4 transition-all animate-in slide-in-from-bottom">
             <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white border border-stone-200 overflow-hidden shrink-0 hidden sm:flex items-center justify-center">
-                  <img
-                    src={product.images[0]?.url}
+                <div className="w-10 h-10 rounded-xl bg-white border border-stone-200 overflow-hidden shrink-0 hidden sm:flex items-center justify-center relative">
+                  <Image
+                    src={galleryImages[0].url}
                     alt=""
-                    className="w-full h-full object-contain p-1"
+                    fill
+                    sizes="40px"
+                    className="object-contain p-1"
                   />
                 </div>
                 <div>
@@ -1029,9 +1013,9 @@ export default function ProductDetailPage() {
                     {cleanName}
                   </h4>
                   <div className="flex items-center gap-2 text-[11px] text-stone-500">
-                    <span className="font-medium text-stone-700">{currentVariantObj.weight}</span>
+                    <span className="font-semibold text-stone-800">{currentOption.weight}</span>
                     <span>•</span>
-                    <span className="font-bold text-stone-950">{formatCurrency(activePrice)}</span>
+                    <span className="font-bold text-stone-950">{formatCurrency(currentOption.price)}</span>
                   </div>
                 </div>
               </div>
@@ -1040,9 +1024,12 @@ export default function ProductDetailPage() {
                 <button
                   type="button"
                   onClick={handleAddToCart}
+                  disabled={isOutOfStock}
                   className={`py-2 px-5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95 ${
                     isAdded
                       ? 'bg-emerald-700 text-white'
+                      : isOutOfStock
+                      ? 'bg-stone-100 text-stone-400 cursor-not-allowed'
                       : 'border border-stone-300 text-stone-900 bg-white hover:bg-stone-100'
                   }`}
                 >
@@ -1054,16 +1041,17 @@ export default function ProductDetailPage() {
                   ) : (
                     <>
                       <ShoppingBag className="w-3.5 h-3.5" />
-                      <span>Add to Bag ({currentVariantObj.weight})</span>
+                      <span>Add to Cart ({currentOption.weight})</span>
                     </>
                   )}
                 </button>
                 <button
                   type="button"
                   onClick={handleBuyNow}
+                  disabled={isOutOfStock}
                   className="py-2 px-5 rounded-full text-xs font-semibold bg-stone-900 hover:bg-amber-800 text-white transition-all cursor-pointer shadow-xs active:scale-98"
                 >
-                  Instant Buy ({currentVariantObj.weight})
+                  Instant Buy ({currentOption.weight})
                 </button>
               </div>
             </div>

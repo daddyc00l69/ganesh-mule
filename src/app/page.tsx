@@ -127,10 +127,10 @@ export default function HomePage() {
                   </a>
 
                   <Link
-                    href="/shop?weight=250"
+                    href="/shop"
                     className="px-6 py-3.5 rounded-full border border-stone-300 bg-white hover:bg-stone-50 text-stone-800 text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
                   >
-                    <span>Explore 250g Samplers</span>
+                    <span>Explore All 6 Harvests</span>
                   </Link>
                 </div>
 
