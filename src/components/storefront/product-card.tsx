@@ -28,6 +28,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const isLowStock = product.stockQuantity > 0 && product.stockQuantity <= product.lowStockThreshold;
   const rating = product.rating || 4.9;
 
+  const discountPercent =
+    product.compareAtPrice && product.compareAtPrice > product.price
+      ? Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)
+      : 0;
+
   const weightLabel = product.weightGrams
     ? product.weightGrams >= 1000
       ? `${(product.weightGrams / 1000).toFixed(2).replace(/\.?0+$/, '')} kg`
@@ -89,13 +94,25 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
 
           <div className="pt-3 border-t border-stone-100 flex items-center justify-between gap-3">
-            <div className="flex items-baseline gap-2">
-              <span className="text-lg font-semibold text-stone-950 tracking-tight">
-                {formatCurrency(product.price)}
-              </span>
-              {product.compareAtPrice && (
-                <span className="text-xs text-stone-400 line-through">
-                  {formatCurrency(product.compareAtPrice)}
+            <div className="flex flex-col">
+              <div className="flex items-baseline gap-1.5 flex-wrap">
+                <span className="text-lg font-semibold text-stone-950 tracking-tight">
+                  {formatCurrency(product.price)}
+                </span>
+                {product.compareAtPrice && (
+                  <span className="text-xs text-stone-400 line-through">
+                    {formatCurrency(product.compareAtPrice)}
+                  </span>
+                )}
+                {discountPercent > 0 && (
+                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.2 rounded">
+                    {discountPercent}% OFF
+                  </span>
+                )}
+              </div>
+              {product.compareAtPrice && product.compareAtPrice > product.price && (
+                <span className="text-[11px] font-medium text-emerald-700">
+                  Save {formatCurrency(product.compareAtPrice - product.price)}
                 </span>
               )}
             </div>

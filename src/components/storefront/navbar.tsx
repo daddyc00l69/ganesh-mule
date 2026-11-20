@@ -18,7 +18,8 @@ export const StorefrontNavbar: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { label: 'Shop', href: '/shop' },
+    { label: 'Home', href: '/' },
+    { label: 'Shop Harvests', href: '/shop' },
     { label: 'Purity & NMR', href: '/support' },
     { label: 'Orders', href: '/account' },
   ];
@@ -27,7 +28,7 @@ export const StorefrontNavbar: React.FC = () => {
     <header className="w-full bg-[#FCFBF7] border-b border-stone-200/70">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
         <Link
-          href="/shop"
+          href="/"
           className="flex items-center gap-2 text-stone-900 hover:opacity-75 transition-opacity"
         >
           <Droplets className="w-4 h-4 fill-amber-600 text-amber-700" />

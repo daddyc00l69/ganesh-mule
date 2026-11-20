@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { StoreProvider } from '@/components/storefront/store-provider';
 import { ProductCard } from '@/components/storefront/product-card';
 import { MOCK_PRODUCTS } from '@/lib/mock-data';
 import { formatCurrency } from '@/lib/utils';
 import { useCart } from '@/lib/cart/cart-context';
+import { guessCityStateFromPin } from '@/lib/constants/india';
 import {
   Star,
   ShieldCheck,
@@ -27,6 +28,9 @@ import {
   ThumbsUp,
   Download,
   CheckCircle2,
+  MapPin,
+  Zap,
+  Tag,
 } from 'lucide-react';
 
 export default function ProductDetailPage() {
@@ -152,8 +156,46 @@ export default function ProductDetailPage() {
     setTimeout(() => setIsAdded(false), 2000);
   };
 
+  const router = useRouter();
+
   const handleBuyNow = () => {
     handleAddToCart();
+    router.push('/checkout');
+  };
+
+  // Pincode Delivery Check
+  const [pincode, setPincode] = useState('');
+  const [pinCity, setPinCity] = useState<string | null>(null);
+  const [pinState, setPinState] = useState<string | null>(null);
+  const [pinChecked, setPinChecked] = useState(false);
+
+  const handleCheckPincode = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pincode.length === 6 && /^\d{6}$/.test(pincode)) {
+      const resolved = guessCityStateFromPin(pincode);
+      setPinCity(resolved?.city || 'Metro Delivery Hub');
+      setPinState(resolved?.state || 'India');
+      setPinChecked(true);
+    }
+  };
+
+  // Frequently Bought Together combo pair (e.g. 250g Sampler from another variety)
+  const comboPair =
+    MOCK_PRODUCTS.find(
+      (p) =>
+        p.id !== product.id &&
+        !p.slug.includes(baseSlug) &&
+        p.weightGrams === 250 &&
+        p.isPublished
+    ) || MOCK_PRODUCTS[0];
+
+  const [comboAdded, setComboAdded] = useState(false);
+
+  const handleAddCombo = () => {
+    handleAddToCart();
+    addToCart(comboPair, 1);
+    setComboAdded(true);
+    setTimeout(() => setComboAdded(false), 2000);
     setIsCartOpen(true);
   };
 
@@ -501,6 +543,110 @@ export default function ProductDetailPage() {
                   <span>7-Day seamless replacement</span>
                 </div>
               </div>
+
+              {/* Interactive Delhivery Pincode Checker */}
+              <div className="pt-4 border-t border-[#d2d2d7]/40 space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-[#1d1d1f]">
+                  <MapPin className="w-3.5 h-3.5 text-[#0071e3]" />
+                  <span>Check Delivery Date & Pincode Serviceability</span>
+                </div>
+                <form onSubmit={handleCheckPincode} className="flex gap-2">
+                  <input
+                    type="text"
+                    maxLength={6}
+                    value={pincode}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, '');
+                      setPincode(v);
+                      if (v.length === 6) {
+                        const resolved = guessCityStateFromPin(v);
+                        setPinCity(resolved?.city || 'Metro Delivery Hub');
+                        setPinState(resolved?.state || 'India');
+                        setPinChecked(true);
+                      } else {
+                        setPinChecked(false);
+                      }
+                    }}
+                    placeholder="Enter 6-digit Pincode (e.g. 400001)"
+                    className="flex-1 px-3.5 py-2 text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] placeholder:text-stone-400 focus:outline-none focus:border-[#0071e3]"
+                  />
+                  <button
+                    type="submit"
+                    className="px-4 py-2 text-xs font-semibold rounded-xl bg-[#1d1d1f] text-white hover:bg-stone-800 transition-colors cursor-pointer"
+                  >
+                    Check
+                  </button>
+                </form>
+                {pinChecked && pinCity && (
+                  <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200/80 text-[11px] text-emerald-900 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <div>
+                      <span className="font-semibold">Express Delivery Available to {pinCity}, {pinState}</span>
+                      <p className="text-[10px] text-emerald-700">Dispatched within 24h via Delhivery Air · Free shipping on orders over ₹999</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Amazon-Style Frequently Bought Together Combo */}
+              {comboPair && (
+                <div className="pt-4 border-t border-[#d2d2d7]/40 space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-[#1d1d1f]">
+                    <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
+                    <span>Frequently Bought Together</span>
+                    <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">Save ₹50</span>
+                  </div>
+
+                  <div className="p-3.5 rounded-[20px] bg-white border border-[#d2d2d7]/60 shadow-2xs space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-14 h-14 rounded-xl bg-[#F7F4EE] border border-stone-200/60 p-1 shrink-0 relative overflow-hidden">
+                        <img
+                          src={product.images[0]?.url}
+                          alt={product.name}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                      <span className="text-stone-400 font-bold text-sm">+</span>
+                      <div className="w-14 h-14 rounded-xl bg-[#F7F4EE] border border-stone-200/60 p-1 shrink-0 relative overflow-hidden">
+                        <img
+                          src={comboPair.images[0]?.url}
+                          alt={comboPair.name}
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-stone-900 line-clamp-1">{product.name} + {comboPair.name}</p>
+                        <div className="flex items-baseline gap-2 mt-0.5">
+                          <span className="text-xs font-bold text-stone-950">
+                            {formatCurrency(activePrice + comboPair.price)}
+                          </span>
+                          <span className="text-[10px] text-stone-400 line-through">
+                            {formatCurrency((activeCompareAtPrice || 54900) + (comboPair.compareAtPrice || 27500))}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAddCombo}
+                      className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold bg-stone-900 hover:bg-amber-900 text-white transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-98"
+                    >
+                      {comboAdded ? (
+                        <>
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Both Added to Bag!</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingBag className="w-3.5 h-3.5" />
+                          <span>Add Both to Bag ({formatCurrency(activePrice + comboPair.price)})</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
