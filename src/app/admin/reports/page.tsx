@@ -321,11 +321,31 @@ export default function AdminReportsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <GlassButton variant="primary" size="sm" onClick={handleExportCSV} className="gap-1.5 shadow-sm">
-            <Download className="w-3.5 h-3.5" />
-            <span>{activeTab === 'MANAGERS' ? 'Export Manager Audit CSV' : 'Export Sales CSV'}</span>
-          </GlassButton>
+        <div className="flex items-center gap-2 flex-wrap">
+          <a href="/api/admin/reports/export?type=orders" download>
+            <GlassButton variant="primary" size="sm" className="gap-1.5 shadow-sm">
+              <Download className="w-3.5 h-3.5" />
+              <span>Export Orders (Excel)</span>
+            </GlassButton>
+          </a>
+          <a href="/api/admin/reports/export?type=revenue" download>
+            <GlassButton variant="outline" size="sm" className="gap-1.5 shadow-sm">
+              <Download className="w-3.5 h-3.5" />
+              <span>Export Revenue (Excel)</span>
+            </GlassButton>
+          </a>
+          <a href="/api/admin/reports/export?type=products" download>
+            <GlassButton variant="outline" size="sm" className="gap-1.5 shadow-sm">
+              <Download className="w-3.5 h-3.5" />
+              <span>Export Inventory (Excel)</span>
+            </GlassButton>
+          </a>
+          <a href="/api/admin/reports/export?type=customers" download>
+            <GlassButton variant="outline" size="sm" className="gap-1.5 shadow-sm">
+              <Download className="w-3.5 h-3.5" />
+              <span>Export Customers (Excel)</span>
+            </GlassButton>
+          </a>
         </div>
       </div>
 

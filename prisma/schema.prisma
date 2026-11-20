@@ -130,6 +130,8 @@ model Product {
   stockQuantity      Int                 @default(0)
   reservedQuantity   Int                 @default(0)
   lowStockThreshold  Int                 @default(5)
+  weightGrams        Int?                @default(500)
+  weight             String?             @default("500g")
   isPublished        Boolean             @default(true)
   images             ProductImage[]
   inventoryMovements InventoryMovement[]
@@ -237,6 +239,8 @@ model OrderItem {
   product     Product  @relation(fields: [productId], references: [id])
   productName String   // Snapshot
   sku         String   // Snapshot
+  weight      String?  // Snapshot e.g. "250g", "500g", "1kg"
+  weightGrams Int?     // Snapshot e.g. 250, 500, 1000
   price       Int      // Snapshot in minor units
   quantity    Int
   total       Int      // price * quantity

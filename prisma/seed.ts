@@ -46,17 +46,6 @@ const varieties = [
     description: 'Distinctive raw honey harvested from white carom flowers. Celebrated in Ayurveda for respiratory comfort, gut health, and soothing digestion.',
   },
   {
-    id: 'cat-saunf',
-    slug: 'saunf-honey',
-    name: 'Saunf (Fennel) Honey',
-    categoryName: 'Raw Saunf (Fennel) Honey',
-    folderName: 'Saunf Honey',
-    skuPrefix: 'GM-SAU',
-    flavour: 'Sweet Licorice & Refreshing Aniseed Notes',
-    origin: 'Fennel Apiaries, Saurashtra, Gujarat',
-    description: 'Aromatic unpasteurized raw honey harvested from sweet fennel blooms. Imparts a naturally cooling aftertaste and soothing herbal benefits.',
-  },
-  {
     id: 'cat-multiflora',
     slug: 'multiflora-honey',
     name: 'Multiflora Honey',
@@ -254,6 +243,7 @@ async function main() {
       const sku = `${v.skuPrefix}-${s.skuSuffix}`;
       const name = `${v.name} (${s.weight})`;
 
+      const weightGrams = s.weight === '1kg' ? 1000 : parseInt(s.weight, 10);
       const prod = await prisma.product.upsert({
         where: { sku },
         update: {
@@ -265,6 +255,8 @@ async function main() {
           costPrice: s.costPrice,
           categoryId: v.id,
           stockQuantity: s.stock,
+          weight: s.weight,
+          weightGrams,
           isPublished: true,
         },
         create: {
@@ -278,6 +270,8 @@ async function main() {
           costPrice: s.costPrice,
           categoryId: v.id,
           stockQuantity: s.stock,
+          weight: s.weight,
+          weightGrams,
           isPublished: true,
         },
       });

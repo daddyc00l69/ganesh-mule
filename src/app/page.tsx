@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { StoreProvider } from '@/components/storefront/store-provider';
 import { ProductCard } from '@/components/storefront/product-card';
+import { VarietyShowcaseCard } from '@/components/storefront/variety-showcase-card';
 import { MOCK_PRODUCTS, MOCK_CATEGORIES } from '@/lib/mock-data';
 import { formatCurrency } from '@/lib/utils';
 import { useCart } from '@/lib/cart/cart-context';
@@ -104,7 +105,7 @@ export default function HomePage() {
                     href="#shop-catalog"
                     className="px-6 py-3.5 rounded-full bg-stone-900 hover:bg-amber-800 text-white text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-98"
                   >
-                    <span>Shop 7 Pure Harvests (From ₹199)</span>
+                    <span>Shop 6 Pure Harvests (From ₹199)</span>
                     <ArrowRight className="w-4 h-4" />
                   </a>
 
@@ -127,7 +128,7 @@ export default function HomePage() {
                   </div>
 
                   <div>
-                    <span className="block text-sm font-bold text-stone-950">7 Varieties</span>
+                    <span className="block text-sm font-bold text-stone-950">6 Varieties</span>
                     <span className="text-[11px] text-stone-500">Single-Origin Blooms</span>
                   </div>
 
@@ -177,7 +178,7 @@ export default function HomePage() {
             <div className="text-center max-w-xl mx-auto space-y-2 mb-8">
               <span className="text-xs font-semibold text-amber-800 tracking-wider uppercase">Choose Your Perfect Jar</span>
               <h2 className="text-2xl sm:text-3xl font-serif font-bold text-stone-950">Simple, Transparent Sizing</h2>
-              <p className="text-xs sm:text-sm text-stone-600">All 7 varieties share the exact same price. Zero confusion.</p>
+              <p className="text-xs sm:text-sm text-stone-600">All 6 varieties share the exact same price. Zero confusion.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -276,16 +277,16 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 1-Tap Filterable Product Showcase */}
+        {/* 1-Tap Filterable Product Showcase — Exactly 6 Main Honey Products */}
         <section id="shop-catalog" className="py-14 sm:py-20 max-w-6xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-stone-200">
             <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-amber-800">The 7 Pure Harvests</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-amber-800">The 6 Pure Harvests</span>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold text-stone-950 mt-1">
                 Explore Artisanal Reserves
               </h2>
               <p className="text-xs sm:text-sm text-stone-600 mt-1">
-                Select any honey variety or filter by jar weight. Click any jar for complete lab reports.
+                Hand-harvested raw honey from distinct Indian floral canopies. Bottled exclusively in thick solid glass.
               </p>
             </div>
 
@@ -315,40 +316,15 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Variety Filter Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto py-4 scrollbar-none">
-            <button
-              type="button"
-              onClick={() => setSelectedCategory('ALL')}
-              className={`px-4 py-2 rounded-full text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
-                selectedCategory === 'ALL'
-                  ? 'bg-amber-800 text-white'
-                  : 'bg-white border border-stone-200 text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              All Varieties ({MOCK_PRODUCTS.length})
-            </button>
-
-            {MOCK_CATEGORIES.filter((c) => c.id !== 'cat-wild-forest').map((cat) => (
-              <button
+          {/* 6 Main Honey Product Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-6">
+            {MOCK_CATEGORIES.filter((c) => c.isVisible !== false && c.id !== 'cat-wild-forest' && c.id !== 'cat-saunf').map((cat) => (
+              <VarietyShowcaseCard
                 key={cat.id}
-                type="button"
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`px-4 py-2 rounded-full text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
-                  selectedCategory === cat.id
-                    ? 'bg-amber-800 text-white'
-                    : 'bg-white border border-stone-200 text-stone-600 hover:text-stone-900'
-                }`}
-              >
-                {cat.name.replace(' Raw Honey', '').replace(' Blossom Honey', '')}
-              </button>
-            ))}
-          </div>
-
-          {/* Product Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
-            {displayedProducts.map((prod) => (
-              <ProductCard key={prod.id} product={prod} />
+                category={cat}
+                products={MOCK_PRODUCTS}
+                activeWeightFilter={selectedWeight}
+              />
             ))}
           </div>
 

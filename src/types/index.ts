@@ -125,6 +125,8 @@ export interface OrderItemRecord {
   productId: string;
   productName: string;
   sku: string;
+  weight?: string;
+  weightGrams?: number;
   price: number; // minor units
   quantity: number;
   total: number;

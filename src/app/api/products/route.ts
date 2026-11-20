@@ -16,6 +16,8 @@ const CreateProductSchema = z.object({
   categoryId: z.string(),
   stockQuantity: z.number().int().nonnegative().default(0),
   lowStockThreshold: z.number().int().positive().default(5),
+  weight: z.string().optional().default('500g'),
+  weightGrams: z.number().int().positive().optional().default(500),
   images: z.array(z.object({ url: z.string().url(), altText: z.string().optional(), position: z.number() })).optional(),
   isPublished: z.boolean().default(true),
 });
@@ -100,6 +102,8 @@ export async function POST(req: NextRequest) {
           categoryId: data.categoryId,
           stockQuantity: data.stockQuantity,
           lowStockThreshold: data.lowStockThreshold,
+          weight: data.weight || '500g',
+          weightGrams: data.weightGrams || 500,
           isPublished: data.isPublished,
           images: {
             create: data.images?.map((img) => ({

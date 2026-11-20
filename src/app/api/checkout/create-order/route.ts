@@ -90,6 +90,8 @@ export async function POST(req: NextRequest) {
       price: number;
       quantity: number;
       total: number;
+      weight?: string;
+      weightGrams?: number;
     }[] = [];
 
     // Check database availability once per request
@@ -111,6 +113,13 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: `Product not found: ${item.productId}` }, { status: 404 });
       }
 
+      if (product.isPublished === false) {
+        return NextResponse.json(
+          { error: `Product "${product.name}" has been discontinued and is no longer available.` },
+          { status: 400 }
+        );
+      }
+
       // Check stock
       if (product.stockQuantity < item.quantity) {
         return NextResponse.json(
@@ -122,6 +131,9 @@ export async function POST(req: NextRequest) {
       const itemTotal = product.price * item.quantity;
       subtotal += itemTotal;
 
+      const itemWeight = product.weight || (product.weightGrams ? `${product.weightGrams}g` : '500g');
+      const itemWeightGrams = product.weightGrams || (itemWeight === '1kg' ? 1000 : parseInt(itemWeight, 10) || 500);
+
       verifiedLineItems.push({
         productId: product.id,
         name: product.name,
@@ -129,6 +141,8 @@ export async function POST(req: NextRequest) {
         price: product.price,
         quantity: item.quantity,
         total: itemTotal,
+        weight: itemWeight,
+        weightGrams: itemWeightGrams,
       });
     }
 
@@ -244,6 +258,8 @@ export async function POST(req: NextRequest) {
                 price: item.price,
                 quantity: item.quantity,
                 total: item.total,
+                weight: item.weight,
+                weightGrams: item.weightGrams,
               })),
             },
             payments: {
@@ -306,6 +322,8 @@ export async function POST(req: NextRequest) {
         price: item.price,
         quantity: item.quantity,
         total: item.total,
+        weight: item.weight,
+        weightGrams: item.weightGrams,
       })),
       payments: [
         {
