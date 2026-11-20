@@ -41,17 +41,20 @@ export function isGoogleAuthConfigured(): boolean {
  * Derives the canonical base URL from environment or request headers.
  */
 export function getBaseUrl(req?: NextRequest): string {
-  // 1. Explicit APP_URL environment variable
-  if (process.env.APP_URL?.trim()) {
-    return process.env.APP_URL.trim().replace(/\/$/, '');
-  }
-
-  // 2. Request host header if available
+  // 1. Request host header if available (always matches the active domain being browsed by the user)
   if (req) {
     const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
     const proto = req.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
     if (host) {
       return `${proto}://${host}`;
+    }
+  }
+
+  // 2. Explicit APP_URL environment variable (unless running on Vercel with a localhost fallback)
+  if (process.env.APP_URL?.trim()) {
+    const val = process.env.APP_URL.trim().replace(/\/$/, '');
+    if (!process.env.VERCEL || (!val.includes('localhost') && !val.includes('127.0.0.1'))) {
+      return val;
     }
   }
 
