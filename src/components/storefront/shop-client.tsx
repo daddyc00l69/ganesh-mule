@@ -30,123 +30,118 @@ interface HoneyCategoryCardData {
   compareAtPrice: number;
   availableSizes: string[];
   flavourNotes: string;
+  categoryTag?: 'WELLNESS' | 'SWEET' | 'HERBAL';
 }
 
+const SIX_ACTIVE_CATEGORIES: HoneyCategoryCardData[] = [
+  {
+    id: 'cat-forest',
+    slug: 'forest-honey',
+    name: 'Wild Forest Raw Honey',
+    cleanTitle: 'Wild Forest Honey',
+    floralOrigin: 'Western Ghats Deciduous Canopies',
+    description:
+      'Pure cold-extracted raw honey gathered from wild Apis dorsata cliff bees in deep deciduous forests. Rich caramel depth with living bio-enzymes.',
+    imageUrl: '/images/honey-brand/Forest Honey/500g/image_1_amazon_main.jpg',
+    rating: 4.9,
+    ratingCount: 783,
+    startingPrice: 19900,
+    compareAtPrice: 27500,
+    availableSizes: ['250g', '500g', '1kg'],
+    flavourNotes: 'Multifloral blossom with warm floral caramel finish',
+    categoryTag: 'WELLNESS',
+  },
+  {
+    id: 'cat-sesame',
+    slug: 'sesame-honey',
+    name: 'Pure Sesame Blossom Honey',
+    cleanTitle: 'Sesame Blossom Honey',
+    floralOrigin: 'Organic Sesame Plains, Maharashtra',
+    description:
+      'Single-origin unheated honey harvested during peak sesame flowering. Naturally rich in bio-available zinc, calcium, and antioxidant flavonoids.',
+    imageUrl: '/images/honey-brand/Sesame Honey/500g/image_1_amazon_main.jpg',
+    rating: 4.9,
+    ratingCount: 312,
+    startingPrice: 19900,
+    compareAtPrice: 27500,
+    availableSizes: ['250g', '500g', '1kg'],
+    flavourNotes: 'Warm nutty undertones with delicate amber sweetness',
+    categoryTag: 'SWEET',
+  },
+  {
+    id: 'cat-ajwain',
+    slug: 'ajwain-honey',
+    name: 'Organic Ajwain (Carom) Honey',
+    cleanTitle: 'Ajwain (Carom) Honey',
+    floralOrigin: 'Carom Flowering Fields, Rajasthan',
+    description:
+      'Distinctive raw monofloral honey harvested from white carom flowers. Celebrated in Ayurveda for respiratory ease and soothing gut digestion.',
+    imageUrl: '/images/honey-brand/Ajwain Honey/500g/image_1_amazon_main.jpg',
+    rating: 4.9,
+    ratingCount: 420,
+    startingPrice: 19900,
+    compareAtPrice: 27500,
+    availableSizes: ['250g', '500g', '1kg'],
+    flavourNotes: 'Herbal, spicy warmth with a clean soothing finish',
+    categoryTag: 'HERBAL',
+  },
+  {
+    id: 'cat-multiflora',
+    slug: 'multiflora-honey',
+    name: 'Wild Multiflora Raw Honey',
+    cleanTitle: 'Wild Multiflora Honey',
+    floralOrigin: 'Biodiverse Alpine Foothills',
+    description:
+      'Harmonious nectar gathered across dozens of seasonal wild blooms and medicinal herbs. Smooth, well-rounded flavour ideal for daily nutrition.',
+    imageUrl: '/images/honey-brand/Multiflora Honey/500g/image_1_amazon_main.jpg',
+    rating: 4.8,
+    ratingCount: 389,
+    startingPrice: 19900,
+    compareAtPrice: 27500,
+    availableSizes: ['250g', '500g', '1kg'],
+    flavourNotes: 'Rich botanical bouquet with golden nectar finish',
+    categoryTag: 'SWEET',
+  },
+  {
+    id: 'cat-ber',
+    slug: 'ber-honey',
+    name: 'Raw Ber (Sidr / Jujube) Honey',
+    cleanTitle: 'Raw Ber (Sidr) Honey',
+    floralOrigin: 'Arid Jujube Woodlands, Rajasthan',
+    description:
+      'Revered ancient Sidr honey harvested from thorny desert jujube trees. Uniquely dense in bio-active polyphenols and amber antioxidants.',
+    imageUrl: '/images/honey-brand/Ber Honey/500g/image_1_amazon_main.jpg',
+    rating: 4.9,
+    ratingCount: 295,
+    startingPrice: 19900,
+    compareAtPrice: 27500,
+    availableSizes: ['250g', '500g', '1kg'],
+    flavourNotes: 'Thick, butterscotch aroma with deep lingering sweetness',
+    categoryTag: 'WELLNESS',
+  },
+  {
+    id: 'cat-sheesham',
+    slug: 'sheesham-honey',
+    name: 'Raw Sheesham (Rosewood) Honey',
+    cleanTitle: 'Sheesham (Rosewood) Honey',
+    floralOrigin: 'Rosewood River Valleys, North India',
+    description:
+      'Rare single-origin raw honey harvested from blooming North Indian Rosewood canopies. Low glycemic index with a silky, smooth finish.',
+    imageUrl: '/images/honey-brand/Sheesham Honey/500g/image_1_amazon_main.jpg',
+    rating: 4.9,
+    ratingCount: 254,
+    startingPrice: 19900,
+    compareAtPrice: 27500,
+    availableSizes: ['250g', '500g', '1kg'],
+    flavourNotes: 'Mild floral notes with subtle woody sweetness',
+    categoryTag: 'SWEET',
+  },
+];
+
 export function ShopClient() {
-  const [categories, setCategories] = useState<HoneyCategoryCardData[]>([]);
+  const [categories, setCategories] = useState<HoneyCategoryCardData[]>(SIX_ACTIVE_CATEGORIES);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'WELLNESS' | 'SWEET' | 'HERBAL'>('ALL');
-
-  // Load the 6 Main Honey Categories from DB / mock data
-  useEffect(() => {
-    // 6 Active Categories mapping
-    const sixActive = [
-      {
-        id: 'cat-forest',
-        slug: 'forest-honey',
-        name: 'Wild Forest Raw Honey',
-        cleanTitle: 'Wild Forest Honey',
-        floralOrigin: 'Western Ghats Deciduous Canopies',
-        description:
-          'Pure cold-extracted raw honey gathered from wild Apis dorsata cliff bees in deep deciduous forests. Rich caramel depth with living bio-enzymes.',
-        imageUrl: '/images/honey-brand/Forest Honey/500g/image_1_amazon_main.jpg',
-        rating: 4.9,
-        ratingCount: 783,
-        startingPrice: 19900,
-        compareAtPrice: 27500,
-        availableSizes: ['250g', '500g', '1kg'],
-        flavourNotes: 'Multifloral blossom with warm floral caramel finish',
-        categoryTag: 'WELLNESS',
-      },
-      {
-        id: 'cat-sesame',
-        slug: 'sesame-honey',
-        name: 'Pure Sesame Blossom Honey',
-        cleanTitle: 'Sesame Blossom Honey',
-        floralOrigin: 'Organic Sesame Plains, Maharashtra',
-        description:
-          'Single-origin unheated honey harvested during peak sesame flowering. Naturally rich in bio-available zinc, calcium, and antioxidant flavonoids.',
-        imageUrl: '/images/honey-brand/Sesame Honey/500g/image_1_amazon_main.jpg',
-        rating: 4.9,
-        ratingCount: 312,
-        startingPrice: 19900,
-        compareAtPrice: 27500,
-        availableSizes: ['250g', '500g', '1kg'],
-        flavourNotes: 'Warm nutty undertones with delicate amber sweetness',
-        categoryTag: 'SWEET',
-      },
-      {
-        id: 'cat-ajwain',
-        slug: 'ajwain-honey',
-        name: 'Organic Ajwain (Carom) Honey',
-        cleanTitle: 'Ajwain (Carom) Honey',
-        floralOrigin: 'Carom Flowering Fields, Rajasthan',
-        description:
-          'Distinctive raw monofloral honey harvested from white carom flowers. Celebrated in Ayurveda for respiratory ease and soothing gut digestion.',
-        imageUrl: '/images/honey-brand/Ajwain Honey/500g/image_1_amazon_main.jpg',
-        rating: 4.9,
-        ratingCount: 420,
-        startingPrice: 19900,
-        compareAtPrice: 27500,
-        availableSizes: ['250g', '500g', '1kg'],
-        flavourNotes: 'Herbal, spicy warmth with a clean soothing finish',
-        categoryTag: 'HERBAL',
-      },
-      {
-        id: 'cat-multiflora',
-        slug: 'multiflora-honey',
-        name: 'Wild Multiflora Raw Honey',
-        cleanTitle: 'Wild Multiflora Honey',
-        floralOrigin: 'Biodiverse Alpine Foothills',
-        description:
-          'Harmonious nectar gathered across dozens of seasonal wild blooms and medicinal herbs. Smooth, well-rounded flavour ideal for daily nutrition.',
-        imageUrl: '/images/honey-brand/Multiflora Honey/500g/image_1_amazon_main.jpg',
-        rating: 4.8,
-        ratingCount: 389,
-        startingPrice: 19900,
-        compareAtPrice: 27500,
-        availableSizes: ['250g', '500g', '1kg'],
-        flavourNotes: 'Rich botanical bouquet with golden nectar finish',
-        categoryTag: 'SWEET',
-      },
-      {
-        id: 'cat-ber',
-        slug: 'ber-honey',
-        name: 'Raw Ber (Sidr / Jujube) Honey',
-        cleanTitle: 'Raw Ber (Sidr) Honey',
-        floralOrigin: 'Arid Jujube Woodlands, Rajasthan',
-        description:
-          'Revered ancient Sidr honey harvested from thorny desert jujube trees. Uniquely dense in bio-active polyphenols and amber antioxidants.',
-        imageUrl: '/images/honey-brand/Ber Honey/500g/image_1_amazon_main.jpg',
-        rating: 4.9,
-        ratingCount: 295,
-        startingPrice: 19900,
-        compareAtPrice: 27500,
-        availableSizes: ['250g', '500g', '1kg'],
-        flavourNotes: 'Thick, butterscotch aroma with deep lingering sweetness',
-        categoryTag: 'WELLNESS',
-      },
-      {
-        id: 'cat-sheesham',
-        slug: 'sheesham-honey',
-        name: 'Raw Sheesham (Rosewood) Honey',
-        cleanTitle: 'Sheesham (Rosewood) Honey',
-        floralOrigin: 'Rosewood River Valleys, North India',
-        description:
-          'Rare single-origin raw honey harvested from blooming North Indian Rosewood canopies. Low glycemic index with a silky, smooth finish.',
-        imageUrl: '/images/honey-brand/Sheesham Honey/500g/image_1_amazon_main.jpg',
-        rating: 4.9,
-        ratingCount: 254,
-        startingPrice: 19900,
-        compareAtPrice: 27500,
-        availableSizes: ['250g', '500g', '1kg'],
-        flavourNotes: 'Mild floral notes with subtle woody sweetness',
-        categoryTag: 'SWEET',
-      },
-    ];
-
-    setCategories(sixActive as any);
-  }, []);
 
   const filteredCategories = useMemo(() => {
     let list = [...categories];
