@@ -248,26 +248,29 @@ export function ShopClient() {
                 key={cat.id}
                 className="bg-white border border-[#d2d2d7]/70 hover:border-[#86868b] rounded-[24px] p-6 sm:p-7 flex flex-col justify-between transition-all duration-300 hover:shadow-[0_16px_36px_rgba(0,0,0,0.08)] hover:-translate-y-1 group"
               >
-                {/* Top Image Showcase — Clean Apple Light Gray Stage */}
+                {/* Top Image Showcase — Apple Pure White Seamless Blend */}
                 <div>
-                  <div className="w-full aspect-square rounded-[20px] bg-[#f5f5f7] relative mb-6 overflow-hidden flex items-center justify-center p-6">
-                    <Image
-                      src={cat.imageUrl}
-                      alt={cat.name}
-                      fill
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 360px"
-                      className="object-contain group-hover:scale-106 transition-transform duration-700 ease-out p-4"
-                    />
+                  <Link href={`/product/${cat.slug}`} className="block">
+                    <div className="w-full aspect-square rounded-[20px] bg-white relative mb-5 overflow-hidden flex items-center justify-center p-4">
+                      <Image
+                        src={cat.imageUrl}
+                        alt={cat.name}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 360px"
+                        className="object-contain group-hover:scale-106 transition-transform duration-700 ease-out p-2"
+                      />
 
-                    {/* Quality Badges */}
-                    <span className="absolute top-3.5 left-3.5 bg-white/95 text-[#1d1d1f] border border-black/5 text-[11px] font-medium px-2.5 py-0.5 rounded-full shadow-2xs backdrop-blur-xs">
-                      Single-Origin
-                    </span>
+                      {/* Quality Badges */}
+                      <span className="absolute top-3.5 left-3.5 bg-white/95 text-[#1d1d1f] border border-black/5 text-[11px] font-medium px-2.5 py-0.5 rounded-full shadow-2xs backdrop-blur-xs">
+                        Single-Origin
+                      </span>
 
-                    <span className="absolute bottom-3.5 right-3.5 bg-[#1d1d1f] text-white text-[10px] font-semibold px-2.5 py-1 rounded-full shadow-2xs">
-                      Solid Flint Glass
-                    </span>
-                  </div>
+                      <span className="absolute bottom-3.5 right-3.5 bg-[#1d1d1f] text-white text-[10px] font-semibold px-2.5 py-1 rounded-full shadow-2xs flex items-center gap-1">
+                        <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                        <span>Solid Flint Glass</span>
+                      </span>
+                    </div>
+                  </Link>
 
                   {/* Category Details */}
                   <div className="space-y-2">
@@ -275,29 +278,24 @@ export function ShopClient() {
                       <span className="truncate max-w-[200px]">{cat.floralOrigin}</span>
                       <span className="inline-flex items-center gap-1 font-medium text-[#1d1d1f] shrink-0">
                         <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
-                        {cat.rating} ({cat.ratingCount})
+                        <span>{cat.rating}</span>
+                        <span className="text-[#86868b] font-normal text-[11px]">({cat.ratingCount})</span>
                       </span>
                     </div>
 
-                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1d1d1f] group-hover:text-[#0071e3] transition-colors">
-                      {cat.cleanTitle}
-                    </h2>
+                    <Link href={`/product/${cat.slug}`} className="block">
+                      <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1d1d1f] group-hover:text-[#0071e3] transition-colors">
+                        {cat.cleanTitle}
+                      </h2>
+                    </Link>
 
                     <p className="text-xs text-[#6e6e73] line-clamp-2 leading-relaxed">
                       {cat.description}
                     </p>
 
-                    {/* Apple Neutral Nectar Note */}
-                    <div className="pt-1.5">
-                      <p className="text-[11px] text-[#1d1d1f] bg-[#f5f5f7] rounded-xl px-3 py-1.5 leading-normal">
-                        <strong className="text-[#1d1d1f] font-medium">Nectar Note:</strong>{' '}
-                        <span className="text-[#6e6e73]">{cat.flavourNotes}</span>
-                      </p>
-                    </div>
-
-                    {/* Sizing Indicator */}
-                    <div className="pt-1 flex items-center gap-2 text-xs text-[#86868b]">
-                      <span>Available Sizes:</span>
+                    {/* Available Sizes Indicator */}
+                    <div className="pt-2 flex items-center gap-2 text-xs text-[#86868b]">
+                      <span>Available in:</span>
                       <div className="flex items-center gap-1.5">
                         {cat.availableSizes.map((size) => (
                           <span
@@ -312,9 +310,9 @@ export function ShopClient() {
                   </div>
                 </div>
 
-                {/* Bottom Pricing & Apple Blue Configure Button */}
-                <div className="pt-5 mt-6 border-t border-[#d2d2d7]/50 flex items-center justify-between gap-4">
-                  <div>
+                {/* Bottom Pricing & Apple Blue Buy Pill Button */}
+                <div className="pt-4 mt-5 border-t border-[#d2d2d7]/50 flex items-center justify-between gap-3">
+                  <div className="flex flex-col">
                     <div className="flex items-baseline gap-1.5">
                       <span className="text-xs font-normal text-[#86868b]">From</span>
                       <span className="text-xl font-bold text-[#1d1d1f] tracking-tight">
@@ -325,16 +323,15 @@ export function ShopClient() {
                       </span>
                     </div>
                     <span className="text-[11px] font-semibold text-[#1b5e20] block">
-                      Save up to 28%
+                      Save up to 28% · Solid Glass
                     </span>
                   </div>
 
                   <Link
                     href={`/product/${cat.slug}`}
-                    className="px-5 py-2.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4] text-white text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-sm group-hover:shadow-md shrink-0"
+                    className="px-5 py-2 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4] text-white text-xs sm:text-sm font-medium transition-all flex items-center justify-center cursor-pointer shadow-sm group-hover:shadow-md shrink-0"
                   >
-                    <span>Configure &amp; Buy</span>
-                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                    <span>Buy</span>
                   </Link>
                 </div>
               </article>

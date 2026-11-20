@@ -41,14 +41,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     >
       <article className="bg-white rounded-[24px] p-6 sm:p-7 border border-[#d2d2d7]/70 hover:border-[#86868b] shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_16px_36px_rgba(0,0,0,0.08)] hover:-translate-y-1 transition-all duration-300 flex flex-col h-full justify-between">
         
-        {/* Apple Neutral Clean Image Stage */}
-        <div className="w-full aspect-square rounded-[20px] bg-[#f5f5f7] relative mb-6 overflow-hidden flex items-center justify-center p-6">
+        {/* Apple Seamless Product Photography (Pure White Blend) */}
+        <div className="w-full aspect-square rounded-[20px] bg-white relative mb-5 overflow-hidden flex items-center justify-center p-4">
           <Image
             src={displayImage}
             alt={cleanName}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 360px"
-            className="object-contain group-hover:scale-106 transition-transform duration-700 ease-out p-4"
+            className="object-contain group-hover:scale-106 transition-transform duration-700 ease-out p-2"
           />
 
           {/* Floating Minimal Badges */}
@@ -81,23 +81,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               {cleanName}
             </h3>
 
-            {/* Short Description */}
+            {/* Short Description with Natural Flavour Note */}
             <p className="text-xs text-[#6e6e73] line-clamp-2 leading-relaxed">
-              {(product as any).flavour || product.description}
+              {(product as any).flavour || (product as any).flavourNotes || product.description}
             </p>
 
-            {/* Subtle Apple Neutral Nectar Note */}
-            <div className="pt-1">
-              <p className="text-[11px] text-[#1d1d1f] bg-[#f5f5f7] rounded-xl px-3 py-1.5 leading-normal">
-                <strong className="text-[#1d1d1f] font-medium">Nectar Note:</strong>{' '}
-                <span className="text-[#6e6e73]">
-                  {(product as any).flavourNotes || (product as any).flavour || 'Multifloral blossom with warm caramel finish'}
-                </span>
-              </p>
-            </div>
-
             {/* Available Sizes Pill */}
-            <div className="pt-1 flex items-center gap-2 text-xs text-[#86868b]">
+            <div className="pt-2 flex items-center gap-2 text-xs text-[#86868b]">
               <span>Available in:</span>
               <div className="flex items-center gap-1.5">
                 <span className="px-2.5 py-0.5 rounded-md bg-[#f5f5f7] text-[#1d1d1f] text-[11px] font-medium">
@@ -113,7 +103,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </div>
           </div>
 
-          {/* Pricing & Apple Blue CTA Button */}
+          {/* Pricing & Apple Buy Pill Button */}
           <div className="pt-4 border-t border-[#d2d2d7]/50 flex items-center justify-between gap-3">
             <div className="flex flex-col">
               <div className="flex items-baseline gap-1.5">
@@ -126,13 +116,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 </span>
               </div>
               <span className="text-[11px] font-semibold text-[#1b5e20]">
-                Save up to {discountPercent}% · In Solid Glass
+                Save up to {discountPercent}% · Solid Glass
               </span>
             </div>
 
-            <div className="px-5 py-2.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4] text-white text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 shadow-sm group-hover:shadow-md shrink-0 cursor-pointer">
-              <span>Configure &amp; Buy</span>
-              <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+            <div className="px-5 py-2 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4] text-white text-xs sm:text-sm font-medium transition-all flex items-center justify-center shadow-sm group-hover:shadow-md shrink-0 cursor-pointer">
+              <span>Buy</span>
             </div>
           </div>
         </div>
