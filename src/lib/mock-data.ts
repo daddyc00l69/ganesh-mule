@@ -2251,7 +2251,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
   "stockQuantity": 65,
   "reservedQuantity": 0,
   "lowStockThreshold": 10,
-  "isPublished": true,
+  "isPublished": false,
   "weightGrams": 300,
   "images": [
     {
@@ -2295,7 +2295,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
   "stockQuantity": 90,
   "reservedQuantity": 0,
   "lowStockThreshold": 15,
-  "isPublished": true,
+  "isPublished": false,
   "weightGrams": 500,
   "images": [
     {
@@ -2339,7 +2339,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
   "stockQuantity": 92,
   "reservedQuantity": 0,
   "lowStockThreshold": 15,
-  "isPublished": true,
+  "isPublished": false,
   "weightGrams": 750,
   "images": [
     {
@@ -2383,7 +2383,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
   "stockQuantity": 44,
   "reservedQuantity": 0,
   "lowStockThreshold": 10,
-  "isPublished": true,
+  "isPublished": false,
   "weightGrams": 1050,
   "images": [
     {

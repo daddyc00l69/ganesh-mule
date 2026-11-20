@@ -33,7 +33,6 @@ export default function HomePage() {
 
   // Active Category / Variety Filter
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
-  const [selectedWeight, setSelectedWeight] = useState<'ALL' | '250' | '500' | '1000'>('ALL');
 
   // Pincode Quick Checker
   const [pincode, setPincode] = useState('');
@@ -51,7 +50,7 @@ export default function HomePage() {
     }
   };
 
-  // Filter products for homepage showcase: exactly 6 main products
+  // Filter products for homepage showcase: strictly the 6 main honey varieties
   const displayedProducts = useMemo(() => {
     const activeCategoryIds = [
       'cat-forest',
@@ -63,27 +62,20 @@ export default function HomePage() {
     ];
 
     if (selectedCategory !== 'ALL') {
-      let list = MOCK_PRODUCTS.filter((p) => p.categoryId === selectedCategory);
-      if (selectedWeight !== 'ALL') {
-        const targetWeight = parseInt(selectedWeight, 10);
-        list = list.filter((p) => p.weightGrams === targetWeight);
-      }
-      return list;
+      const prod = MOCK_PRODUCTS.find((p) => p.categoryId === selectedCategory && p.isPublished !== false);
+      return prod ? [prod] : [];
     }
 
-    const targetWeight = selectedWeight !== 'ALL' ? parseInt(selectedWeight, 10) : 500;
     const sixProducts: typeof MOCK_PRODUCTS = [];
     activeCategoryIds.forEach((catId) => {
-      const prod =
-        MOCK_PRODUCTS.find((p) => p.categoryId === catId && p.weightGrams === targetWeight) ||
-        MOCK_PRODUCTS.find((p) => p.categoryId === catId);
+      const prod = MOCK_PRODUCTS.find((p) => p.categoryId === catId && p.isPublished !== false);
       if (prod) {
         sixProducts.push(prod);
       }
     });
 
     return sixProducts;
-  }, [selectedCategory, selectedWeight]);
+  }, [selectedCategory]);
 
   return (
     <StoreProvider>
@@ -189,26 +181,19 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 3-Size Package Comparison Guide (Easy Decision-Making) */}
+        {/* 3-Size Package Comparison Guide (Educational - Zero Confusion) */}
         <section className="py-12 bg-white border-b border-stone-200/70">
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
             <div className="text-center max-w-xl mx-auto space-y-2 mb-8">
-              <span className="text-xs font-semibold text-amber-800 tracking-wider uppercase">Choose Your Perfect Jar</span>
+              <span className="text-xs font-semibold text-amber-800 tracking-wider uppercase">Unified Sizing Standard</span>
               <h2 className="text-2xl sm:text-3xl font-serif font-bold text-stone-950">Simple, Transparent Sizing</h2>
-              <p className="text-xs sm:text-sm text-stone-600">All 6 varieties share the exact same price. Zero confusion.</p>
+              <p className="text-xs sm:text-sm text-stone-600">Every single honey variety shares the exact same price across India.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               
               {/* 250g Sampler */}
-              <div
-                onClick={() => setSelectedWeight('250')}
-                className={`p-6 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
-                  selectedWeight === '250'
-                    ? 'border-amber-700 bg-amber-50/40 ring-2 ring-amber-700/20 shadow-sm'
-                    : 'border-stone-200 hover:border-stone-300 bg-white hover:shadow-xs'
-                }`}
-              >
+              <div className="p-6 rounded-2xl border border-stone-200 bg-white flex flex-col justify-between shadow-2xs">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-wider text-stone-500">Trial / Gifting</span>
@@ -225,21 +210,14 @@ export default function HomePage() {
                 </div>
                 <div className="pt-4 mt-4 border-t border-stone-100 flex items-center justify-between text-xs font-medium text-amber-900">
                   <span>₹796 / kg</span>
-                  <span className="flex items-center gap-1">Filter 250g <ChevronRight className="w-3.5 h-3.5" /></span>
+                  <span className="text-stone-500 text-[11px]">Choose on product page</span>
                 </div>
               </div>
 
               {/* 500g Most Popular */}
-              <div
-                onClick={() => setSelectedWeight('500')}
-                className={`p-6 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between relative ${
-                  selectedWeight === '500'
-                    ? 'border-amber-700 bg-amber-50/40 ring-2 ring-amber-700/20 shadow-sm'
-                    : 'border-amber-500/40 bg-[#FCFBF7] hover:border-amber-500 hover:shadow-xs'
-                }`}
-              >
+              <div className="p-6 rounded-2xl border border-amber-500/40 bg-[#FCFBF7] flex flex-col justify-between relative shadow-2xs">
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-800 text-white text-[10px] font-bold tracking-wider uppercase px-3 py-0.5 rounded-full shadow-2xs">
-                  Most Popular · Daily Wellness
+                  Most Popular · Daily Routine
                 </div>
                 <div className="space-y-3 pt-1">
                   <div className="flex items-center justify-between">
@@ -252,24 +230,17 @@ export default function HomePage() {
                     <span className="text-sm text-stone-400 line-through">MRP: ₹549</span>
                   </div>
                   <p className="text-xs text-stone-600 leading-relaxed">
-                    Perfect 30-day supply for morning warm lemon water, Ayurvedic digestive therapy, and natural daily immunity.
+                    Perfect 30-day supply for morning warm lemon water, Ayurvedic digestive therapy, and daily immunity.
                   </p>
                 </div>
                 <div className="pt-4 mt-4 border-t border-amber-200/60 flex items-center justify-between text-xs font-medium text-amber-900">
                   <span>Save ₹150 · ₹798 / kg</span>
-                  <span className="flex items-center gap-1">Filter 500g <ChevronRight className="w-3.5 h-3.5" /></span>
+                  <span className="text-amber-800 font-semibold text-[11px]">Recommended Size</span>
                 </div>
               </div>
 
               {/* 1kg Grand Reserve */}
-              <div
-                onClick={() => setSelectedWeight('1000')}
-                className={`p-6 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
-                  selectedWeight === '1000'
-                    ? 'border-amber-700 bg-amber-50/40 ring-2 ring-amber-700/20 shadow-sm'
-                    : 'border-stone-200 hover:border-stone-300 bg-white hover:shadow-xs'
-                }`}
-              >
+              <div className="p-6 rounded-2xl border border-stone-200 bg-white flex flex-col justify-between shadow-2xs">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">Best Value</span>
@@ -281,12 +252,12 @@ export default function HomePage() {
                     <span className="text-sm text-stone-400 line-through">MRP: ₹999</span>
                   </div>
                   <p className="text-xs text-stone-600 leading-relaxed">
-                    Heavy solid glass reserve jar. Maximum economy for full family Ayurvedic use, natural baking, and daily nutrition.
+                    Heavy solid glass reserve jar. Maximum family economy for full Ayurvedic therapies &amp; natural baking.
                   </p>
                 </div>
                 <div className="pt-4 mt-4 border-t border-stone-100 flex items-center justify-between text-xs font-medium text-emerald-800">
                   <span className="font-bold">Lowest Rate: ₹749 / kg</span>
-                  <span className="flex items-center gap-1">Filter 1kg <ChevronRight className="w-3.5 h-3.5" /></span>
+                  <span className="text-stone-500 text-[11px]">Save ₹250</span>
                 </div>
               </div>
 
@@ -294,7 +265,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 1-Tap Filterable Product Showcase — Exactly 6 Main Honey Products */}
+        {/* The 6 Pure Harvests Showcase — Strictly 6 Main Products (Apple.com Inspired) */}
         <section id="shop-catalog" className="py-14 sm:py-20 max-w-6xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-stone-200">
             <div>
@@ -303,33 +274,12 @@ export default function HomePage() {
                 Explore Artisanal Reserves
               </h2>
               <p className="text-xs sm:text-sm text-stone-600 mt-1">
-                Hand-harvested raw honey from distinct Indian floral canopies. Bottled exclusively in thick solid glass.
+                Cold-extracted raw honey gathered from wild Indian canopies. Bottled exclusively in thick solid glass.
               </p>
             </div>
 
-            {/* Quick Weight Filter Switcher */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0">
-              {(
-                [
-                  { value: 'ALL', label: 'All Sizes' },
-                  { value: '250', label: '250g (₹199)' },
-                  { value: '500', label: '500g (₹399)' },
-                  { value: '1000', label: '1kg (₹749)' },
-                ] as const
-              ).map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setSelectedWeight(opt.value)}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
-                    selectedWeight === opt.value
-                      ? 'bg-stone-900 text-white'
-                      : 'bg-white border border-stone-200 text-stone-700 hover:border-stone-300'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
+            <div className="text-xs text-stone-500 font-medium hidden md:block">
+              Choose your jar size (250g / 500g / 1kg) on the product page
             </div>
           </div>
 
@@ -340,7 +290,7 @@ export default function HomePage() {
               onClick={() => setSelectedCategory('ALL')}
               className={`px-4 py-2 rounded-full text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                 selectedCategory === 'ALL'
-                  ? 'bg-amber-800 text-white'
+                  ? 'bg-stone-900 text-white shadow-xs'
                   : 'bg-white border border-stone-200 text-stone-600 hover:text-stone-900'
               }`}
             >
@@ -354,7 +304,7 @@ export default function HomePage() {
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`px-4 py-2 rounded-full text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
                   selectedCategory === cat.id
-                    ? 'bg-amber-800 text-white'
+                    ? 'bg-amber-800 text-white shadow-xs'
                     : 'bg-white border border-stone-200 text-stone-600 hover:text-stone-900'
                 }`}
               >
@@ -363,7 +313,7 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* 6 Main Honey Product Cards Grid (Original ProductCard Theme Preserved) */}
+          {/* 6 Main Honey Product Cards Grid (Strictly 6 Varieties) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
             {displayedProducts.map((prod) => (
               <ProductCard key={prod.id} product={prod} />
@@ -375,7 +325,7 @@ export default function HomePage() {
               href="/shop"
               className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full border border-stone-300 bg-white hover:bg-stone-100 text-xs sm:text-sm font-semibold text-stone-900 transition-all cursor-pointer shadow-2xs"
             >
-              <span>View Full Shop Catalogue</span>
+              <span>View Full Shop Catalogue (All 6 Harvests)</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
