@@ -28,7 +28,7 @@ export default function SupportPage() {
 
   return (
     <StoreProvider>
-      <div className="bg-[#FAF9F5] min-h-screen py-12 sm:py-16 text-stone-900">
+      <div className="bg-[#f5f5f7] min-h-screen py-12 sm:py-16 text-[#1d1d1f] selection:bg-[#0071e3]/20 selection:text-[#0071e3]">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           {/* Header */}
           <div className="text-center max-w-2xl mx-auto space-y-3">

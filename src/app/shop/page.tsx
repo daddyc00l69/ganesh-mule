@@ -14,7 +14,7 @@ export default function ShopPage() {
     <StoreProvider>
       <Suspense
         fallback={
-          <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center p-12 text-center text-xs text-stone-400">
+          <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center p-12 text-center text-xs text-[#86868b]">
             <span>Loading artisanal honey reserves...</span>
           </div>
         }

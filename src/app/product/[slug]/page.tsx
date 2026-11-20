@@ -372,33 +372,33 @@ export default function ProductDetailPage() {
 
   return (
     <StoreProvider>
-      <div className="bg-[#FAF9F5] min-h-screen pb-24 text-stone-900 selection:bg-amber-500/20 selection:text-amber-900">
+      <div className="bg-[#f5f5f7] min-h-screen pb-24 text-[#1d1d1f] selection:bg-[#0071e3]/20 selection:text-[#0071e3]">
         
         {/* Apple-Style Minimalist Breadcrumb Bar */}
-        <div className="border-b border-stone-200/70 bg-[#FCFBF7]/90 backdrop-blur-md sticky top-11 sm:top-12 z-30">
+        <div className="border-b border-[#d2d2d7]/80 bg-white/80 backdrop-blur-md sticky top-11 sm:top-12 z-30">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between text-xs">
             <Link
               href="/shop"
-              className="inline-flex items-center gap-1.5 text-stone-700 hover:text-amber-900 font-medium transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-[#1d1d1f] hover:text-[#0071e3] font-medium transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to The 6 Harvests</span>
             </Link>
 
             <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-2 text-stone-500">
-                <Link href="/" className="hover:text-stone-950">Store</Link>
+              <div className="hidden sm:flex items-center gap-2 text-[#86868b]">
+                <Link href="/" className="hover:text-[#1d1d1f]">Store</Link>
                 <span>/</span>
-                <Link href="/shop" className="hover:text-stone-950">Harvests</Link>
+                <Link href="/shop" className="hover:text-[#1d1d1f]">Harvests</Link>
                 <span>/</span>
-                <span className="text-stone-900 font-medium truncate max-w-xs">{cleanName}</span>
+                <span className="text-[#1d1d1f] font-medium truncate max-w-xs">{cleanName}</span>
               </div>
               <button
                 type="button"
                 onClick={handleShare}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-stone-200 bg-white text-stone-800 hover:bg-stone-50 text-xs font-medium cursor-pointer shadow-2xs"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[#d2d2d7] bg-white text-[#1d1d1f] hover:bg-[#f5f5f7] text-xs font-medium cursor-pointer shadow-2xs"
               >
-                <Share2 className="w-3.5 h-3.5 text-amber-800" />
+                <Share2 className="w-3.5 h-3.5 text-[#0071e3]" />
                 <span>{copiedLink ? 'Link Copied!' : 'Share'}</span>
               </button>
             </div>
@@ -411,7 +411,7 @@ export default function ProductDetailPage() {
             
             {/* Gallery Column (6 Cols) */}
             <div className="lg:col-span-6 space-y-4 lg:sticky lg:top-28">
-              <div className="relative aspect-square rounded-[32px] overflow-hidden bg-white border border-stone-200/80 flex items-center justify-center p-8 sm:p-12 shadow-sm group">
+              <div className="relative aspect-square rounded-[28px] overflow-hidden bg-white border border-[#d2d2d7]/70 flex items-center justify-center p-8 sm:p-12 shadow-[0_4px_24px_rgba(0,0,0,0.04)] group">
                 <Image
                   src={galleryImages[selectedImage]?.url || galleryImages[0].url}
                   alt={galleryImages[selectedImage]?.altText || cleanName}
@@ -423,7 +423,7 @@ export default function ProductDetailPage() {
 
                 {/* Floating Badges */}
                 <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
-                  <span className="bg-stone-900 text-white text-[11px] font-medium tracking-wider px-3 py-1 rounded-full shadow-2xs">
+                  <span className="bg-[#1d1d1f] text-white text-[11px] font-medium tracking-wider px-3 py-1 rounded-full shadow-2xs">
                     {currentOption.weight} Solid Glass Jar
                   </span>
                   <span className="bg-emerald-50 text-emerald-800 text-[10px] font-medium px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1 shadow-2xs">
@@ -432,7 +432,7 @@ export default function ProductDetailPage() {
                   </span>
                 </div>
 
-                <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-xs px-3 py-1 rounded-full text-[11px] text-stone-500 border border-stone-200 shadow-2xs">
+                <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-xs px-3 py-1 rounded-full text-[11px] text-[#86868b] border border-[#d2d2d7] shadow-2xs">
                   {selectedImage + 1} of {galleryImages.length}
                 </div>
               </div>
@@ -445,8 +445,8 @@ export default function ProductDetailPage() {
                     onClick={() => setSelectedImage(idx)}
                     className={`w-20 h-20 rounded-2xl overflow-hidden border-2 bg-white p-2 cursor-pointer transition-all shrink-0 relative ${
                       selectedImage === idx
-                        ? 'border-amber-800 ring-2 ring-amber-800/20 shadow-xs'
-                        : 'border-stone-200 hover:border-stone-400 opacity-80 hover:opacity-100'
+                        ? 'border-[#0071e3] ring-2 ring-[#0071e3]/20 shadow-xs'
+                        : 'border-[#d2d2d7] hover:border-[#86868b] opacity-80 hover:opacity-100'
                     }`}
                   >
                     <Image
@@ -466,8 +466,8 @@ export default function ProductDetailPage() {
               
               {/* Product Header */}
               <div>
-                <div className="flex items-center gap-2 text-xs font-semibold tracking-wider uppercase text-amber-800 flex-wrap">
-                  <span className="px-2.5 py-0.5 rounded-full border text-[10px] font-bold tracking-normal bg-amber-100 text-amber-900 border-amber-300">
+                <div className="flex items-center gap-2 text-xs font-semibold tracking-wider uppercase text-[#86868b] flex-wrap">
+                  <span className="px-2.5 py-0.5 rounded-full border text-[10px] font-bold tracking-normal bg-white text-[#1d1d1f] border-[#d2d2d7]">
                     Flagship Harvest
                   </span>
                   <span>{categoryMeta.varietyName}</span>
@@ -476,18 +476,18 @@ export default function ProductDetailPage() {
                 </div>
                 
                 {/* Clean Product Name without baked-in 500g */}
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-stone-950 mt-2 leading-tight tracking-tight">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#1d1d1f] mt-2 leading-tight tracking-tight">
                   {cleanName}
                 </h1>
 
                 {/* Rating & Tested Tag */}
                 <div className="flex items-center gap-3 mt-3">
-                  <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-white border border-stone-200 text-xs font-semibold text-stone-900 shadow-2xs">
+                  <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-white border border-[#d2d2d7] text-xs font-semibold text-[#1d1d1f] shadow-2xs">
                     <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
                     <span>4.9</span>
-                    <span className="text-stone-500 font-normal">(783 verified reviews)</span>
+                    <span className="text-[#86868b] font-normal">(783 verified reviews)</span>
                   </div>
-                  <span className="text-xs text-stone-300">•</span>
+                  <span className="text-xs text-[#d2d2d7]">•</span>
                   <span className="text-xs text-emerald-800 font-medium flex items-center gap-1">
                     <Check className="w-3.5 h-3.5 text-emerald-600" />
                     NMR Batch Verified
@@ -496,67 +496,67 @@ export default function ProductDetailPage() {
               </div>
 
               {/* Dynamic Price Display */}
-              <div className="pt-2 border-t border-stone-200/80 space-y-1">
+              <div className="pt-2 border-t border-[#d2d2d7]/60 space-y-1">
                 <div className="flex items-baseline gap-3">
-                  <span className="text-3xl sm:text-4xl font-bold text-stone-950 tracking-tight">
+                  <span className="text-3xl sm:text-4xl font-bold text-[#1d1d1f] tracking-tight">
                     {formatCurrency(currentOption.price)}
                   </span>
-                  <span className="text-base text-stone-400 line-through">
+                  <span className="text-base text-[#86868b] line-through">
                     MRP: {formatCurrency(currentOption.compareAtPrice)}
                   </span>
                   <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
                     {currentOption.discountPercent}% OFF
                   </span>
                 </div>
-                <p className="text-xs font-semibold text-emerald-700">
+                <p className="text-xs font-semibold text-[#1b5e20]">
                   {currentOption.savingsText} ·{' '}
-                  <span className="text-stone-600 font-normal">{currentOption.pricePerKg}</span>
+                  <span className="text-[#6e6e73] font-normal">{currentOption.pricePerKg}</span>
                 </p>
-                <p className="text-xs text-stone-500">
+                <p className="text-xs text-[#86868b]">
                   Inclusive of all taxes. Free express air delivery on orders over ₹999.
                 </p>
               </div>
 
               {/* Sensory 4-Tile Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-4 rounded-2xl bg-white border border-stone-200/80 text-xs shadow-2xs">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-4 rounded-2xl bg-white border border-[#d2d2d7]/70 text-xs shadow-2xs">
                 <div>
-                  <span className="text-stone-400 block text-[10px] uppercase font-semibold">Flora</span>
-                  <span className="font-semibold text-stone-900 line-clamp-1">{cleanName.split(' ')[0]} Bloom</span>
+                  <span className="text-[#86868b] block text-[10px] uppercase font-semibold">Flora</span>
+                  <span className="font-semibold text-[#1d1d1f] line-clamp-1">{cleanName.split(' ')[0]} Bloom</span>
                 </div>
                 <div>
-                  <span className="text-stone-400 block text-[10px] uppercase font-semibold">Heat</span>
-                  <span className="font-semibold text-stone-900">0.0% Cold</span>
+                  <span className="text-[#86868b] block text-[10px] uppercase font-semibold">Heat</span>
+                  <span className="font-semibold text-[#1d1d1f]">0.0% Cold</span>
                 </div>
                 <div>
-                  <span className="text-stone-400 block text-[10px] uppercase font-semibold">Enzymes</span>
+                  <span className="text-[#86868b] block text-[10px] uppercase font-semibold">Enzymes</span>
                   <span className="font-semibold text-emerald-700">100% Active</span>
                 </div>
                 <div>
-                  <span className="text-stone-400 block text-[10px] uppercase font-semibold">Glass</span>
-                  <span className="font-semibold text-stone-900">Solid Flint</span>
+                  <span className="text-[#86868b] block text-[10px] uppercase font-semibold">Glass</span>
+                  <span className="font-semibold text-[#1d1d1f]">Solid Flint</span>
                 </div>
               </div>
 
               {/* Short Description */}
-              <p className="text-xs sm:text-sm text-stone-600 leading-relaxed">
+              <p className="text-xs sm:text-sm text-[#6e6e73] leading-relaxed">
                 {categoryMeta.description}
               </p>
 
               {/* CRITICAL FEATURE: "Choose your preferred size" (Apple-Style Configuration) */}
-              <div className="space-y-3 pt-3 border-t border-stone-200/80">
+              <div className="space-y-3 pt-3 border-t border-[#d2d2d7]/60">
                 <div className="space-y-1">
                   <div className="flex items-baseline justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-amber-800">
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#86868b]">
                       Configuration
                     </span>
-                    <span className="text-xs font-medium text-stone-600">
-                      Selected: <strong className="text-stone-950 font-bold">{currentOption.weight}</strong> ({currentOption.label})
+                    <span className="text-xs font-medium text-[#6e6e73]">
+                      Selected: <strong className="text-[#1d1d1f] font-bold">{currentOption.weight}</strong> ({currentOption.label})
                     </span>
                   </div>
-                  <h3 className="text-lg font-serif font-bold text-stone-950">
+                  <h3 className="text-xl font-bold tracking-tight text-[#1d1d1f]">
                     Choose your preferred size
                   </h3>
-                  <p className="text-xs text-stone-500">
+                  <p className="text-xs text-[#86868b]">
                     Sourced directly from live apiary inventory. All options bottled in thick solid glass.
                   </p>
                 </div>
@@ -578,18 +578,18 @@ export default function ProductDetailPage() {
                         }}
                         className={`p-4 sm:p-5 text-left rounded-2xl border transition-all cursor-pointer relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                           isSelected
-                            ? 'border-stone-950 ring-2 ring-stone-950/20 bg-amber-50/40 shadow-sm'
+                            ? 'border-[#0071e3] ring-2 ring-[#0071e3]/20 bg-white shadow-md'
                             : isOptOutOfStock
-                            ? 'border-stone-200 bg-stone-50/50 text-stone-400 cursor-not-allowed opacity-60'
-                            : 'border-stone-200 bg-white hover:border-stone-400 text-stone-700 hover:shadow-2xs'
+                            ? 'border-[#d2d2d7] bg-[#f5f5f7] text-[#86868b] cursor-not-allowed opacity-60'
+                            : 'border-[#d2d2d7] bg-white hover:border-[#86868b] text-[#1d1d1f] hover:shadow-2xs'
                         }`}
                       >
                         {opt.badge && (
                           <span
                             className={`absolute -top-2.5 left-4 text-[10px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full shadow-2xs ${
                               opt.weight === '500g'
-                                ? 'bg-amber-800 text-white'
-                                : 'bg-emerald-800 text-white'
+                                ? 'bg-[#0071e3] text-white'
+                                : 'bg-[#1d1d1f] text-white'
                             }`}
                           >
                             {opt.badge}
@@ -601,8 +601,8 @@ export default function ProductDetailPage() {
                           <div
                             className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
                               isSelected
-                                ? 'border-stone-950 bg-stone-950 text-white'
-                                : 'border-stone-300 bg-white'
+                                ? 'border-[#0071e3] bg-[#0071e3] text-white'
+                                : 'border-[#d2d2d7] bg-white'
                             }`}
                           >
                             {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
@@ -610,33 +610,33 @@ export default function ProductDetailPage() {
 
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                              <span className="text-xl font-serif font-bold text-stone-950">
+                              <span className="text-xl font-bold text-[#1d1d1f]">
                                 {opt.weight}
                               </span>
-                              <span className="text-xs font-semibold text-stone-700">
+                              <span className="text-xs font-semibold text-[#515154]">
                                 {opt.label}
                               </span>
                             </div>
-                            <p className="text-xs text-stone-500 max-w-sm leading-relaxed">
+                            <p className="text-xs text-[#86868b] max-w-sm leading-relaxed">
                               {opt.description}
                             </p>
-                            <div className="text-[11px] font-mono text-stone-400 pt-0.5">
+                            <div className="text-[11px] font-mono text-[#86868b] pt-0.5">
                               SKU: {opt.sku}
                             </div>
                           </div>
                         </div>
 
-                        <div className="flex sm:flex-col items-baseline sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-2 sm:pt-0 border-stone-100 shrink-0 pl-8 sm:pl-0">
-                          <div className="text-xl font-bold text-stone-950">
+                        <div className="flex sm:flex-col items-baseline sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-2 sm:pt-0 border-zinc-100 shrink-0 pl-8 sm:pl-0">
+                          <div className="text-xl font-bold text-[#1d1d1f]">
                             {formatCurrency(opt.price)}
                           </div>
-                          <div className="text-xs text-stone-400 line-through">
+                          <div className="text-xs text-[#86868b] line-through">
                             MRP: {formatCurrency(opt.compareAtPrice)}
                           </div>
-                          <div className="text-[11px] font-semibold text-emerald-700">
+                          <div className="text-[11px] font-semibold text-[#1b5e20]">
                             {opt.discountPercent}% OFF · {opt.savingsText}
                           </div>
-                          <div className="text-[10px] text-stone-500">
+                          <div className="text-[10px] text-[#86868b]">
                             {opt.pricePerKg}
                           </div>
                         </div>
@@ -650,37 +650,37 @@ export default function ProductDetailPage() {
               <div className="space-y-3 pt-2">
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                   {/* Quantity Stepper */}
-                  <div className="flex items-center justify-between border border-stone-200 rounded-full bg-white px-3 py-2 w-32 shrink-0">
+                  <div className="flex items-center justify-between border border-[#d2d2d7] rounded-full bg-white px-3 py-2 w-32 shrink-0">
                     <button
                       type="button"
                       onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                      className="p-1 text-stone-700 hover:text-stone-950 transition-colors cursor-pointer"
+                      className="p-1 text-[#1d1d1f] hover:text-[#0071e3] transition-colors cursor-pointer"
                       aria-label="Decrease quantity"
                     >
                       <Minus className="w-3.5 h-3.5" />
                     </button>
-                    <span className="font-semibold text-xs text-stone-950">{quantity}</span>
+                    <span className="font-semibold text-xs text-[#1d1d1f]">{quantity}</span>
                     <button
                       type="button"
                       onClick={() => setQuantity((q) => Math.min(currentOption.stockQuantity, q + 1))}
-                      className="p-1 text-stone-700 hover:text-stone-950 transition-colors cursor-pointer"
+                      className="p-1 text-[#1d1d1f] hover:text-[#0071e3] transition-colors cursor-pointer"
                       aria-label="Increase quantity"
                     >
                       <Plus className="w-3.5 h-3.5" />
                     </button>
                   </div>
 
-                  {/* Add to Cart */}
+                  {/* Add to Cart - Apple Blue */}
                   <button
                     type="button"
                     disabled={isOutOfStock}
                     onClick={handleAddToCart}
-                    className={`flex-1 py-3 px-6 rounded-full font-semibold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs active:scale-98 ${
+                    className={`flex-1 py-3 px-6 rounded-full font-medium text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-98 ${
                       isAdded
                         ? 'bg-emerald-700 text-white'
                         : isOutOfStock
-                        ? 'bg-stone-100 text-stone-400 cursor-not-allowed'
-                        : 'border border-stone-300 bg-white hover:bg-stone-100 text-stone-900'
+                        ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
+                        : 'bg-[#0071e3] hover:bg-[#0077ed] text-white'
                     }`}
                   >
                     {isAdded ? (
@@ -696,19 +696,19 @@ export default function ProductDetailPage() {
                     )}
                   </button>
 
-                  {/* Instant Buy */}
+                  {/* Instant Buy - Apple Obsidian */}
                   <button
                     type="button"
                     disabled={isOutOfStock}
                     onClick={handleBuyNow}
-                    className="py-3 px-6 rounded-full font-semibold text-xs sm:text-sm bg-stone-900 hover:bg-amber-800 active:bg-amber-900 text-white transition-all cursor-pointer shadow-sm active:scale-98"
+                    className="py-3 px-6 rounded-full font-medium text-xs sm:text-sm bg-[#1d1d1f] hover:bg-[#333336] text-white transition-all cursor-pointer shadow-sm active:scale-98"
                   >
                     Instant Buy ({currentOption.weight})
                   </button>
                 </div>
 
                 {/* Stock Availability from Database */}
-                <div className="p-3.5 rounded-2xl bg-white border border-stone-200/80 flex items-center justify-between text-xs text-stone-600 shadow-2xs">
+                <div className="p-3.5 rounded-2xl bg-white border border-[#d2d2d7]/70 flex items-center justify-between text-xs text-[#6e6e73] shadow-2xs">
                   <div className="flex items-center gap-2">
                     <span
                       className={`w-2 h-2 rounded-full ${
@@ -719,7 +719,7 @@ export default function ProductDetailPage() {
                           : 'bg-emerald-500 animate-pulse'
                       }`}
                     />
-                    <span className="font-medium text-stone-900">
+                    <span className="font-medium text-[#1d1d1f]">
                       {isOutOfStock
                         ? 'Out of Stock'
                         : isLowStock
@@ -727,17 +727,17 @@ export default function ProductDetailPage() {
                         : `In Stock (${currentOption.stockQuantity} jars ready for dispatch)`}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-amber-900 font-medium">
-                    <Clock className="w-3.5 h-3.5 text-amber-700" />
+                  <div className="flex items-center gap-1.5 text-[#1d1d1f] font-medium">
+                    <Clock className="w-3.5 h-3.5 text-[#0071e3]" />
                     <span>Dispatches in 24 hours</span>
                   </div>
                 </div>
               </div>
 
               {/* Service Badges */}
-              <div className="pt-4 border-t border-stone-200/80 grid grid-cols-2 gap-3 text-xs text-stone-600">
+              <div className="pt-4 border-t border-[#d2d2d7]/60 grid grid-cols-2 gap-3 text-xs text-[#6e6e73]">
                 <div className="flex items-center gap-2">
-                  <Truck className="w-4 h-4 text-amber-800 shrink-0" />
+                  <Truck className="w-4 h-4 text-[#0071e3] shrink-0" />
                   <span>Free insured air freight over ₹999</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -745,19 +745,19 @@ export default function ProductDetailPage() {
                   <span>100% Zero-breakage glass guarantee</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Award className="w-4 h-4 text-amber-800 shrink-0" />
+                  <Award className="w-4 h-4 text-[#0071e3] shrink-0" />
                   <span>NMR Spectroscopy tested pure</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <RotateCcw className="w-4 h-4 text-stone-700 shrink-0" />
+                  <RotateCcw className="w-4 h-4 text-[#1d1d1f] shrink-0" />
                   <span>7-Day seamless replacement</span>
                 </div>
               </div>
 
               {/* Interactive Delhivery Pincode Checker */}
-              <div className="pt-4 border-t border-stone-200/80 space-y-2">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-900">
-                  <MapPin className="w-3.5 h-3.5 text-amber-800" />
+              <div className="pt-4 border-t border-[#d2d2d7]/60 space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-[#1d1d1f]">
+                  <MapPin className="w-3.5 h-3.5 text-[#0071e3]" />
                   <span>Check Delivery Date &amp; Pincode Serviceability</span>
                 </div>
                 <form onSubmit={handleCheckPincode} className="flex gap-2">
@@ -778,11 +778,11 @@ export default function ProductDetailPage() {
                       }
                     }}
                     placeholder="Enter 6-digit Pincode (e.g. 400001)"
-                    className="flex-1 px-3.5 py-2 text-xs rounded-xl border border-stone-300 bg-white text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-amber-700"
+                    className="flex-1 px-3.5 py-2 text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:border-[#0071e3]"
                   />
                   <button
                     type="submit"
-                    className="px-4 py-2 text-xs font-semibold rounded-xl bg-stone-900 text-white hover:bg-amber-800 transition-colors cursor-pointer"
+                    className="px-4 py-2 text-xs font-medium rounded-xl bg-[#0071e3] hover:bg-[#0077ed] text-white transition-colors cursor-pointer"
                   >
                     Check
                   </button>
@@ -803,11 +803,11 @@ export default function ProductDetailPage() {
         </div>
 
         {/* Extended Information Section */}
-        <section className="bg-white border-t border-stone-200/70 py-16">
+        <section className="bg-white border-t border-[#d2d2d7]/70 py-16">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
             
             {/* Segmented Nav Tabs */}
-            <div className="flex items-center justify-center gap-2 border-b border-stone-200 pb-4 flex-wrap">
+            <div className="flex items-center justify-center gap-2 border-b border-[#d2d2d7]/60 pb-4 flex-wrap">
               {[
                 { id: 'STORY', label: 'The Harvest & Origin' },
                 { id: 'SPECS', label: 'Technical Specifications' },
@@ -820,8 +820,8 @@ export default function ProductDetailPage() {
                   onClick={() => setActiveTab(t.id as any)}
                   className={`px-4 py-2 text-xs font-medium rounded-full transition-all cursor-pointer ${
                     activeTab === t.id
-                      ? 'bg-stone-900 text-white shadow-2xs'
-                      : 'bg-stone-50 border border-stone-200 text-stone-600 hover:text-stone-950'
+                      ? 'bg-[#1d1d1f] text-white shadow-2xs'
+                      : 'bg-[#f5f5f7] border border-[#d2d2d7] text-[#1d1d1f] hover:border-[#86868b]'
                   }`}
                 >
                   {t.label}
@@ -831,11 +831,11 @@ export default function ProductDetailPage() {
 
             {/* Tab 1: Story */}
             {activeTab === 'STORY' && (
-              <div className="bg-[#FAF9F5] rounded-3xl border border-stone-200/80 p-8 space-y-6 shadow-2xs animate-in fade-in">
-                <h3 className="text-xl font-serif font-bold text-stone-950">
+              <div className="bg-[#f5f5f7] rounded-3xl border border-[#d2d2d7]/70 p-8 space-y-6 shadow-2xs animate-in fade-in">
+                <h3 className="text-xl font-bold text-[#1d1d1f]">
                   Ethically Harvested by Indigenous Forest Beekeepers
                 </h3>
-                <p className="text-xs sm:text-sm text-stone-600 leading-relaxed">
+                <p className="text-xs sm:text-sm text-[#6e6e73] leading-relaxed">
                   Unlike commercial beekeeping operations where hives are fed sugar syrup and treated with synthetic antibiotics, our raw honey is collected directly from wild bee colonies in remote bio-reserves. We partner directly with tribal beekeeper collectives using non-destructive traditional smoke methods that keep colonies safe.
                 </p>
 
@@ -846,25 +846,25 @@ export default function ProductDetailPage() {
                     '【SOLID GLASS PACKAGING】: Bottled exclusively in inert food-grade solid flint glass to prevent chemical leaching and protect volatile aromas.',
                     '【NATURAL POLLEN & ENZYMES】: Retains beneficial natural floral pollen, propolis, and bio-available polyphenols.',
                   ].map((item, idx) => (
-                    <div key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-stone-800">
+                    <div key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-[#1d1d1f]">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                       <span>{item}</span>
                     </div>
                   ))}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-stone-200">
-                  <div className="p-5 rounded-2xl bg-white border border-stone-200/70 space-y-1">
-                    <span className="text-xs font-semibold text-stone-950">Never Boiled / Heated</span>
-                    <p className="text-xs text-stone-500">Extracted cold below 38°C to keep enzymes and beneficial bacteria alive.</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-[#d2d2d7]/60">
+                  <div className="p-5 rounded-2xl bg-white border border-[#d2d2d7]/70 space-y-1">
+                    <span className="text-xs font-semibold text-[#1d1d1f]">Never Boiled / Heated</span>
+                    <p className="text-xs text-[#86868b]">Extracted cold below 38°C to keep enzymes and beneficial bacteria alive.</p>
                   </div>
-                  <div className="p-5 rounded-2xl bg-white border border-stone-200/70 space-y-1">
-                    <span className="text-xs font-semibold text-stone-950">Unfiltered Pollen</span>
-                    <p className="text-xs text-stone-500">Coarsely strained so microscopic wildflower bee pollen remains intact.</p>
+                  <div className="p-5 rounded-2xl bg-white border border-[#d2d2d7]/70 space-y-1">
+                    <span className="text-xs font-semibold text-[#1d1d1f]">Unfiltered Pollen</span>
+                    <p className="text-xs text-[#86868b]">Coarsely strained so microscopic wildflower bee pollen remains intact.</p>
                   </div>
-                  <div className="p-5 rounded-2xl bg-white border border-stone-200/70 space-y-1">
-                    <span className="text-xs font-semibold text-stone-950">Solid Glass Jars</span>
-                    <p className="text-xs text-stone-500">Inert solid glass eliminates microplastic contamination forever.</p>
+                  <div className="p-5 rounded-2xl bg-white border border-[#d2d2d7]/70 space-y-1">
+                    <span className="text-xs font-semibold text-[#1d1d1f]">Solid Glass Jars</span>
+                    <p className="text-xs text-[#86868b]">Inert solid glass eliminates microplastic contamination forever.</p>
                   </div>
                 </div>
               </div>
@@ -872,15 +872,15 @@ export default function ProductDetailPage() {
 
             {/* Tab 2: Specs */}
             {activeTab === 'SPECS' && (
-              <div className="bg-[#FAF9F5] rounded-3xl border border-stone-200/80 p-8 shadow-2xs animate-in fade-in space-y-6">
+              <div className="bg-[#f5f5f7] rounded-3xl border border-[#d2d2d7]/70 p-8 shadow-2xs animate-in fade-in space-y-6">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-serif font-bold text-stone-950">Technical Specifications</h3>
-                  <span className="text-xs font-mono text-stone-500">SKU: {currentOption.sku}</span>
+                  <h3 className="text-xl font-bold text-[#1d1d1f]">Technical Specifications</h3>
+                  <span className="text-xs font-mono text-[#86868b]">SKU: {currentOption.sku}</span>
                 </div>
                 
-                <div className="rounded-2xl border border-stone-200/80 overflow-hidden text-xs bg-white">
+                <div className="rounded-2xl border border-[#d2d2d7]/70 overflow-hidden text-xs bg-white">
                   <table className="w-full text-left">
-                    <tbody className="divide-y divide-stone-100">
+                    <tbody className="divide-y divide-zinc-100">
                       {[
                         ['Brand', 'Ganesh Mule Pure Honey'],
                         ['Flavour', categoryMeta.flavourNotes],
@@ -891,17 +891,17 @@ export default function ProductDetailPage() {
                         ['Moisture Content', '< 18% (FSSAI Compliant)'],
                         ['Diastase Activity', '> 12 Schade (Active Live Enzymes)'],
                       ].map(([key, val], idx) => (
-                        <tr key={key} className={idx % 2 === 0 ? 'bg-stone-50/50' : 'bg-white'}>
-                          <td className="py-3 px-4 font-semibold text-stone-600 w-1/3">{key}</td>
-                          <td className="py-3 px-4 text-stone-900 font-medium">{val}</td>
+                        <tr key={key} className={idx % 2 === 0 ? 'bg-[#f5f5f7]/50' : 'bg-white'}>
+                          <td className="py-3 px-4 font-semibold text-[#515154] w-1/3">{key}</td>
+                          <td className="py-3 px-4 text-[#1d1d1f] font-medium">{val}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-white border border-stone-200/70 text-xs text-stone-600 leading-relaxed">
-                  <span className="font-semibold text-stone-950 block mb-1">Dietary Information:</span>
+                <div className="p-4 rounded-2xl bg-white border border-[#d2d2d7]/70 text-xs text-[#6e6e73] leading-relaxed">
+                  <span className="font-semibold text-[#1d1d1f] block mb-1">Dietary Information:</span>
                   100% natural and vegetarian. Naturally free from gluten, dairy, artificial preservatives, additives, and refined sugars. Not recommended for infants under 12 months.
                 </div>
               </div>
@@ -909,11 +909,11 @@ export default function ProductDetailPage() {
 
             {/* Tab 3: Purity & NMR */}
             {activeTab === 'PURITY' && (
-              <div className="bg-[#FAF9F5] rounded-3xl border border-stone-200/80 p-8 shadow-2xs animate-in fade-in space-y-6">
+              <div className="bg-[#f5f5f7] rounded-3xl border border-[#d2d2d7]/70 p-8 shadow-2xs animate-in fade-in space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <h3 className="text-xl font-serif font-bold text-stone-950">NMR Spectroscopy Batch Analysis</h3>
-                    <span className="text-xs text-stone-500 font-mono">Apiary Identifier: BATCH-2026-WF04</span>
+                    <h3 className="text-xl font-bold text-[#1d1d1f]">NMR Spectroscopy Batch Analysis</h3>
+                    <span className="text-xs text-[#86868b] font-mono">Apiary Identifier: BATCH-2026-WF04</span>
                   </div>
                   <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 w-fit">
                     PASSED • 100% PURE RAW HONEY
@@ -921,34 +921,34 @@ export default function ProductDetailPage() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="p-5 rounded-2xl bg-white border border-stone-200/70 space-y-1.5 text-center">
-                    <span className="text-xs text-stone-500 font-medium">Diastase Activity</span>
-                    <p className="text-2xl font-bold text-stone-950">14.2 Schade</p>
-                    <p className="text-[11px] text-stone-500">Standard &gt; 8. Confirms zero heat exposure.</p>
+                  <div className="p-5 rounded-2xl bg-white border border-[#d2d2d7]/70 space-y-1.5 text-center">
+                    <span className="text-xs text-[#86868b] font-medium">Diastase Activity</span>
+                    <p className="text-2xl font-bold text-[#1d1d1f]">14.2 Schade</p>
+                    <p className="text-[11px] text-[#86868b]">Standard &gt; 8. Confirms zero heat exposure.</p>
                   </div>
-                  <div className="p-5 rounded-2xl bg-white border border-stone-200/70 space-y-1.5 text-center">
-                    <span className="text-xs text-stone-500 font-medium">C3 / C4 Added Sugars</span>
+                  <div className="p-5 rounded-2xl bg-white border border-[#d2d2d7]/70 space-y-1.5 text-center">
+                    <span className="text-xs text-[#86868b] font-medium">C3 / C4 Added Sugars</span>
                     <p className="text-2xl font-bold text-emerald-700">0.0% (Zero)</p>
-                    <p className="text-[11px] text-stone-500">Zero corn syrup, rice syrup, or cane sugar.</p>
+                    <p className="text-[11px] text-[#86868b]">Zero corn syrup, rice syrup, or cane sugar.</p>
                   </div>
-                  <div className="p-5 rounded-2xl bg-white border border-stone-200/70 space-y-1.5 text-center">
-                    <span className="text-xs text-stone-500 font-medium">Moisture Density</span>
-                    <p className="text-2xl font-bold text-stone-950">17.6%</p>
-                    <p className="text-[11px] text-stone-500">Naturally capped honeycomb ripeness.</p>
+                  <div className="p-5 rounded-2xl bg-white border border-[#d2d2d7]/70 space-y-1.5 text-center">
+                    <span className="text-xs text-[#86868b] font-medium">Moisture Density</span>
+                    <p className="text-2xl font-bold text-[#1d1d1f]">17.6%</p>
+                    <p className="text-[11px] text-[#86868b]">Naturally capped honeycomb ripeness.</p>
                   </div>
                 </div>
 
-                <div className="p-5 rounded-2xl border border-stone-200/70 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="text-xs text-stone-600">
-                    <span className="font-semibold text-stone-950 block">Certificate of Authenticity Available</span>
+                <div className="p-5 rounded-2xl border border-[#d2d2d7]/70 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="text-xs text-[#6e6e73]">
+                    <span className="font-semibold text-[#1d1d1f] block">Certificate of Authenticity Available</span>
                     Testing conducted in accordance with German NMR and Codex Alimentarius honey purity standards.
                   </div>
                   <button
                     type="button"
                     onClick={() => alert(`Certificate for BATCH-2026 downloaded successfully (Simulated PDF).`)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-stone-50 border border-stone-200 text-stone-900 hover:bg-stone-100 text-xs font-semibold cursor-pointer shadow-2xs shrink-0"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#f5f5f7] border border-[#d2d2d7] text-[#1d1d1f] hover:bg-white text-xs font-semibold cursor-pointer shadow-2xs shrink-0"
                   >
-                    <Download className="w-3.5 h-3.5 text-amber-800" />
+                    <Download className="w-3.5 h-3.5 text-[#0071e3]" />
                     <span>Download Report</span>
                   </button>
                 </div>
@@ -957,10 +957,10 @@ export default function ProductDetailPage() {
 
             {/* Tab 4: Q&A */}
             {activeTab === 'QA' && (
-              <div className="bg-[#FAF9F5] rounded-3xl border border-stone-200/80 p-8 shadow-2xs animate-in fade-in space-y-6">
+              <div className="bg-[#f5f5f7] rounded-3xl border border-[#d2d2d7]/70 p-8 shadow-2xs animate-in fade-in space-y-6">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-serif font-bold text-stone-950">Questions &amp; Answers</h3>
-                  <span className="text-xs text-stone-500">3 questions answered</span>
+                  <h3 className="text-xl font-bold text-[#1d1d1f]">Questions &amp; Answers</h3>
+                  <span className="text-xs text-[#86868b]">3 questions answered</span>
                 </div>
 
                 <div className="space-y-4">
@@ -978,12 +978,12 @@ export default function ProductDetailPage() {
                       answer: 'Honey is mildly acidic (pH ~3.9). Plastic containers leach microplastics under warm temperatures. Inert solid glass protects purity and enzymes forever.',
                     },
                   ].map((item, idx) => (
-                    <div key={idx} className="p-5 rounded-2xl bg-white border border-stone-200/70 space-y-2">
-                      <div className="text-xs font-semibold text-stone-950 flex items-start gap-2">
-                        <span className="text-amber-800 font-bold">Q:</span>
+                    <div key={idx} className="p-5 rounded-2xl bg-white border border-[#d2d2d7]/70 space-y-2">
+                      <div className="text-xs font-semibold text-[#1d1d1f] flex items-start gap-2">
+                        <span className="text-[#0071e3] font-bold">Q:</span>
                         <span>{item.question}</span>
                       </div>
-                      <div className="text-xs text-stone-600 leading-relaxed pl-4 border-l-2 border-amber-800/40">
+                      <div className="text-xs text-[#6e6e73] leading-relaxed pl-4 border-l-2 border-[#0071e3]/40">
                         {item.answer}
                       </div>
                     </div>
@@ -996,10 +996,10 @@ export default function ProductDetailPage() {
 
         {/* Floating Sticky Quick-Add Bar */}
         {showStickyBar && (
-          <div className="fixed bottom-0 left-0 right-0 bg-[#FCFBF7]/95 backdrop-blur-md border-t border-stone-200/80 shadow-xl z-40 py-3 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-all animate-in slide-in-from-bottom">
+          <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-[#d2d2d7] shadow-xl z-40 py-3 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-all animate-in slide-in-from-bottom">
             <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white border border-stone-200 overflow-hidden shrink-0 hidden sm:flex items-center justify-center relative">
+                <div className="w-10 h-10 rounded-xl bg-[#f5f5f7] border border-[#d2d2d7] overflow-hidden shrink-0 hidden sm:flex items-center justify-center relative">
                   <Image
                     src={galleryImages[0].url}
                     alt=""
@@ -1009,13 +1009,13 @@ export default function ProductDetailPage() {
                   />
                 </div>
                 <div>
-                  <h4 className="text-xs sm:text-sm font-semibold text-stone-950 truncate max-w-xs sm:max-w-sm">
+                  <h4 className="text-xs sm:text-sm font-semibold text-[#1d1d1f] truncate max-w-xs sm:max-w-sm">
                     {cleanName}
                   </h4>
-                  <div className="flex items-center gap-2 text-[11px] text-stone-500">
-                    <span className="font-semibold text-stone-800">{currentOption.weight}</span>
+                  <div className="flex items-center gap-2 text-[11px] text-[#86868b]">
+                    <span className="font-semibold text-[#1d1d1f]">{currentOption.weight}</span>
                     <span>•</span>
-                    <span className="font-bold text-stone-950">{formatCurrency(currentOption.price)}</span>
+                    <span className="font-bold text-[#1d1d1f]">{formatCurrency(currentOption.price)}</span>
                   </div>
                 </div>
               </div>
@@ -1025,12 +1025,12 @@ export default function ProductDetailPage() {
                   type="button"
                   onClick={handleAddToCart}
                   disabled={isOutOfStock}
-                  className={`py-2 px-5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95 ${
+                  className={`py-2 px-5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 ${
                     isAdded
                       ? 'bg-emerald-700 text-white'
                       : isOutOfStock
-                      ? 'bg-stone-100 text-stone-400 cursor-not-allowed'
-                      : 'border border-stone-300 text-stone-900 bg-white hover:bg-stone-100'
+                      ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
+                      : 'bg-[#0071e3] hover:bg-[#0077ed] text-white'
                   }`}
                 >
                   {isAdded ? (
@@ -1049,7 +1049,7 @@ export default function ProductDetailPage() {
                   type="button"
                   onClick={handleBuyNow}
                   disabled={isOutOfStock}
-                  className="py-2 px-5 rounded-full text-xs font-semibold bg-stone-900 hover:bg-amber-800 text-white transition-all cursor-pointer shadow-xs active:scale-98"
+                  className="py-2 px-5 rounded-full text-xs font-medium bg-[#1d1d1f] hover:bg-[#333336] text-white transition-all cursor-pointer shadow-sm active:scale-98"
                 >
                   Instant Buy ({currentOption.weight})
                 </button>

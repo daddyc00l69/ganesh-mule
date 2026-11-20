@@ -162,42 +162,42 @@ export function ShopClient() {
   }, [categories, searchQuery]);
 
   return (
-    <div className="bg-[#FAF9F5] min-h-screen text-stone-900 selection:bg-amber-500/20 selection:text-amber-900">
+    <div className="bg-[#f5f5f7] min-h-screen text-[#1d1d1f] selection:bg-[#0071e3]/20 selection:text-[#0071e3]">
       
       {/* Apple-Style Minimalist Editorial Header */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 pb-8 border-b border-stone-200/70">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 pb-8 border-b border-[#d2d2d7]/60">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-4">
           <div className="max-w-xl space-y-3">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100/70 border border-amber-200 text-amber-900 text-xs font-semibold">
-              <Droplets className="w-3.5 h-3.5 fill-amber-700 text-amber-800" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-[#d2d2d7] text-[#1d1d1f] text-xs font-semibold shadow-2xs">
+              <Droplets className="w-3.5 h-3.5 fill-amber-500 text-amber-600" />
               <span>The 6 Pure Harvests · 2026 Season</span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-bold tracking-tight text-stone-950 leading-[1.08]">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[#1d1d1f] leading-[1.08]">
               Artisanal Honey,{' '}
-              <span className="italic font-normal text-amber-900">Pure &amp; Unheated.</span>
+              <span className="font-normal text-[#86868b]">Pure &amp; Unheated.</span>
             </h1>
 
-            <p className="text-sm sm:text-base text-stone-600 leading-relaxed">
+            <p className="text-sm sm:text-base text-[#6e6e73] leading-relaxed">
               Explore our six single-origin monofloral harvests. Cold-extracted below 38°C, tested by 400MHz German NMR spectroscopy, and bottled exclusively in solid glass jars.
             </p>
           </div>
 
           {/* Quick Search */}
           <div className="relative w-full md:w-72 shrink-0">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#86868b]" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by variety or floral origin..."
-              className="w-full h-11 pl-10 pr-8 text-xs sm:text-sm rounded-full border border-stone-300 bg-white text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-amber-800 transition-colors shadow-2xs"
+              className="w-full h-11 pl-10 pr-8 text-xs sm:text-sm rounded-full border border-[#d2d2d7] bg-white text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:border-[#0071e3] transition-colors shadow-2xs"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#86868b] hover:text-[#1d1d1f] cursor-pointer"
                 aria-label="Clear search"
               >
                 <X className="w-3.5 h-3.5" />
@@ -207,20 +207,20 @@ export function ShopClient() {
         </div>
 
         {/* 3 Honest Pricing Anchors Summary Strip */}
-        <div className="pt-6 border-t border-stone-200/60 flex flex-wrap items-center justify-between gap-4 text-xs text-stone-500">
+        <div className="pt-6 border-t border-[#d2d2d7]/50 flex flex-wrap items-center justify-between gap-4 text-xs text-[#86868b]">
           <div className="flex items-center gap-6 flex-wrap">
-            <span className="font-semibold text-stone-800">Unified Pricing Across All 6 Varieties:</span>
-            <span className="inline-flex items-center gap-1.5 font-medium text-stone-700">
-              <strong className="text-stone-950">250g Sampler:</strong> ₹199 (MRP ₹275)
+            <span className="font-semibold text-[#1d1d1f]">Unified Pricing Across All 6 Varieties:</span>
+            <span className="inline-flex items-center gap-1.5 font-medium text-[#515154]">
+              <strong className="text-[#1d1d1f]">250g Sampler:</strong> ₹199 (MRP ₹275)
             </span>
-            <span className="inline-flex items-center gap-1.5 font-medium text-stone-700">
-              <strong className="text-stone-950">500g Standard:</strong> ₹399 (MRP ₹549)
+            <span className="inline-flex items-center gap-1.5 font-medium text-[#515154]">
+              <strong className="text-[#1d1d1f]">500g Standard:</strong> ₹399 (MRP ₹549)
             </span>
-            <span className="inline-flex items-center gap-1.5 font-medium text-stone-700">
-              <strong className="text-stone-950">1kg Reserve:</strong> ₹749 (MRP ₹999)
+            <span className="inline-flex items-center gap-1.5 font-medium text-[#515154]">
+              <strong className="text-[#1d1d1f]">1kg Reserve:</strong> ₹749 (MRP ₹999)
             </span>
           </div>
-          <div className="flex items-center gap-2 text-emerald-800 font-semibold">
+          <div className="flex items-center gap-2 text-[#1b5e20] font-semibold">
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
             <span>100% German NMR Certified Pure</span>
           </div>
@@ -230,13 +230,13 @@ export function ShopClient() {
       {/* 6 Category Showcase Grid (Strictly 6 Cards, Never Individual Sizes as Cards) */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
         {filteredCategories.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-3xl border border-stone-200 p-8 space-y-3">
-            <p className="text-lg font-serif font-bold text-stone-950">No harvests match your search</p>
-            <p className="text-xs text-stone-500">Try searching for forest, ajwain, sesame, or ber honey.</p>
+          <div className="text-center py-20 bg-white rounded-3xl border border-[#d2d2d7]/70 p-8 space-y-3">
+            <p className="text-lg font-bold text-[#1d1d1f]">No harvests match your search</p>
+            <p className="text-xs text-[#86868b]">Try searching for forest, ajwain, sesame, or ber honey.</p>
             <button
               type="button"
               onClick={() => setSearchQuery('')}
-              className="mt-2 px-6 py-2.5 rounded-full bg-stone-900 text-white text-xs font-semibold hover:bg-amber-800 transition-colors cursor-pointer"
+              className="mt-2 px-6 py-2.5 rounded-full bg-[#0071e3] text-white text-xs font-semibold hover:bg-[#0077ed] transition-colors cursor-pointer"
             >
               View All 6 Harvests
             </button>
@@ -246,62 +246,63 @@ export function ShopClient() {
             {filteredCategories.map((cat) => (
               <article
                 key={cat.id}
-                className="bg-white border border-stone-200/90 hover:border-stone-400 rounded-3xl p-6 sm:p-7 flex flex-col justify-between transition-all duration-300 hover:shadow-[0_20px_45px_rgba(28,25,23,0.07)] group"
+                className="bg-white border border-[#d2d2d7]/70 hover:border-[#86868b] rounded-[24px] p-6 sm:p-7 flex flex-col justify-between transition-all duration-300 hover:shadow-[0_16px_36px_rgba(0,0,0,0.08)] hover:-translate-y-1 group"
               >
-                {/* Top Image Showcase */}
+                {/* Top Image Showcase — Clean Apple Light Gray Stage */}
                 <div>
-                  <div className="w-full aspect-square rounded-2xl bg-[#F7F4EE] relative mb-6 overflow-hidden flex items-center justify-center p-6">
+                  <div className="w-full aspect-square rounded-[20px] bg-[#f5f5f7] relative mb-6 overflow-hidden flex items-center justify-center p-6">
                     <Image
                       src={cat.imageUrl}
                       alt={cat.name}
                       fill
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 360px"
-                      className="object-contain group-hover:scale-105 transition-transform duration-700 ease-out p-4"
+                      className="object-contain group-hover:scale-106 transition-transform duration-700 ease-out p-4"
                     />
 
                     {/* Quality Badges */}
-                    <span className="absolute top-3.5 left-3.5 bg-white/95 text-stone-900 border border-stone-200 text-[11px] font-semibold px-2.5 py-0.5 rounded-full shadow-2xs">
+                    <span className="absolute top-3.5 left-3.5 bg-white/95 text-[#1d1d1f] border border-black/5 text-[11px] font-medium px-2.5 py-0.5 rounded-full shadow-2xs backdrop-blur-xs">
                       Single-Origin
                     </span>
 
-                    <span className="absolute bottom-3.5 right-3.5 bg-stone-950 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-2xs">
+                    <span className="absolute bottom-3.5 right-3.5 bg-[#1d1d1f] text-white text-[10px] font-semibold px-2.5 py-1 rounded-full shadow-2xs">
                       Solid Flint Glass
                     </span>
                   </div>
 
                   {/* Category Details */}
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs text-stone-500">
+                    <div className="flex items-center justify-between text-xs text-[#86868b]">
                       <span className="truncate max-w-[200px]">{cat.floralOrigin}</span>
-                      <span className="inline-flex items-center gap-1 font-semibold text-stone-800 shrink-0">
+                      <span className="inline-flex items-center gap-1 font-medium text-[#1d1d1f] shrink-0">
                         <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
                         {cat.rating} ({cat.ratingCount})
                       </span>
                     </div>
 
-                    <h2 className="text-xl sm:text-2xl font-serif font-bold text-stone-950 group-hover:text-amber-900 transition-colors tracking-tight">
+                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[#1d1d1f] group-hover:text-[#0071e3] transition-colors">
                       {cat.cleanTitle}
                     </h2>
 
-                    <p className="text-xs text-stone-600 line-clamp-2 leading-relaxed">
+                    <p className="text-xs text-[#6e6e73] line-clamp-2 leading-relaxed">
                       {cat.description}
                     </p>
 
-                    {/* Flavour Profile Tag */}
-                    <div className="pt-2">
-                      <p className="text-[11px] text-amber-900/90 font-medium bg-amber-50/70 border border-amber-200/60 rounded-xl px-3 py-1.5 leading-normal">
-                        <strong>Nectar Note:</strong> {cat.flavourNotes}
+                    {/* Apple Neutral Nectar Note */}
+                    <div className="pt-1.5">
+                      <p className="text-[11px] text-[#1d1d1f] bg-[#f5f5f7] rounded-xl px-3 py-1.5 leading-normal">
+                        <strong className="text-[#1d1d1f] font-medium">Nectar Note:</strong>{' '}
+                        <span className="text-[#6e6e73]">{cat.flavourNotes}</span>
                       </p>
                     </div>
 
                     {/* Sizing Indicator */}
-                    <div className="pt-2 flex items-center gap-2 text-xs text-stone-500">
+                    <div className="pt-1 flex items-center gap-2 text-xs text-[#86868b]">
                       <span>Available Sizes:</span>
                       <div className="flex items-center gap-1.5">
                         {cat.availableSizes.map((size) => (
                           <span
                             key={size}
-                            className="px-2 py-0.5 rounded-md bg-stone-100 text-stone-700 text-[11px] font-medium"
+                            className="px-2.5 py-0.5 rounded-md bg-[#f5f5f7] text-[#1d1d1f] text-[11px] font-medium"
                           >
                             {size}
                           </span>
@@ -311,26 +312,26 @@ export function ShopClient() {
                   </div>
                 </div>
 
-                {/* Bottom Pricing & Explore Configuration Button */}
-                <div className="pt-5 mt-6 border-t border-stone-100 flex items-center justify-between gap-4">
+                {/* Bottom Pricing & Apple Blue Configure Button */}
+                <div className="pt-5 mt-6 border-t border-[#d2d2d7]/50 flex items-center justify-between gap-4">
                   <div>
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-xs font-medium text-stone-500">From</span>
-                      <span className="text-xl font-bold text-stone-950">
+                      <span className="text-xs font-normal text-[#86868b]">From</span>
+                      <span className="text-xl font-bold text-[#1d1d1f] tracking-tight">
                         {formatCurrency(cat.startingPrice)}
                       </span>
-                      <span className="text-xs text-stone-400 line-through">
+                      <span className="text-xs text-[#86868b] line-through">
                         {formatCurrency(cat.compareAtPrice)}
                       </span>
                     </div>
-                    <span className="text-[11px] font-semibold text-emerald-700 block">
+                    <span className="text-[11px] font-semibold text-[#1b5e20] block">
                       Save up to 28%
                     </span>
                   </div>
 
                   <Link
                     href={`/product/${cat.slug}`}
-                    className="px-5 py-2.5 rounded-full bg-stone-900 hover:bg-amber-800 text-white text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 group-hover:shadow-md shrink-0"
+                    className="px-5 py-2.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4] text-white text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-sm group-hover:shadow-md shrink-0"
                   >
                     <span>Configure &amp; Buy</span>
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
@@ -342,22 +343,22 @@ export function ShopClient() {
         )}
 
         {/* Minimal Editorial Purity Banner */}
-        <div className="mt-20 p-8 sm:p-12 rounded-3xl bg-white border border-stone-200/90 shadow-2xs grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
+        <div className="mt-20 p-8 sm:p-12 rounded-[28px] bg-white border border-[#d2d2d7]/70 shadow-[0_4px_20px_rgba(0,0,0,0.03)] grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
           <div className="space-y-1.5">
-            <h3 className="text-base font-serif font-bold text-stone-950">100% Unheated Raw Honey</h3>
-            <p className="text-xs text-stone-600 leading-relaxed">
+            <h3 className="text-base font-bold text-[#1d1d1f]">100% Unheated Raw Honey</h3>
+            <p className="text-xs text-[#6e6e73] leading-relaxed">
               Extracted below hive temperature (38°C) without artificial boiling, keeping invertase and diastase enzymes viable.
             </p>
           </div>
           <div className="space-y-1.5">
-            <h3 className="text-base font-serif font-bold text-stone-950">400MHz German NMR Verified</h3>
-            <p className="text-xs text-stone-600 leading-relaxed">
+            <h3 className="text-base font-bold text-[#1d1d1f]">400MHz German NMR Verified</h3>
+            <p className="text-xs text-[#6e6e73] leading-relaxed">
               Every single batch is molecularly fingerprinted to verify 0.0% inverted sugar syrup and zero synthetic syrups.
             </p>
           </div>
           <div className="space-y-1.5">
-            <h3 className="text-base font-serif font-bold text-stone-950">Insured Solid Glass Freight</h3>
-            <p className="text-xs text-stone-600 leading-relaxed">
+            <h3 className="text-base font-bold text-[#1d1d1f]">Insured Solid Glass Freight</h3>
+            <p className="text-xs text-[#6e6e73] leading-relaxed">
               Packed with 5-ply shock-absorbing honeycomb cushions. Full replacement guarantee against transit breakage.
             </p>
           </div>

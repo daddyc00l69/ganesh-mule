@@ -12,7 +12,7 @@ export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FCFBF7] text-[#1C1917] antialiased">
+    <div className="min-h-screen flex flex-col bg-[#f5f5f7] text-[#1d1d1f] antialiased">
       <StorefrontNavbar />
       <main className="flex-1">{children}</main>
       <StorefrontFooter />

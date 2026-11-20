@@ -200,7 +200,7 @@ export default function CustomerAccountPage() {
 
   return (
     <StoreProvider>
-      <div className="bg-[#FAF9F5] min-h-screen py-10 sm:py-14 text-stone-900 selection:bg-amber-200">
+      <div className="bg-[#f5f5f7] min-h-screen py-10 sm:py-14 text-[#1d1d1f] selection:bg-[#0071e3]/20 selection:text-[#0071e3]">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
 
           {/* Top Breadcrumbs */}

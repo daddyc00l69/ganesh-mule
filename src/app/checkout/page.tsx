@@ -843,7 +843,7 @@ function CheckoutContent() {
   if (items.length === 0 && !completedOrder) {
     return (
       <StoreProvider>
-        <div className="bg-[#FAF8F5] min-h-screen py-24 px-4 flex items-center justify-center text-stone-900">
+        <div className="bg-[#f5f5f7] min-h-screen py-24 px-4 flex items-center justify-center text-stone-900">
           <div className="max-w-md w-full bg-white rounded-3xl border border-stone-200/90 p-8 sm:p-10 text-center space-y-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
             <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200/60 flex items-center justify-center mx-auto text-amber-700">
               <ShoppingBag className="w-8 h-8 stroke-[1.75]" />
@@ -873,7 +873,7 @@ function CheckoutContent() {
   if (completedOrder) {
     return (
       <StoreProvider>
-        <div className="bg-[#FAF8F5] min-h-screen py-16 px-4 sm:px-6 text-stone-900">
+        <div className="bg-[#f5f5f7] min-h-screen py-16 px-4 sm:px-6 text-stone-900">
           <div className="max-w-xl mx-auto text-center space-y-6">
             <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center mx-auto shadow-sm">
               <CheckCircle2 className="w-9 h-9 stroke-[2]" />
@@ -960,7 +960,7 @@ function CheckoutContent() {
 
   return (
     <StoreProvider>
-      <div className="bg-[#FAF8F5] min-h-screen pb-44 lg:pb-20 text-stone-900 selection:bg-amber-200 scroll-smooth overscroll-y-contain">
+      <div className="bg-[#f5f5f7] min-h-screen pb-44 lg:pb-20 text-stone-900 selection:bg-[#0071e3]/20 selection:text-[#0071e3] scroll-smooth overscroll-y-contain">
         
         {/* Top Progress & Guarantee Header */}
         <div className="border-b border-stone-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-20">
@@ -2136,10 +2136,10 @@ export default function CheckoutPage() {
   return (
     <Suspense
       fallback={
-        <div className="bg-[#FAF8F5] min-h-screen flex items-center justify-center p-8">
+        <div className="bg-[#f5f5f7] min-h-screen flex items-center justify-center p-8">
           <div className="text-center space-y-3">
-            <div className="w-8 h-8 border-2 border-amber-600 border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-xs text-stone-600 font-semibold">Preparing Secure Checkout...</p>
+            <div className="w-8 h-8 border-2 border-[#0071e3] border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-xs text-[#1d1d1f] font-medium">Preparing Secure Checkout...</p>
           </div>
         </div>
       }
