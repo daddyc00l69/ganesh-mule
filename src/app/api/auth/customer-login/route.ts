@@ -29,6 +29,10 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: 'Account suspended' }, { status: 403 });
         }
 
+        if (!user.passwordHash) {
+          return NextResponse.json({ error: 'This account signs in with Google. Please click Continue with Google.' }, { status: 400 });
+        }
+
         const isValid = await verifyPassword(password, user.passwordHash);
         if (!isValid) {
           return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });

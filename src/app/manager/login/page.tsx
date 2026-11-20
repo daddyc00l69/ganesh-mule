@@ -6,6 +6,7 @@ import { GlassCard } from '@/components/ui/glass-card';
 import { GlassButton } from '@/components/ui/glass-button';
 import { Sparkles, ArrowRight, Zap, CheckCircle2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
 
 export default function DirectManagerLoginPage() {
   const router = useRouter();
@@ -114,6 +115,22 @@ export default function DirectManagerLoginPage() {
             <Zap className="w-4 h-4" />
             <span>{isLoading ? 'Connecting to Queue...' : '⚡ Enter Manager Orders Desk'}</span>
           </button>
+
+          <div className="relative my-2">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/10" />
+            </div>
+            <div className="relative flex justify-center text-[10px] uppercase">
+              <span className="bg-background px-2 text-muted-foreground font-medium">Or</span>
+            </div>
+          </div>
+
+          <GoogleSignInButton
+            label="Sign in with Manager Google Account"
+            redirect="/manager/orders"
+            expectedRole="MANAGER"
+            variant="glass"
+          />
 
           <div className="text-center pt-2">
             <Link

@@ -9,6 +9,7 @@ export interface SafeUser {
   createdAt: string;
   permissions?: string[];
   department?: string;
+  avatarUrl?: string;
 }
 
 export interface ManagerAccount {

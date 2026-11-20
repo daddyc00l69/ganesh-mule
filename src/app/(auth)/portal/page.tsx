@@ -8,6 +8,7 @@ import { GlassButton } from '@/components/ui/glass-button';
 import { Sparkles, Shield, UserCheck, AlertCircle, ArrowLeft, CheckCircle2, UserPlus, KeyRound, LogOut, ArrowRight, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { SafeUser } from '@/types';
+import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
 
 function StaffPortalContent() {
   const router = useRouter();
@@ -15,6 +16,7 @@ function StaffPortalContent() {
   const rawRedirect = searchParams.get('redirect');
   const redirectTarget = rawRedirect ? decodeURIComponent(rawRedirect) : '';
   const urlError = searchParams.get('error');
+  const urlMessage = searchParams.get('message');
 
   const isManagerRedirect = redirectTarget.startsWith('/manager') || searchParams.get('role') === 'manager';
 
@@ -23,7 +25,7 @@ function StaffPortalContent() {
   const [selectedRole, setSelectedRole] = useState<'ADMIN' | 'MANAGER'>(isManagerRedirect ? 'MANAGER' : 'MANAGER');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(
-    urlError === 'unauthorized' ? 'You do not have Administrator privileges for that section.' : null
+    urlMessage || (urlError === 'unauthorized' ? 'You do not have Administrator privileges for that section.' : null)
   );
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [activeSession, setActiveSession] = useState<SafeUser | null>(null);
@@ -295,6 +297,25 @@ function StaffPortalContent() {
               <span>{successMessage}</span>
             </div>
           )}
+
+          {/* Google Sign-In for Admin & Manager */}
+          <GoogleSignInButton
+            label={`Sign in with Google (${selectedRole === 'ADMIN' ? 'Admin' : 'Manager'})`}
+            redirect={redirectTarget || (selectedRole === 'ADMIN' ? '/admin' : '/manager/orders')}
+            expectedRole={selectedRole}
+            variant="glass"
+          />
+
+          <div className="relative my-2">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/10" />
+            </div>
+            <div className="relative flex justify-center text-[10px] uppercase">
+              <span className="bg-slate-950 px-2 text-muted-foreground font-medium">
+                Or sign in with staff password
+              </span>
+            </div>
+          </div>
 
           {/* Master Credentials Autofill Pill */}
           <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-between text-xs">

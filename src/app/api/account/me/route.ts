@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
             email: dbUser.email,
             name: dbUser.name,
             role: dbUser.role,
+            avatarUrl: dbUser.avatarUrl,
           },
         });
       }

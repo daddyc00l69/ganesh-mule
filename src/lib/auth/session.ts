@@ -33,6 +33,7 @@ export function createUserSessionToken(user: SafeUser): string {
       role: user.role,
       permissions: user.permissions || [],
       department: user.department,
+      avatarUrl: user.avatarUrl,
       isActive: true,
       createdAt: user.createdAt,
     },

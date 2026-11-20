@@ -30,6 +30,7 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { BRAND_NAME, SUPPORT_EMAIL, SUPPORT_PHONE } from '@/lib/constants/brand';
+import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
 
 export default function CustomerAccountPage() {
   const [activeTab, setActiveTab] = useState<'ORDERS' | 'TRACK_ORDER' | 'ADDRESSES'>('ORDERS');
@@ -57,6 +58,17 @@ export default function CustomerAccountPage() {
   const [loginFeedback, setLoginFeedback] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const urlError = params.get('error');
+      const urlMsg = params.get('message');
+      if (urlError) {
+        setLoginFeedback({
+          type: 'error',
+          message: urlMsg || 'Google sign-in was not completed. Please try again.',
+        });
+      }
+    }
     loadCustomerData();
   }, []);
 
@@ -336,7 +348,26 @@ export default function CustomerAccountPage() {
                   </div>
 
                   {!otpSent ? (
-                    <form onSubmit={handleSendInlineOtp} className="space-y-4">
+                    <div className="space-y-4">
+                      <GoogleSignInButton
+                        label="Continue with Google"
+                        redirect="/account"
+                        expectedRole="CUSTOMER"
+                        variant="light"
+                      />
+
+                      <div className="relative my-2">
+                        <div className="absolute inset-0 flex items-center">
+                          <div className="w-full border-t border-stone-200/80" />
+                        </div>
+                        <div className="relative flex justify-center text-[10px] uppercase">
+                          <span className="bg-white px-2.5 text-stone-400 font-semibold tracking-wider">
+                            Or sign in with email OTP
+                          </span>
+                        </div>
+                      </div>
+
+                      <form onSubmit={handleSendInlineOtp} className="space-y-4">
                       <div className="space-y-1.5 text-left">
                         <label className="text-xs font-semibold text-stone-800">
                           Email Address
@@ -392,6 +423,7 @@ export default function CustomerAccountPage() {
                         <span>Instant passwordless access via Resend</span>
                       </div>
                     </form>
+                    </div>
                   ) : (
                     <form onSubmit={handleVerifyInlineOtp} className="space-y-4">
                       <div className="space-y-1.5 text-left">

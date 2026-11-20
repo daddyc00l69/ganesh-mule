@@ -69,6 +69,7 @@ export async function getCurrentUser(): Promise<SafeUser | null> {
           createdAt: session.user.createdAt.toISOString(),
           permissions: session.user.managerProfile?.permissions || [],
           department: session.user.managerProfile?.department || undefined,
+          avatarUrl: session.user.avatarUrl || undefined,
         };
       }
     } catch {
