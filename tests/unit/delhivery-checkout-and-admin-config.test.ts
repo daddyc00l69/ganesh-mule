@@ -148,7 +148,7 @@ describe('Admin Configuration & Delhivery Dynamic Checkout Logistics', () => {
     for (const product of MOCK_PRODUCTS) {
       expect(product.images.length).toBeGreaterThan(0);
       for (const img of product.images) {
-        expect(img.url).toMatch(/^\/images\/products\//);
+        expect(img.url).toMatch(/^\/images\/(products|honey-brand)\//);
         expect(img.url).not.toContain('unsplash.com');
       }
     }

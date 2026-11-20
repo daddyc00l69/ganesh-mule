@@ -10,317 +10,2791 @@ import {
 
 export const MOCK_CATEGORIES: CategoryItem[] = [
   {
-    id: 'cat-wild-forest',
-    slug: 'wild-forest-raw',
-    name: 'Wild Forest Raw Honey',
-    description: 'Cold-extracted multifloral nectar gathered by wild forest bees in deep alpine and deciduous reserves.',
-    productCount: 3,
-    isVisible: true,
+    "id": "cat-wild-forest",
+    "slug": "wild-forest-raw",
+    "name": "Wild Forest Raw Honey",
+    "description": "Cold-extracted multifloral nectar gathered by wild forest bees in deep alpine and deciduous reserves.",
+    "productCount": 3,
+    "isVisible": true
   },
+  {
+    "id": "cat-forest",
+    "slug": "forest-honey",
+    "name": "Wild Forest Raw Honey",
+    "description": "Pure cold-extracted raw honey gathered from wild Apis dorsata cliff bees in pristine deciduous forest canopies. Bottled exclusively in thick, food-grade solid glass to safeguard delicate aromatic polyphenols and active living enzymes.",
+    "productCount": 3,
+    "isVisible": true
+  },
+  {
+    "id": "cat-sesame",
+    "slug": "sesame-honey",
+    "name": "Pure Sesame Blossom Honey",
+    "description": "Single-origin unheated honey harvested during peak sesame flowering. Naturally high in zinc, calcium minerals, and antioxidant flavonoids.",
+    "productCount": 3,
+    "isVisible": true
+  },
+  {
+    "id": "cat-ajwain",
+    "slug": "ajwain-honey",
+    "name": "Organic Ajwain (Carom) Honey",
+    "description": "Distinctive raw honey harvested from white carom flowers. Celebrated in Ayurveda for respiratory comfort, gut health, and soothing digestion.",
+    "productCount": 3,
+    "isVisible": true
+  },
+  {
+    "id": "cat-saunf",
+    "slug": "saunf-honey",
+    "name": "Raw Saunf (Fennel) Honey",
+    "description": "Aromatic unpasteurized raw honey harvested from sweet fennel blooms. Imparts a naturally cooling aftertaste and soothing herbal benefits.",
+    "productCount": 3,
+    "isVisible": true
+  },
+  {
+    "id": "cat-multiflora",
+    "slug": "multiflora-honey",
+    "name": "Wild Multiflora Raw Honey",
+    "description": "Harmonious multifloral nectar gathered by bees foraging across dozens of seasonal medicinal herbs and seasonal forest blossoms.",
+    "productCount": 3,
+    "isVisible": true
+  },
+  {
+    "id": "cat-ber",
+    "slug": "ber-honey",
+    "name": "Raw Ber (Sidr / Jujube) Honey",
+    "description": "Revered Sidr honey harvested from thorny desert jujube trees. Uniquely rich in bioactive polyphenols and amber antioxidants.",
+    "productCount": 3,
+    "isVisible": true
+  },
+  {
+    "id": "cat-sheesham",
+    "slug": "sheesham-honey",
+    "name": "Raw Sheesham (Rosewood) Honey",
+    "description": "Rare single-origin raw honey harvested from blooming North Indian Rosewood canopies. Low glycemic index with a soothing smooth finish.",
+    "productCount": 3,
+    "isVisible": true
+  }
 ];
 
 export const MOCK_PRODUCTS: ProductItem[] = [
   {
-    id: 'prod-wild-forest-300g',
-    slug: 'wild-forest-raw-honey-300g',
-    sku: 'HNY-WLD-300G',
-    name: 'Wild Forest Raw Honey (300g)',
-    description:
-      'Pure cold-extracted raw honey gathered from wild Apis dorsata cliff bees in pristine deciduous forest canopies. Bottled exclusively in thick, food-grade solid glass to safeguard delicate aromatic polyphenols and active living enzymes.',
-    price: 44900, // ₹449.00
-    compareAtPrice: 59900, // ₹599.00
-    costPrice: 24000,
-    categoryId: 'cat-wild-forest',
-    category: MOCK_CATEGORIES[0],
-    stockQuantity: 65,
-    reservedQuantity: 0,
-    lowStockThreshold: 10,
-    isPublished: true,
-    badge: '300g Sampler',
-    badgeColor: 'amber',
-    rating: 4.9,
-    ratingCount: 842,
-    answeredQuestionsCount: 41,
-    weightGrams: 300,
-    batchNumber: 'BATCH-2026-WF300',
-    harvestDate: 'October 2026',
-    flavour: 'Multifloral Forest Blossom with Warm Floral Caramel Finish',
-    origin: 'Western Ghats Deciduous Canopies, Maharashtra',
-    packageType: 'Heavy Food-Safe Solid Glass Jar with Airtight Seal',
-    speciality: [
-      '100% Raw & Unheated',
-      'NMR Lab Tested (0% Sugar Syrup)',
-      'Unpasteurized & Unfiltered',
-      'Preserved Live Bee Pollen',
-      'Vegetarian & Gluten-Free',
-    ],
-    aboutItems: [
-      '【100% COLD-EXTRACTED RAW HONEY】: Harvested straight from wild forest canopies without heating above hive temperature (38°C), safeguarding active living enzymes (diastase, invertase, catalase).',
-      '【NMR SPECTROSCOPY CERTIFIED PURITY】: Molecularly fingerprinted and verified by German NMR testing laboratories to guarantee zero C3/C4 corn syrup, zero inverted rice syrup, and zero antibiotics.',
-      '【SOLID GLASS PACKAGING (300G)】: Bottled exclusively in inert solid glass to prevent microplastic leaching, preserve volatile floral aromatics, and maintain shelf stability forever.',
-      '【LIVING BEE POLLEN & PROPOLIS INTACT】: Coarsely strained through cheesecloth to retain microscopic wildflower bee pollen, natural propolis, and bio-available polyphenols.',
-      '【ETHICAL CANOPY HARVESTING】: Gathered by indigenous tribal beekeepers using traditional smoke techniques that protect live colonies and preserve wild pollinators.',
-    ],
-    technicalDetails: {
-      'Brand': 'Ganesh Mule Pure Honey',
-      'Flavour': 'Wild Multifloral Forest Nectar',
-      'Net Weight': '300 Grams',
-      'Package Information': 'Heavy Solid Glass Jar',
-      'Item Form': 'Raw Liquid with Natural Velvet Micro-Crystals',
-      'Diastase Activity': '14.2 Schade Units (High Enzyme Viability)',
-      'Moisture Content': '17.6% (Ideal Density)',
-      'HMF Level': '9.4 mg/kg (Ultra Fresh Harvest)',
-      'Specialty': 'Cold Extracted, Unheated, No Added Sugar, Non-GMO',
-      'Country of Origin': 'India (Western Ghats Biosphere)',
-      'Dietary Preference': 'Vegetarian, Gluten-Free, Keto-Friendly',
-      'Shelf Life': '24 Months (Naturally indefinite when sealed airtight)',
-    },
-    customerReviews: [
-      {
-        id: 'rev-wf300-1',
-        author: 'Dr. Rajesh Deshmukh',
-        rating: 5,
-        title: 'Authentic forest honey like my childhood village harvests',
-        date: '14 October 2026',
-        verifiedPurchase: true,
-        content: 'I have tested dozens of commercial supermarket brands that all taste like heated sugar syrup. This Wild Forest Honey has the genuine herbal complexity, pleasant throat warmth, and micro-crystallization of pure raw nectar. The heavy glass jar packaging is exemplary.',
-        helpfulCount: 42,
-      },
-      {
-        id: 'rev-wf300-2',
-        author: 'Ananya Sharma',
-        rating: 5,
-        title: 'NMR certificate verified on batch, outstanding quality',
-        date: '28 September 2026',
-        verifiedPurchase: true,
-        content: 'I take a teaspoon every morning in warm water with lemon. It dissolves beautifully with subtle hints of wildflowers and caramel. Zero artificial sweetness. Highly recommended for daily wellness.',
-        helpfulCount: 19,
-      },
-    ],
-    qAndA: [
-      {
-        question: 'Does this raw honey crystallize in winter?',
-        answer: 'Yes! Natural crystallization is proof that the honey is 100% raw and has not been subjected to high-temperature commercial pasteurization. To soften it, gently warm the glass jar in a lukewarm water bath below 40°C.',
-        votes: 34,
-      },
-      {
-        question: 'Is this jar sealed in glass?',
-        answer: 'Yes, absolutely. We use heavy food-safe solid glass jars with hermetic airtight caps, ensuring zero contact with chemical plastics.',
-        votes: 27,
-      },
-    ],
-    images: [
-      {
-        id: 'img-wf300-1',
-        url: '/images/products/wild-forest-honey.jpg',
-        altText: 'Wild Forest Raw Honey 300g in Heavy Solid Glass Jar',
-        position: 0,
-      },
-      {
-        id: 'img-wf300-2',
-        url: '/images/products/artisan-honeycomb-slab.jpg',
-        altText: 'Cold-extracted golden raw honey drizzle and comb',
-        position: 1,
-      },
-    ],
-    createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
-    updatedAt: new Date().toISOString(),
+  "id": "prod-forest-honey-250g",
+  "slug": "forest-honey-250g",
+  "sku": "GM-FOR-250G",
+  "name": "Forest Honey (250g)",
+  "description": "Pure cold-extracted raw honey gathered from wild Apis dorsata cliff bees in pristine deciduous forest canopies. Bottled exclusively in thick, food-grade solid glass to safeguard delicate aromatic polyphenols and active living enzymes.",
+  "price": 19900,
+  "compareAtPrice": 27500,
+  "costPrice": 9500,
+  "categoryId": "cat-forest",
+  "category": {
+    "id": "cat-forest",
+    "slug": "forest-honey",
+    "name": "Wild Forest Raw Honey",
+    "description": "Pure cold-extracted raw honey gathered from wild Apis dorsata cliff bees in pristine deciduous forest canopies. Bottled exclusively in thick, food-grade solid glass to safeguard delicate aromatic polyphenols and active living enzymes.",
+    "isVisible": true
   },
+  "stockQuantity": 80,
+  "reservedQuantity": 0,
+  "lowStockThreshold": 10,
+  "isPublished": true,
+  "badge": "Flagship Reserve",
+  "badgeColor": "amber",
+  "rating": 4.9,
+  "ratingCount": 600,
+  "answeredQuestionsCount": 28,
+  "weightGrams": 250,
+  "batchNumber": "BATCH-2026-FOR250G",
+  "harvestDate": "October 2026",
+  "flavour": "Multifloral Forest Blossom with Warm Floral Caramel Finish",
+  "origin": "Western Ghats Deciduous Canopies, Maharashtra",
+  "packageType": "Heavy Food-Safe Solid Glass Jar with Airtight Seal",
+  "speciality": [
+    "100% Raw & Unheated",
+    "NMR Lab Tested (0% Sugar Syrup)",
+    "Unpasteurized & Coarsely Filtered",
+    "Preserved Live Bee Pollen",
+    "Heavy Solid Glass (Microplastic-Free)"
+  ],
+  "aboutItems": [
+    "【100% COLD-EXTRACTED RAW HONEY】: Single-origin raw honey harvested without heating above hive temperature (38°C), safeguarding living bio-enzymes.",
+    "【GERMAN NMR 400MHz PURITY TESTED】: Molecularly fingerprinted to guarantee 0% adulteration, zero C3/C4 corn syrup, and zero antibiotics.",
+    "【SOLID GLASS PACKAGING (250G)】: Bottled exclusively in inert food-grade solid flint glass to prevent chemical leaching and protect volatile aromas.",
+    "【NATURAL POLLEN & ENZYMES】: Retains beneficial natural floral pollen, propolis, and bio-available polyphenols.",
+    "【LEGAL METROLOGY & FSSAI COMPLIANT】: Sealed with tamper-evident band, batch-level testing QR code, and standard net weight."
+  ],
+  "technicalDetails": {
+    "Brand": "Ganesh Mule Pure Honey",
+    "Flavour": "Multifloral Forest Blossom with Warm Floral Caramel Finish",
+    "Net Weight": "250g",
+    "Package Information": "Heavy Food-Grade Solid Glass Jar",
+    "Item Form": "Raw Liquid with Natural Micro-Crystallization",
+    "Diastase Activity": "High Active Enzyme Viability (>12 Schade)",
+    "Moisture Content": "<18% (Compliant with FSSAI Honey Standards)",
+    "Specialty": "Cold Extracted, Unheated, No Added Sugar, Zero Preservatives",
+    "Country of Origin": "India",
+    "Shelf Life": "24 Months (Indefinite if kept dry and sealed)"
+  },
+  "customerReviews": [
+    {
+      "id": "rev-forest-honey-250g-1",
+      "author": "Arun Kulkarni",
+      "rating": 5,
+      "title": "Exceptional aroma and authentic raw Forest Honey",
+      "date": "12 November 2026",
+      "verifiedPurchase": true,
+      "content": "You can instantly taste the floral notes and natural goodness. The solid glass jar packaging arrived completely safe in protective cushioning. Highly recommended!",
+      "helpfulCount": 34
+    },
+    {
+      "id": "rev-forest-honey-250g-2",
+      "author": "Meera Sengupta",
+      "rating": 5,
+      "title": "True raw honey that naturally micro-crystallizes",
+      "date": "04 November 2026",
+      "verifiedPurchase": true,
+      "content": "Delighted to find authentic Indian honey that isn't boiled or ultra-filtered sugar water. Great value in the 250g glass jar.",
+      "helpfulCount": 21
+    }
+  ],
+  "qAndA": [
+    {
+      "question": "Is this honey heated or pasteurized during bottling?",
+      "answer": "Never. Our honey is cold-extracted and coarsely strained through stainless mesh. It is never heated above ambient hive temperature to keep all active enzymes alive.",
+      "votes": 45
+    },
+    {
+      "question": "Is the glass jar safe during courier shipping?",
+      "answer": "Yes! Every jar is shipped in 5-ply engineered shock-proof honeycomb kraft cushioning with a zero-breakage guarantee.",
+      "votes": 38
+    }
+  ],
+  "images": [
+    {
+      "id": "img-forest-honey-250g-1",
+      "url": "/images/honey-brand/Forest Honey/250g/image_1_amazon_main.jpg",
+      "altText": "Forest Honey 250g Amazon Main Studio Shot in Solid Glass",
+      "position": 0
+    },
+    {
+      "id": "img-forest-honey-250g-2",
+      "url": "/images/honey-brand/Forest Honey/250g/image_2_lifestyle.jpg",
+      "altText": "Forest Honey 250g Lifestyle Photography on Teak Wood with Dipper",
+      "position": 1
+    },
+    {
+      "id": "img-forest-honey-250g-3",
+      "url": "/images/honey-brand/Forest Honey/250g/image_3_texture.jpg",
+      "altText": "Raw Unpasteurized Forest Honey Slow Micro-Drizzle Macro Texture",
+      "position": 2
+    },
+    {
+      "id": "img-forest-honey-250g-4",
+      "url": "/images/honey-brand/Forest Honey/250g/image_6_size_comparison.jpg",
+      "altText": "Ganesh Mule Raw Honey Trio Size Comparison (250g, 500g, 1kg)",
+      "position": 3
+    }
+  ],
+  "createdAt": "2026-11-20T14:28:59.682Z",
+  "updatedAt": "2026-11-20T14:28:59.683Z"
+},
   {
-    id: 'prod-wild-forest-750g',
-    slug: 'wild-forest-raw-honey-750g',
-    sku: 'HNY-WLD-750G',
-    name: 'Wild Forest Raw Honey (750g)',
-    description:
-      'Our flagship harvest. Unpasteurized, unfiltered, cold-extracted raw honey gathered from wild Apis dorsata cliff bees in pristine deciduous forest canopies. Rich in natural bio-active enzymes, pollen, and propolis with a warm floral body and deep butterscotch finish in solid glass packaging.',
-    price: 89900, // ₹899.00
-    compareAtPrice: 119900, // ₹1,199.00
-    costPrice: 48000,
-    categoryId: 'cat-wild-forest',
-    category: MOCK_CATEGORIES[0],
-    stockQuantity: 92,
-    reservedQuantity: 0,
-    lowStockThreshold: 15,
-    isPublished: true,
-    badge: 'Most Popular',
-    badgeColor: 'amber',
-    rating: 4.95,
-    ratingCount: 1640,
-    answeredQuestionsCount: 94,
-    weightGrams: 750,
-    batchNumber: 'BATCH-2026-WF750',
-    harvestDate: 'October 2026',
-    flavour: 'Multifloral Forest Blossom with Warm Butterscotch Finish',
-    origin: 'Western Ghats Deciduous Canopies, Maharashtra',
-    packageType: 'Heavy Food-Safe Solid Glass Jar with Airtight Seal',
-    speciality: [
-      '100% Raw & Unheated',
-      'NMR Lab Tested (0% Sugar Syrup)',
-      'Unpasteurized & Unfiltered',
-      'Preserved Live Bee Pollen',
-      'Vegetarian & Gluten-Free',
-    ],
-    aboutItems: [
-      '【100% COLD-EXTRACTED RAW HONEY】: Harvested straight from wild forest canopies without heating above hive temperature (38°C), safeguarding active living enzymes (diastase, invertase, catalase).',
-      '【NMR SPECTROSCOPY CERTIFIED PURITY】: Molecularly fingerprinted and verified by German NMR testing laboratories to guarantee zero C3/C4 corn syrup, zero inverted rice syrup, and zero antibiotics.',
-      '【SOLID GLASS PACKAGING (750G)】: Bottled exclusively in heavy, inert solid glass jars to prevent microplastic leaching, preserve volatile floral aromatics, and maintain shelf stability forever.',
-      '【LIVING BEE POLLEN & PROPOLIS INTACT】: Coarsely strained through cheesecloth to retain microscopic wildflower bee pollen, natural propolis, and bio-available polyphenols.',
-      '【ETHICAL CANOPY HARVESTING】: Gathered by indigenous tribal beekeepers using traditional smoke techniques that protect live colonies and preserve wild pollinators.',
-    ],
-    technicalDetails: {
-      'Brand': 'Ganesh Mule Pure Honey',
-      'Flavour': 'Wild Multifloral Forest Nectar',
-      'Net Weight': '750 Grams',
-      'Package Information': 'Heavy Solid Glass Jar',
-      'Item Form': 'Raw Liquid with Natural Velvet Micro-Crystals',
-      'Diastase Activity': '14.8 Schade Units (High Enzyme Viability)',
-      'Moisture Content': '17.4% (Ideal Density)',
-      'HMF Level': '8.9 mg/kg (Ultra Fresh Harvest)',
-      'Specialty': 'Cold Extracted, Unheated, No Added Sugar, Non-GMO',
-      'Country of Origin': 'India (Western Ghats Biosphere)',
-      'Dietary Preference': 'Vegetarian, Gluten-Free, Keto-Friendly',
-      'Shelf Life': '24 Months (Naturally indefinite when sealed airtight)',
-    },
-    customerReviews: [
-      {
-        id: 'rev-wf750-1',
-        author: 'Vikram Sengupta',
-        rating: 5,
-        title: 'Safely arrived in protective cushioning, divine taste',
-        date: '02 September 2026',
-        verifiedPurchase: true,
-        content: 'Was worried about ordering glass online, but the courier packaging had zero damage. Honey is thick, rich, and tastes natural.',
-        helpfulCount: 28,
-      },
-      {
-        id: 'rev-wf750-2',
-        author: 'Meera Kulkarni',
-        rating: 5,
-        title: '750g jar is the perfect pantry size',
-        date: '19 August 2026',
-        verifiedPurchase: true,
-        content: 'Best honey in India. Thick texture, raw natural floral fragrance, and truly unheated. Will never buy commercial plastic bottles again.',
-        helpfulCount: 31,
-      },
-    ],
-    qAndA: [
-      {
-        question: 'How long does this 750g jar last?',
-        answer: 'Pure raw honey does not spoil as long as it is sealed in glass and kept dry. For daily morning use (1 tbsp), this jar lasts approximately 5 to 6 weeks.',
-        votes: 45,
-      },
-    ],
-    images: [
-      {
-        id: 'img-wf750-1',
-        url: '/images/products/himalayan-acacia-honey.jpg',
-        altText: 'Wild Forest Raw Honey 750g Solid Glass Jar',
-        position: 0,
-      },
-      {
-        id: 'img-wf750-2',
-        url: '/images/products/wild-forest-honey.jpg',
-        altText: 'Cold-extracted golden raw honey drizzle',
-        position: 1,
-      },
-    ],
-    createdAt: new Date(Date.now() - 25 * 86400000).toISOString(),
-    updatedAt: new Date().toISOString(),
+  "id": "prod-forest-honey-500g",
+  "slug": "forest-honey-500g",
+  "sku": "GM-FOR-500G",
+  "name": "Forest Honey (500g)",
+  "description": "Pure cold-extracted raw honey gathered from wild Apis dorsata cliff bees in pristine deciduous forest canopies. Bottled exclusively in thick, food-grade solid glass to safeguard delicate aromatic polyphenols and active living enzymes.",
+  "price": 39900,
+  "compareAtPrice": 54900,
+  "costPrice": 17000,
+  "categoryId": "cat-forest",
+  "category": {
+    "id": "cat-forest",
+    "slug": "forest-honey",
+    "name": "Wild Forest Raw Honey",
+    "description": "Pure cold-extracted raw honey gathered from wild Apis dorsata cliff bees in pristine deciduous forest canopies. Bottled exclusively in thick, food-grade solid glass to safeguard delicate aromatic polyphenols and active living enzymes.",
+    "isVisible": true
   },
+  "stockQuantity": 120,
+  "reservedQuantity": 0,
+  "lowStockThreshold": 10,
+  "isPublished": true,
+  "badge": "Most Popular",
+  "badgeColor": "amber",
+  "rating": 4.9,
+  "ratingCount": 783,
+  "answeredQuestionsCount": 28,
+  "weightGrams": 500,
+  "batchNumber": "BATCH-2026-FOR500G",
+  "harvestDate": "October 2026",
+  "flavour": "Multifloral Forest Blossom with Warm Floral Caramel Finish",
+  "origin": "Western Ghats Deciduous Canopies, Maharashtra",
+  "packageType": "Heavy Food-Safe Solid Glass Jar with Airtight Seal",
+  "speciality": [
+    "100% Raw & Unheated",
+    "NMR Lab Tested (0% Sugar Syrup)",
+    "Unpasteurized & Coarsely Filtered",
+    "Preserved Live Bee Pollen",
+    "Heavy Solid Glass (Microplastic-Free)"
+  ],
+  "aboutItems": [
+    "【100% COLD-EXTRACTED RAW HONEY】: Single-origin raw honey harvested without heating above hive temperature (38°C), safeguarding living bio-enzymes.",
+    "【GERMAN NMR 400MHz PURITY TESTED】: Molecularly fingerprinted to guarantee 0% adulteration, zero C3/C4 corn syrup, and zero antibiotics.",
+    "【SOLID GLASS PACKAGING (500G)】: Bottled exclusively in inert food-grade solid flint glass to prevent chemical leaching and protect volatile aromas.",
+    "【NATURAL POLLEN & ENZYMES】: Retains beneficial natural floral pollen, propolis, and bio-available polyphenols.",
+    "【LEGAL METROLOGY & FSSAI COMPLIANT】: Sealed with tamper-evident band, batch-level testing QR code, and standard net weight."
+  ],
+  "technicalDetails": {
+    "Brand": "Ganesh Mule Pure Honey",
+    "Flavour": "Multifloral Forest Blossom with Warm Floral Caramel Finish",
+    "Net Weight": "500g",
+    "Package Information": "Heavy Food-Grade Solid Glass Jar",
+    "Item Form": "Raw Liquid with Natural Micro-Crystallization",
+    "Diastase Activity": "High Active Enzyme Viability (>12 Schade)",
+    "Moisture Content": "<18% (Compliant with FSSAI Honey Standards)",
+    "Specialty": "Cold Extracted, Unheated, No Added Sugar, Zero Preservatives",
+    "Country of Origin": "India",
+    "Shelf Life": "24 Months (Indefinite if kept dry and sealed)"
+  },
+  "customerReviews": [
+    {
+      "id": "rev-forest-honey-500g-1",
+      "author": "Arun Kulkarni",
+      "rating": 5,
+      "title": "Exceptional aroma and authentic raw Forest Honey",
+      "date": "12 November 2026",
+      "verifiedPurchase": true,
+      "content": "You can instantly taste the floral notes and natural goodness. The solid glass jar packaging arrived completely safe in protective cushioning. Highly recommended!",
+      "helpfulCount": 34
+    },
+    {
+      "id": "rev-forest-honey-500g-2",
+      "author": "Meera Sengupta",
+      "rating": 5,
+      "title": "True raw honey that naturally micro-crystallizes",
+      "date": "04 November 2026",
+      "verifiedPurchase": true,
+      "content": "Delighted to find authentic Indian honey that isn't boiled or ultra-filtered sugar water. Great value in the 500g glass jar.",
+      "helpfulCount": 21
+    }
+  ],
+  "qAndA": [
+    {
+      "question": "Is this honey heated or pasteurized during bottling?",
+      "answer": "Never. Our honey is cold-extracted and coarsely strained through stainless mesh. It is never heated above ambient hive temperature to keep all active enzymes alive.",
+      "votes": 45
+    },
+    {
+      "question": "Is the glass jar safe during courier shipping?",
+      "answer": "Yes! Every jar is shipped in 5-ply engineered shock-proof honeycomb kraft cushioning with a zero-breakage guarantee.",
+      "votes": 38
+    }
+  ],
+  "images": [
+    {
+      "id": "img-forest-honey-500g-1",
+      "url": "/images/honey-brand/Forest Honey/500g/image_1_amazon_main.jpg",
+      "altText": "Forest Honey 500g Amazon Main Studio Shot in Solid Glass",
+      "position": 0
+    },
+    {
+      "id": "img-forest-honey-500g-2",
+      "url": "/images/honey-brand/Forest Honey/500g/image_2_lifestyle.jpg",
+      "altText": "Forest Honey 500g Lifestyle Photography on Teak Wood with Dipper",
+      "position": 1
+    },
+    {
+      "id": "img-forest-honey-500g-3",
+      "url": "/images/honey-brand/Forest Honey/500g/image_3_texture.jpg",
+      "altText": "Raw Unpasteurized Forest Honey Slow Micro-Drizzle Macro Texture",
+      "position": 2
+    },
+    {
+      "id": "img-forest-honey-500g-4",
+      "url": "/images/honey-brand/Forest Honey/500g/image_6_size_comparison.jpg",
+      "altText": "Ganesh Mule Raw Honey Trio Size Comparison (250g, 500g, 1kg)",
+      "position": 3
+    }
+  ],
+  "createdAt": "2026-11-20T14:28:59.683Z",
+  "updatedAt": "2026-11-20T14:28:59.683Z"
+},
   {
-    id: 'prod-wild-forest-1050g',
-    slug: 'wild-forest-raw-honey-1050g',
-    sku: 'HNY-WLD-1050G',
-    name: 'Wild Forest Raw Honey (1050g)',
-    description:
-      'Grand Harvest Reserve (1.05 kg) in heavy handcrafted solid glass. Perfect for daily family Ayurvedic wellness, tea, and warm morning elixirs. Coarsely strained through cheesecloth to retain living bio-enzymes, polyphenols, and wildflower pollen.',
-    price: 119900, // ₹1,199.00
-    compareAtPrice: 159900, // ₹1,599.00
-    costPrice: 62000,
-    categoryId: 'cat-wild-forest',
-    category: MOCK_CATEGORIES[0],
-    stockQuantity: 44,
-    reservedQuantity: 0,
-    lowStockThreshold: 10,
-    isPublished: true,
-    badge: 'Grand Reserve',
-    badgeColor: 'amber',
-    rating: 5.0,
-    ratingCount: 618,
-    answeredQuestionsCount: 38,
-    weightGrams: 1050,
-    batchNumber: 'BATCH-2026-WF1050',
-    harvestDate: 'October 2026',
-    flavour: 'Deep Amber Multifloral with Rich Malt & Woodland Undertones',
-    origin: 'Western Ghats Bio-Reserve, Maharashtra',
-    packageType: 'Heavy Food-Safe Solid Glass Jar with Airtight Seal',
-    speciality: [
-      '100% Raw & Unheated',
-      'NMR Lab Tested (0% Sugar Syrup)',
-      'Unpasteurized & Unfiltered',
-      'Preserved Live Bee Pollen',
-      'Vegetarian & Gluten-Free',
-    ],
-    aboutItems: [
-      '【100% COLD-EXTRACTED RAW HONEY】: Harvested straight from wild forest canopies without heating above hive temperature (38°C), safeguarding active living enzymes (diastase, invertase, catalase).',
-      '【GRAND HARVEST 1050G VALUE】: Over 1 kilogram of pristine Western Ghats forest honey bottled in extra-thick solid glass with an airtight gold closure.',
-      '【NMR SPECTROSCOPY CERTIFIED PURITY】: Molecularly fingerprinted and verified by German NMR testing laboratories to guarantee zero C3/C4 corn syrup, zero inverted rice syrup, and zero antibiotics.',
-      '【SOLID GLASS PACKAGING (1050G)】: Bottled exclusively in inert solid glass to prevent microplastic leaching, preserve volatile floral aromatics, and maintain shelf stability forever.',
-      '【LIVING BEE POLLEN & PROPOLIS INTACT】: Coarsely strained through cheesecloth to retain microscopic wildflower bee pollen, natural propolis, and bio-available polyphenols.',
-    ],
-    technicalDetails: {
-      'Brand': 'Ganesh Mule Pure Honey',
-      'Flavour': 'Deep Amber Multifloral with Woodland Undertones',
-      'Net Weight': '1050 Grams (1.05 kg)',
-      'Package Information': 'Heavy Solid Glass Jar with Airtight Seal',
-      'Item Form': 'Raw Liquid with Natural Velvet Micro-Crystals',
-      'Diastase Activity': '15.1 Schade Units (High Enzyme Viability)',
-      'Moisture Content': '17.2% (Ideal Density)',
-      'HMF Level': '8.2 mg/kg (Ultra Fresh Harvest)',
-      'Specialty': 'Cold Extracted, Unheated, No Added Sugar, Non-GMO',
-      'Country of Origin': 'India (Western Ghats Biosphere)',
-      'Dietary Preference': 'Vegetarian, Gluten-Free, Keto-Friendly',
-      'Shelf Life': '24 Months (Naturally indefinite when sealed airtight)',
-    },
-    customerReviews: [
-      {
-        id: 'rev-wf1050-1',
-        author: 'Col. Amitav Roy',
-        rating: 5,
-        title: 'Outstanding 1.05kg grand glass jar, unparalleled purity',
-        date: '20 October 2026',
-        verifiedPurchase: true,
-        content: 'This 1050g jar is a masterpiece of packaging. Solid, weighty glass, perfectly sealed. Honey is dark, thick, highly aromatic, and genuinely wild.',
-        helpfulCount: 52,
-      },
-    ],
-    qAndA: [
-      {
-        question: 'Is the 1050g jar packaged safely against transit shock?',
-        answer: 'Yes! Every 1050g jar is encased in 5-ply engineered shock-proof honeycomb kraft cushioning with a zero-breakage guarantee.',
-        votes: 39,
-      },
-    ],
-    images: [
-      {
-        id: 'img-wf1050-1',
-        url: '/images/products/sundarbans-mangrove-honey.jpg',
-        altText: 'Wild Forest Raw Honey 1050g Grand Reserve in Heavy Solid Glass',
-        position: 0,
-      },
-      {
-        id: 'img-wf1050-2',
-        url: '/images/products/kashmiri-saffron-honey.jpg',
-        altText: 'Pure golden raw honey with amber hue',
-        position: 1,
-      },
-    ],
-    createdAt: new Date(Date.now() - 20 * 86400000).toISOString(),
-    updatedAt: new Date().toISOString(),
+  "id": "prod-forest-honey-1kg",
+  "slug": "forest-honey-1kg",
+  "sku": "GM-FOR-1KG",
+  "name": "Forest Honey (1kg)",
+  "description": "Pure cold-extracted raw honey gathered from wild Apis dorsata cliff bees in pristine deciduous forest canopies. Bottled exclusively in thick, food-grade solid glass to safeguard delicate aromatic polyphenols and active living enzymes.",
+  "price": 74900,
+  "compareAtPrice": 99900,
+  "costPrice": 31000,
+  "categoryId": "cat-forest",
+  "category": {
+    "id": "cat-forest",
+    "slug": "forest-honey",
+    "name": "Wild Forest Raw Honey",
+    "description": "Pure cold-extracted raw honey gathered from wild Apis dorsata cliff bees in pristine deciduous forest canopies. Bottled exclusively in thick, food-grade solid glass to safeguard delicate aromatic polyphenols and active living enzymes.",
+    "isVisible": true
   },
+  "stockQuantity": 65,
+  "reservedQuantity": 0,
+  "lowStockThreshold": 10,
+  "isPublished": true,
+  "badge": "Best Value",
+  "badgeColor": "amber",
+  "rating": 4.9,
+  "ratingCount": 838,
+  "answeredQuestionsCount": 28,
+  "weightGrams": 1000,
+  "batchNumber": "BATCH-2026-FOR1KG",
+  "harvestDate": "October 2026",
+  "flavour": "Multifloral Forest Blossom with Warm Floral Caramel Finish",
+  "origin": "Western Ghats Deciduous Canopies, Maharashtra",
+  "packageType": "Heavy Food-Safe Solid Glass Jar with Airtight Seal",
+  "speciality": [
+    "100% Raw & Unheated",
+    "NMR Lab Tested (0% Sugar Syrup)",
+    "Unpasteurized & Coarsely Filtered",
+    "Preserved Live Bee Pollen",
+    "Heavy Solid Glass (Microplastic-Free)"
+  ],
+  "aboutItems": [
+    "【100% COLD-EXTRACTED RAW HONEY】: Single-origin raw honey harvested without heating above hive temperature (38°C), safeguarding living bio-enzymes.",
+    "【GERMAN NMR 400MHz PURITY TESTED】: Molecularly fingerprinted to guarantee 0% adulteration, zero C3/C4 corn syrup, and zero antibiotics.",
+    "【SOLID GLASS PACKAGING (1KG)】: Bottled exclusively in inert food-grade solid flint glass to prevent chemical leaching and protect volatile aromas.",
+    "【NATURAL POLLEN & ENZYMES】: Retains beneficial natural floral pollen, propolis, and bio-available polyphenols.",
+    "【LEGAL METROLOGY & FSSAI COMPLIANT】: Sealed with tamper-evident band, batch-level testing QR code, and standard net weight."
+  ],
+  "technicalDetails": {
+    "Brand": "Ganesh Mule Pure Honey",
+    "Flavour": "Multifloral Forest Blossom with Warm Floral Caramel Finish",
+    "Net Weight": "1kg",
+    "Package Information": "Heavy Food-Grade Solid Glass Jar",
+    "Item Form": "Raw Liquid with Natural Micro-Crystallization",
+    "Diastase Activity": "High Active Enzyme Viability (>12 Schade)",
+    "Moisture Content": "<18% (Compliant with FSSAI Honey Standards)",
+    "Specialty": "Cold Extracted, Unheated, No Added Sugar, Zero Preservatives",
+    "Country of Origin": "India",
+    "Shelf Life": "24 Months (Indefinite if kept dry and sealed)"
+  },
+  "customerReviews": [
+    {
+      "id": "rev-forest-honey-1kg-1",
+      "author": "Arun Kulkarni",
+      "rating": 5,
+      "title": "Exceptional aroma and authentic raw Forest Honey",
+      "date": "12 November 2026",
+      "verifiedPurchase": true,
+      "content": "You can instantly taste the floral notes and natural goodness. The solid glass jar packaging arrived completely safe in protective cushioning. Highly recommended!",
+      "helpfulCount": 34
+    },
+    {
+      "id": "rev-forest-honey-1kg-2",
+      "author": "Meera Sengupta",
+      "rating": 5,
+      "title": "True raw honey that naturally micro-crystallizes",
+      "date": "04 November 2026",
+      "verifiedPurchase": true,
+      "content": "Delighted to find authentic Indian honey that isn't boiled or ultra-filtered sugar water. Great value in the 1kg glass jar.",
+      "helpfulCount": 21
+    }
+  ],
+  "qAndA": [
+    {
+      "question": "Is this honey heated or pasteurized during bottling?",
+      "answer": "Never. Our honey is cold-extracted and coarsely strained through stainless mesh. It is never heated above ambient hive temperature to keep all active enzymes alive.",
+      "votes": 45
+    },
+    {
+      "question": "Is the glass jar safe during courier shipping?",
+      "answer": "Yes! Every jar is shipped in 5-ply engineered shock-proof honeycomb kraft cushioning with a zero-breakage guarantee.",
+      "votes": 38
+    }
+  ],
+  "images": [
+    {
+      "id": "img-forest-honey-1kg-1",
+      "url": "/images/honey-brand/Forest Honey/1kg/image_1_amazon_main.jpg",
+      "altText": "Forest Honey 1kg Amazon Main Studio Shot in Solid Glass",
+      "position": 0
+    },
+    {
+      "id": "img-forest-honey-1kg-2",
+      "url": "/images/honey-brand/Forest Honey/1kg/image_2_lifestyle.jpg",
+      "altText": "Forest Honey 1kg Lifestyle Photography on Teak Wood with Dipper",
+      "position": 1
+    },
+    {
+      "id": "img-forest-honey-1kg-3",
+      "url": "/images/honey-brand/Forest Honey/1kg/image_3_texture.jpg",
+      "altText": "Raw Unpasteurized Forest Honey Slow Micro-Drizzle Macro Texture",
+      "position": 2
+    },
+    {
+      "id": "img-forest-honey-1kg-4",
+      "url": "/images/honey-brand/Forest Honey/1kg/image_6_size_comparison.jpg",
+      "altText": "Ganesh Mule Raw Honey Trio Size Comparison (250g, 500g, 1kg)",
+      "position": 3
+    }
+  ],
+  "createdAt": "2026-11-20T14:28:59.683Z",
+  "updatedAt": "2026-11-20T14:28:59.683Z"
+},
+  {
+  "id": "prod-sesame-honey-250g",
+  "slug": "sesame-honey-250g",
+  "sku": "GM-SES-250G",
+  "name": "Sesame Honey (250g)",
+  "description": "Single-origin unheated honey harvested during peak sesame flowering. Naturally high in zinc, calcium minerals, and antioxidant flavonoids.",
+  "price": 19900,
+  "compareAtPrice": 27500,
+  "costPrice": 9500,
+  "categoryId": "cat-sesame",
+  "category": {
+    "id": "cat-sesame",
+    "slug": "sesame-honey",
+    "name": "Pure Sesame Blossom Honey",
+    "description": "Single-origin unheated honey harvested during peak sesame flowering. Naturally high in zinc, calcium minerals, and antioxidant flavonoids.",
+    "isVisible": true
+  },
+  "stockQuantity": 80,
+  "reservedQuantity": 0,
+  "lowStockThreshold": 10,
+  "isPublished": true,
+  "badge": "Mineral Rich",
+  "badgeColor": "purple",
+  "rating": 4.9,
+  "ratingCount": 702,
+  "answeredQuestionsCount": 28,
+  "weightGrams": 250,
+  "batchNumber": "BATCH-2026-SES250G",
+  "harvestDate": "October 2026",
+  "flavour": "Nutty, Warm Sesame Flora with Mild Sweet Aftertaste",
+  "origin": "Solapur & Marathwada Sesame Groves, Maharashtra",
+  "packageType": "Heavy Food-Safe Solid Glass Jar with Airtight Seal",
+  "speciality": [
+    "100% Raw & Unheated",
+    "NMR Lab Tested (0% Sugar Syrup)",
+    "Unpasteurized & Coarsely Filtered",
+    "Preserved Live Bee Pollen",
+    "Heavy Solid Glass (Microplastic-Free)"
+  ],
+  "aboutItems": [
+    "【100% COLD-EXTRACTED RAW HONEY】: Single-origin raw honey harvested without heating above hive temperature (38°C), safeguarding living bio-enzymes.",
+    "【GERMAN NMR 400MHz PURITY TESTED】: Molecularly fingerprinted to guarantee 0% adulteration, zero C3/C4 corn syrup, and zero antibiotics.",
+    "【SOLID GLASS PACKAGING (250G)】: Bottled exclusively in inert food-grade solid flint glass to prevent chemical leaching and protect volatile aromas.",
+    "【NATURAL POLLEN & ENZYMES】: Retains beneficial natural floral pollen, propolis, and bio-available polyphenols.",
+    "【LEGAL METROLOGY & FSSAI COMPLIANT】: Sealed with tamper-evident band, batch-level testing QR code, and standard net weight."
+  ],
+  "technicalDetails": {
+    "Brand": "Ganesh Mule Pure Honey",
+    "Flavour": "Nutty, Warm Sesame Flora with Mild Sweet Aftertaste",
+    "Net Weight": "250g",
+    "Package Information": "Heavy Food-Grade Solid Glass Jar",
+    "Item Form": "Raw Liquid with Natural Micro-Crystallization",
+    "Diastase Activity": "High Active Enzyme Viability (>12 Schade)",
+    "Moisture Content": "<18% (Compliant with FSSAI Honey Standards)",
+    "Specialty": "Cold Extracted, Unheated, No Added Sugar, Zero Preservatives",
+    "Country of Origin": "India",
+    "Shelf Life": "24 Months (Indefinite if kept dry and sealed)"
+  },
+  "customerReviews": [
+    {
+      "id": "rev-sesame-honey-250g-1",
+      "author": "Arun Kulkarni",
+      "rating": 5,
+      "title": "Exceptional aroma and authentic raw Sesame Honey",
+      "date": "12 November 2026",
+      "verifiedPurchase": true,
+      "content": "You can instantly taste the floral notes and natural goodness. The solid glass jar packaging arrived completely safe in protective cushioning. Highly recommended!",
+      "helpfulCount": 34
+    },
+    {
+      "id": "rev-sesame-honey-250g-2",
+      "author": "Meera Sengupta",
+      "rating": 5,
+      "title": "True raw honey that naturally micro-crystallizes",
+      "date": "04 November 2026",
+      "verifiedPurchase": true,
+      "content": "Delighted to find authentic Indian honey that isn't boiled or ultra-filtered sugar water. Great value in the 250g glass jar.",
+      "helpfulCount": 21
+    }
+  ],
+  "qAndA": [
+    {
+      "question": "Is this honey heated or pasteurized during bottling?",
+      "answer": "Never. Our honey is cold-extracted and coarsely strained through stainless mesh. It is never heated above ambient hive temperature to keep all active enzymes alive.",
+      "votes": 45
+    },
+    {
+      "question": "Is the glass jar safe during courier shipping?",
+      "answer": "Yes! Every jar is shipped in 5-ply engineered shock-proof honeycomb kraft cushioning with a zero-breakage guarantee.",
+      "votes": 38
+    }
+  ],
+  "images": [
+    {
+      "id": "img-sesame-honey-250g-1",
+      "url": "/images/honey-brand/Sesame Honey/250g/image_1_amazon_main.jpg",
+      "altText": "Sesame Honey 250g Amazon Main Studio Shot in Solid Glass",
+      "position": 0
+    },
+    {
+      "id": "img-sesame-honey-250g-2",
+      "url": "/images/honey-brand/Sesame Honey/250g/image_2_lifestyle.jpg",
+      "altText": "Sesame Honey 250g Lifestyle Photography on Teak Wood with Dipper",
+      "position": 1
+    },
+    {
+      "id": "img-sesame-honey-250g-3",
+      "url": "/images/honey-brand/Sesame Honey/250g/image_3_texture.jpg",
+      "altText": "Raw Unpasteurized Sesame Honey Slow Micro-Drizzle Macro Texture",
+      "position": 2
+    },
+    {
+      "id": "img-sesame-honey-250g-4",
+      "url": "/images/honey-brand/Sesame Honey/250g/image_6_size_comparison.jpg",
+      "altText": "Ganesh Mule Raw Honey Trio Size Comparison (250g, 500g, 1kg)",
+      "position": 3
+    }
+  ],
+  "createdAt": "2026-11-20T14:28:59.683Z",
+  "updatedAt": "2026-11-20T14:28:59.683Z"
+},
+  {
+  "id": "prod-sesame-honey-500g",
+  "slug": "sesame-honey-500g",
+  "sku": "GM-SES-500G",
+  "name": "Sesame Honey (500g)",
+  "description": "Single-origin unheated honey harvested during peak sesame flowering. Naturally high in zinc, calcium minerals, and antioxidant flavonoids.",
+  "price": 39900,
+  "compareAtPrice": 54900,
+  "costPrice": 17000,
+  "categoryId": "cat-sesame",
+  "category": {
+    "id": "cat-sesame",
+    "slug": "sesame-honey",
+    "name": "Pure Sesame Blossom Honey",
+    "description": "Single-origin unheated honey harvested during peak sesame flowering. Naturally high in zinc, calcium minerals, and antioxidant flavonoids.",
+    "isVisible": true
+  },
+  "stockQuantity": 120,
+  "reservedQuantity": 0,
+  "lowStockThreshold": 10,
+  "isPublished": true,
+  "badge": "Most Popular",
+  "badgeColor": "purple",
+  "rating": 4.9,
+  "ratingCount": 486,
+  "answeredQuestionsCount": 28,
+  "weightGrams": 500,
+  "batchNumber": "BATCH-2026-SES500G",
+  "harvestDate": "October 2026",
+  "flavour": "Nutty, Warm Sesame Flora with Mild Sweet Aftertaste",
+  "origin": "Solapur & Marathwada Sesame Groves, Maharashtra",
+  "packageType": "Heavy Food-Safe Solid Glass Jar with Airtight Seal",
+  "speciality": [
+    "100% Raw & Unheated",
+    "NMR Lab Tested (0% Sugar Syrup)",
+    "Unpasteurized & Coarsely Filtered",
+    "Preserved Live Bee Pollen",
+    "Heavy Solid Glass (Microplastic-Free)"
+  ],
+  "aboutItems": [
+    "【100% COLD-EXTRACTED RAW HONEY】: Single-origin raw honey harvested without heating above hive temperature (38°C), safeguarding living bio-enzymes.",
+    "【GERMAN NMR 400MHz PURITY TESTED】: Molecularly fingerprinted to guarantee 0% adulteration, zero C3/C4 corn syrup, and zero antibiotics.",
+    "【SOLID GLASS PACKAGING (500G)】: Bottled exclusively in inert food-grade solid flint glass to prevent chemical leaching and protect volatile aromas.",
+    "【NATURAL POLLEN & ENZYMES】: Retains beneficial natural floral pollen, propolis, and bio-available polyphenols.",
+    "【LEGAL METROLOGY & FSSAI COMPLIANT】: Sealed with tamper-evident band, batch-level testing QR code, and standard net weight."
+  ],
+  "technicalDetails": {
+    "Brand": "Ganesh Mule Pure Honey",
+    "Flavour": "Nutty, Warm Sesame Flora with Mild Sweet Aftertaste",
+    "Net Weight": "500g",
+    "Package Information": "Heavy Food-Grade Solid Glass Jar",
+    "Item Form": "Raw Liquid with Natural Micro-Crystallization",
+    "Diastase Activity": "High Active Enzyme Viability (>12 Schade)",
+    "Moisture Content": "<18% (Compliant with FSSAI Honey Standards)",
+    "Specialty": "Cold Extracted, Unheated, No Added Sugar, Zero Preservatives",
+    "Country of Origin": "India",
+    "Shelf Life": "24 Months (Indefinite if kept dry and sealed)"
+  },
+  "customerReviews": [
+    {
+      "id": "rev-sesame-honey-500g-1",
+      "author": "Arun Kulkarni",
+      "rating": 5,
+      "title": "Exceptional aroma and authentic raw Sesame Honey",
+      "date": "12 November 2026",
+      "verifiedPurchase": true,
+      "content": "You can instantly taste the floral notes and natural goodness. The solid glass jar packaging arrived completely safe in protective cushioning. Highly recommended!",
+      "helpfulCount": 34
+    },
+    {
+      "id": "rev-sesame-honey-500g-2",
+      "author": "Meera Sengupta",
+      "rating": 5,
+      "title": "True raw honey that naturally micro-crystallizes",
+      "date": "04 November 2026",
+      "verifiedPurchase": true,
+      "content": "Delighted to find authentic Indian honey that isn't boiled or ultra-filtered sugar water. Great value in the 500g glass jar.",
+      "helpfulCount": 21
+    }
+  ],
+  "qAndA": [
+    {
+      "question": "Is this honey heated or pasteurized during bottling?",
+      "answer": "Never. Our honey is cold-extracted and coarsely strained through stainless mesh. It is never heated above ambient hive temperature to keep all active enzymes alive.",
+      "votes": 45
+    },
+    {
+      "question": "Is the glass jar safe during courier shipping?",
+      "answer": "Yes! Every jar is shipped in 5-ply engineered shock-proof honeycomb kraft cushioning with a zero-breakage guarantee.",
+      "votes": 38
+    }
+  ],
+  "images": [
+    {
+      "id": "img-sesame-honey-500g-1",
+      "url": "/images/honey-brand/Sesame Honey/500g/image_1_amazon_main.jpg",
+      "altText": "Sesame Honey 500g Amazon Main Studio Shot in Solid Glass",
+      "position": 0
+    },
+    {
+      "id": "img-sesame-honey-500g-2",
+      "url": "/images/honey-brand/Sesame Honey/500g/image_2_lifestyle.jpg",
+      "altText": "Sesame Honey 500g Lifestyle Photography on Teak Wood with Dipper",
+      "position": 1
+    },
+    {
+      "id": "img-sesame-honey-500g-3",
+      "url": "/images/honey-brand/Sesame Honey/500g/image_3_texture.jpg",
+      "altText": "Raw Unpasteurized Sesame Honey Slow Micro-Drizzle Macro Texture",
+      "position": 2
+    },
+    {
+      "id": "img-sesame-honey-500g-4",
+      "url": "/images/honey-brand/Sesame Honey/500g/image_6_size_comparison.jpg",
+      "altText": "Ganesh Mule Raw Honey Trio Size Comparison (250g, 500g, 1kg)",
+      "position": 3
+    }
+  ],
+  "createdAt": "2026-11-20T14:28:59.683Z",
+  "updatedAt": "2026-11-20T14:28:59.683Z"
+},
+  {
+  "id": "prod-sesame-honey-1kg",
+  "slug": "sesame-honey-1kg",
+  "sku": "GM-SES-1KG",
+  "name": "Sesame Honey (1kg)",
+  "description": "Single-origin unheated honey harvested during peak sesame flowering. Naturally high in zinc, calcium minerals, and antioxidant flavonoids.",
+  "price": 74900,
+  "compareAtPrice": 99900,
+  "costPrice": 31000,
+  "categoryId": "cat-sesame",
+  "category": {
+    "id": "cat-sesame",
+    "slug": "sesame-honey",
+    "name": "Pure Sesame Blossom Honey",
+    "description": "Single-origin unheated honey harvested during peak sesame flowering. Naturally high in zinc, calcium minerals, and antioxidant flavonoids.",
+    "isVisible": true
+  },
+  "stockQuantity": 65,
+  "reservedQuantity": 0,
+  "lowStockThreshold": 10,
+  "isPublished": true,
+  "badge": "Best Value",
+  "badgeColor": "purple",
+  "rating": 4.9,
+  "ratingCount": 528,
+  "answeredQuestionsCount": 28,
+  "weightGrams": 1000,
+  "batchNumber": "BATCH-2026-SES1KG",
+  "harvestDate": "October 2026",
+  "flavour": "Nutty, Warm Sesame Flora with Mild Sweet Aftertaste",
+  "origin": "Solapur & Marathwada Sesame Groves, Maharashtra",
+  "packageType": "Heavy Food-Safe Solid Glass Jar with Airtight Seal",
+  "speciality": [
+    "100% Raw & Unheated",
+    "NMR Lab Tested (0% Sugar Syrup)",
+    "Unpasteurized & Coarsely Filtered",
+    "Preserved Live Bee Pollen",
+    "Heavy Solid Glass (Microplastic-Free)"
+  ],
+  "aboutItems": [
+    "【100% COLD-EXTRACTED RAW HONEY】: Single-origin raw honey harvested without heating above hive temperature (38°C), safeguarding living bio-enzymes.",
+    "【GERMAN NMR 400MHz PURITY TESTED】: Molecularly fingerprinted to guarantee 0% adulteration, zero C3/C4 corn syrup, and zero antibiotics.",
+    "【SOLID GLASS PACKAGING (1KG)】: Bottled exclusively in inert food-grade solid flint glass to prevent chemical leaching and protect volatile aromas.",
+    "【NATURAL POLLEN & ENZYMES】: Retains beneficial natural floral pollen, propolis, and bio-available polyphenols.",
+    "【LEGAL METROLOGY & FSSAI COMPLIANT】: Sealed with tamper-evident band, batch-level testing QR code, and standard net weight."
+  ],
+  "technicalDetails": {
+    "Brand": "Ganesh Mule Pure Honey",
+    "Flavour": "Nutty, Warm Sesame Flora with Mild Sweet Aftertaste",
+    "Net Weight": "1kg",
+    "Package Information": "Heavy Food-Grade Solid Glass Jar",
+    "Item Form": "Raw Liquid with Natural Micro-Crystallization",
+    "Diastase Activity": "High Active Enzyme Viability (>12 Schade)",
+    "Moisture Content": "<18% (Compliant with FSSAI Honey Standards)",
+    "Specialty": "Cold Extracted, Unheated, No Added Sugar, Zero Preservatives",
+    "Country of Origin": "India",
+    "Shelf Life": "24 Months (Indefinite if kept dry and sealed)"
+  },
+  "customerReviews": [
+    {
+      "id": "rev-sesame-honey-1kg-1",
+      "author": "Arun Kulkarni",
+      "rating": 5,
+      "title": "Exceptional aroma and authentic raw Sesame Honey",
+      "date": "12 November 2026",
+      "verifiedPurchase": true,
+      "content": "You can instantly taste the floral notes and natural goodness. The solid glass jar packaging arrived completely safe in protective cushioning. Highly recommended!",
+      "helpfulCount": 34
+    },
+    {
+      "id": "rev-sesame-honey-1kg-2",
+      "author": "Meera Sengupta",
+      "rating": 5,
+      "title": "True raw honey that naturally micro-crystallizes",
+      "date": "04 November 2026",
+      "verifiedPurchase": true,
+      "content": "Delighted to find authentic Indian honey that isn't boiled or ultra-filtered sugar water. Great value in the 1kg glass jar.",
+      "helpfulCount": 21
+    }
+  ],
+  "qAndA": [
+    {
+      "question": "Is this honey heated or pasteurized during bottling?",
+      "answer": "Never. Our honey is cold-extracted and coarsely strained through stainless mesh. It is never heated above ambient hive temperature to keep all active enzymes alive.",
+      "votes": 45
+    },
+    {
+      "question": "Is the glass jar safe during courier shipping?",
+      "answer": "Yes! Every jar is shipped in 5-ply engineered shock-proof honeycomb kraft cushioning with a zero-breakage guarantee.",
+      "votes": 38
+    }
+  ],
+  "images": [
+    {
+      "id": "img-sesame-honey-1kg-1",
+      "url": "/images/honey-brand/Sesame Honey/1kg/image_1_amazon_main.jpg",
+      "altText": "Sesame Honey 1kg Amazon Main Studio Shot in Solid Glass",
+      "position": 0
+    },
+    {
+      "id": "img-sesame-honey-1kg-2",
+      "url": "/images/honey-brand/Sesame Honey/1kg/image_2_lifestyle.jpg",
+      "altText": "Sesame Honey 1kg Lifestyle Photography on Teak Wood with Dipper",
+      "position": 1
+    },
+    {
+      "id": "img-sesame-honey-1kg-3",
+      "url": "/images/honey-brand/Sesame Honey/1kg/image_3_texture.jpg",
+      "altText": "Raw Unpasteurized Sesame Honey Slow Micro-Drizzle Macro Texture",
+      "position": 2
+    },
+    {
+      "id": "img-sesame-honey-1kg-4",
+      "url": "/images/honey-brand/Sesame Honey/1kg/image_6_size_comparison.jpg",
+      "altText": "Ganesh Mule Raw Honey Trio Size Comparison (250g, 500g, 1kg)",
+      "position": 3
+    }
+  ],
+  "createdAt": "2026-11-20T14:28:59.683Z",
+  "updatedAt": "2026-11-20T14:28:59.683Z"
+},
+  {
+  "id": "prod-ajwain-honey-250g",
+  "slug": "ajwain-honey-250g",
+  "sku": "GM-AJW-250G",
+  "name": "Ajwain Honey (250g)",
+  "description": "Distinctive raw honey harvested from white carom flowers. Celebrated in Ayurveda for respiratory comfort, gut health, and soothing digestion.",
+  "price": 19900,
+  "compareAtPrice": 27500,
+  "costPrice": 9500,
+  "categoryId": "cat-ajwain",
+  "category": {
+    "id": "cat-ajwain",
+    "slug": "ajwain-honey",
+    "name": "Organic Ajwain (Carom) Honey",
+    "description": "Distinctive raw honey harvested from white carom flowers. Celebrated in Ayurveda for respiratory comfort, gut health, and soothing digestion.",
+    "isVisible": true
+  },
+  "stockQuantity": 80,
+  "reservedQuantity": 0,
+  "lowStockThreshold": 10,
+  "isPublished": true,
+  "badge": "Ayurvedic Digest",
+  "badgeColor": "emerald",
+  "rating": 4.9,
+  "ratingCount": 451,
+  "answeredQuestionsCount": 28,
+  "weightGrams": 250,
+  "batchNumber": "BATCH-2026-AJW250G",
+  "harvestDate": "October 2026",
+  "flavour": "Herbal, Pungent & Warm Digestive Carom Notes",
+  "origin": "Organic Carom Seed Farms, Rajasthan & Gujarat",
+  "packageType": "Heavy Food-Safe Solid Glass Jar with Airtight Seal",
+  "speciality": [
+    "100% Raw & Unheated",
+    "NMR Lab Tested (0% Sugar Syrup)",
+    "Unpasteurized & Coarsely Filtered",
+    "Preserved Live Bee Pollen",
+    "Heavy Solid Glass (Microplastic-Free)"
+  ],
+  "aboutItems": [
+    "【100% COLD-EXTRACTED RAW HONEY】: Single-origin raw honey harvested without heating above hive temperature (38°C), safeguarding living bio-enzymes.",
+    "【GERMAN NMR 400MHz PURITY TESTED】: Molecularly fingerprinted to guarantee 0% adulteration, zero C3/C4 corn syrup, and zero antibiotics.",
+    "【SOLID GLASS PACKAGING (250G)】: Bottled exclusively in inert food-grade solid flint glass to prevent chemical leaching and protect volatile aromas.",
+    "【NATURAL POLLEN & ENZYMES】: Retains beneficial natural floral pollen, propolis, and bio-available polyphenols.",
+    "【LEGAL METROLOGY & FSSAI COMPLIANT】: Sealed with tamper-evident band, batch-level testing QR code, and standard net weight."
+  ],
+  "technicalDetails": {
+    "Brand": "Ganesh Mule Pure Honey",
+    "Flavour": "Herbal, Pungent & Warm Digestive Carom Notes",
+    "Net Weight": "250g",
+    "Package Information": "Heavy Food-Grade Solid Glass Jar",
+    "Item Form": "Raw Liquid with Natural Micro-Crystallization",
+    "Diastase Activity": "High Active Enzyme Viability (>12 Schade)",
+    "Moisture Content": "<18% (Compliant with FSSAI Honey Standards)",
+    "Specialty": "Cold Extracted, Unheated, No Added Sugar, Zero Preservatives",
+    "Country of Origin": "India",
+    "Shelf Life": "24 Months (Indefinite if kept dry and sealed)"
+  },
+  "customerReviews": [
+    {
+      "id": "rev-ajwain-honey-250g-1",
+      "author": "Arun Kulkarni",
+      "rating": 5,
+      "title": "Exceptional aroma and authentic raw Ajwain Honey",
+      "date": "12 November 2026",
+      "verifiedPurchase": true,
+      "content": "You can instantly taste the floral notes and natural goodness. The solid glass jar packaging arrived completely safe in protective cushioning. Highly recommended!",
+      "helpfulCount": 34
+    },
+    {
+      "id": "rev-ajwain-honey-250g-2",
+      "author": "Meera Sengupta",
+      "rating": 5,
+      "title": "True raw honey that naturally micro-crystallizes",
+      "date": "04 November 2026",
+      "verifiedPurchase": true,
+      "content": "Delighted to find authentic Indian honey that isn't boiled or ultra-filtered sugar water. Great value in the 250g glass jar.",
+      "helpfulCount": 21
+    }
+  ],
+  "qAndA": [
+    {
+      "question": "Is this honey heated or pasteurized during bottling?",
+      "answer": "Never. Our honey is cold-extracted and coarsely strained through stainless mesh. It is never heated above ambient hive temperature to keep all active enzymes alive.",
+      "votes": 45
+    },
+    {
+      "question": "Is the glass jar safe during courier shipping?",
+      "answer": "Yes! Every jar is shipped in 5-ply engineered shock-proof honeycomb kraft cushioning with a zero-breakage guarantee.",
+      "votes": 38
+    }
+  ],
+  "images": [
+    {
+      "id": "img-ajwain-honey-250g-1",
+      "url": "/images/honey-brand/Ajwain Honey/250g/image_1_amazon_main.jpg",
+      "altText": "Ajwain Honey 250g Amazon Main Studio Shot in Solid Glass",
+      "position": 0
+    },
+    {
+      "id": "img-ajwain-honey-250g-2",
+      "url": "/images/honey-brand/Ajwain Honey/250g/image_2_lifestyle.jpg",
+      "altText": "Ajwain Honey 250g Lifestyle Photography on Teak Wood with Dipper",
+      "position": 1
+    },
+    {
+      "id": "img-ajwain-honey-250g-3",
+      "url": "/images/honey-brand/Ajwain Honey/250g/image_3_texture.jpg",
+      "altText": "Raw Unpasteurized Ajwain Honey Slow Micro-Drizzle Macro Texture",
+      "position": 2
+    },
+    {
+      "id": "img-ajwain-honey-250g-4",
+      "url": "/images/honey-brand/Ajwain Honey/250g/image_6_size_comparison.jpg",
+      "altText": "Ganesh Mule Raw Honey Trio Size Comparison (250g, 500g, 1kg)",
+      "position": 3
+    }
+  ],
+  "createdAt": "2026-11-20T14:28:59.683Z",
+  "updatedAt": "2026-11-20T14:28:59.683Z"
+},
+  {
+  "id": "prod-ajwain-honey-500g",
+  "slug": "ajwain-honey-500g",
+  "sku": "GM-AJW-500G",
+  "name": "Ajwain Honey (500g)",
+  "description": "Distinctive raw honey harvested from white carom flowers. Celebrated in Ayurveda for respiratory comfort, gut health, and soothing digestion.",
+  "price": 39900,
+  "compareAtPrice": 54900,
+  "costPrice": 17000,
+  "categoryId": "cat-ajwain",
+  "category": {
+    "id": "cat-ajwain",
+    "slug": "ajwain-honey",
+    "name": "Organic Ajwain (Carom) Honey",
+    "description": "Distinctive raw honey harvested from white carom flowers. Celebrated in Ayurveda for respiratory comfort, gut health, and soothing digestion.",
+    "isVisible": true
+  },
+  "stockQuantity": 120,
+  "reservedQuantity": 0,
+  "lowStockThreshold": 10,
+  "isPublished": true,
+  "badge": "Most Popular",
+  "badgeColor": "emerald",
+  "rating": 4.9,
+  "ratingCount": 436,
+  "answeredQuestionsCount": 28,
+  "weightGrams": 500,
+  "batchNumber": "BATCH-2026-AJW500G",
+  "harvestDate": "October 2026",
+  "flavour": "Herbal, Pungent & Warm Digestive Carom Notes",
+  "origin": "Organic Carom Seed Farms, Rajasthan & Gujarat",
+  "packageType": "Heavy Food-Safe Solid Glass Jar with Airtight Seal",
+  "speciality": [
+    "100% Raw & Unheated",
+    "NMR Lab Tested (0% Sugar Syrup)",
+    "Unpasteurized & Coarsely Filtered",
+    "Preserved Live Bee Pollen",
+    "Heavy Solid Glass (Microplastic-Free)"
+  ],
+  "aboutItems": [
+    "【100% COLD-EXTRACTED RAW HONEY】: Single-origin raw honey harvested without heating above hive temperature (38°C), safeguarding living bio-enzymes.",
+    "【GERMAN NMR 400MHz PURITY TESTED】: Molecularly fingerprinted to guarantee 0% adulteration, zero C3/C4 corn syrup, and zero antibiotics.",
+    "【SOLID GLASS PACKAGING (500G)】: Bottled exclusively in inert food-grade solid flint glass to prevent chemical leaching and protect volatile aromas.",
+    "【NATURAL POLLEN & ENZYMES】: Retains beneficial natural floral pollen, propolis, and bio-available polyphenols.",
+    "【LEGAL METROLOGY & FSSAI COMPLIANT】: Sealed with tamper-evident band, batch-level testing QR code, and standard net weight."
+  ],
+  "technicalDetails": {
+    "Brand": "Ganesh Mule Pure Honey",
+    "Flavour": "Herbal, Pungent & Warm Digestive Carom Notes",
+    "Net Weight": "500g",
+    "Package Information": "Heavy Food-Grade Solid Glass Jar",
+    "Item Form": "Raw Liquid with Natural Micro-Crystallization",
+    "Diastase Activity": "High Active Enzyme Viability (>12 Schade)",
+    "Moisture Content": "<18% (Compliant with FSSAI Honey Standards)",
+    "Specialty": "Cold Extracted, Unheated, No Added Sugar, Zero Preservatives",
+    "Country of Origin": "India",
+    "Shelf Life": "24 Months (Indefinite if kept dry and sealed)"
+  },
+  "customerReviews": [
+    {
+      "id": "rev-ajwain-honey-500g-1",
+      "author": "Arun Kulkarni",
+      "rating": 5,
+      "title": "Exceptional aroma and authentic raw Ajwain Honey",
+      "date": "12 November 2026",
+      "verifiedPurchase": true,
+      "content": "You can instantly taste the floral notes and natural goodness. The solid glass jar packaging arrived completely safe in protective cushioning. Highly recommended!",
+      "helpfulCount": 34
+    },
+    {
+      "id": "rev-ajwain-honey-500g-2",
+      "author": "Meera Sengupta",
+      "rating": 5,
+      "title": "True raw honey that naturally micro-crystallizes",
+      "date": "04 November 2026",
+      "verifiedPurchase": true,
+      "content": "Delighted to find authentic Indian honey that isn't boiled or ultra-filtered sugar water. Great value in the 500g glass jar.",
+      "helpfulCount": 21
+    }
+  ],
+  "qAndA": [
+    {
+      "question": "Is this honey heated or pasteurized during bottling?",
+      "answer": "Never. Our honey is cold-extracted and coarsely strained through stainless mesh. It is never heated above ambient hive temperature to keep all active enzymes alive.",
+      "votes": 45
+    },
+    {
+      "question": "Is the glass jar safe during courier shipping?",
+      "answer": "Yes! Every jar is shipped in 5-ply engineered shock-proof honeycomb kraft cushioning with a zero-breakage guarantee.",
+      "votes": 38
+    }
+  ],
+  "images": [
+    {
+      "id": "img-ajwain-honey-500g-1",
+      "url": "/images/honey-brand/Ajwain Honey/500g/image_1_amazon_main.jpg",
+      "altText": "Ajwain Honey 500g Amazon Main Studio Shot in Solid Glass",
+      "position": 0
+    },
+    {
+      "id": "img-ajwain-honey-500g-2",
+      "url": "/images/honey-brand/Ajwain Honey/500g/image_2_lifestyle.jpg",
+      "altText": "Ajwain Honey 500g Lifestyle Photography on Teak Wood with Dipper",
+      "position": 1
+    },
+    {
+      "id": "img-ajwain-honey-500g-3",
+      "url": "/images/honey-brand/Ajwain Honey/500g/image_3_texture.jpg",
+      "altText": "Raw Unpasteurized Ajwain Honey Slow Micro-Drizzle Macro Texture",
+      "position": 2
+    },
+    {
+      "id": "img-ajwain-honey-500g-4",
+      "url": "/images/honey-brand/Ajwain Honey/500g/image_6_size_comparison.jpg",
+      "altText": "Ganesh Mule Raw Honey Trio Size Comparison (250g, 500g, 1kg)",
+      "position": 3
+    }
+  ],
+  "createdAt": "2026-11-20T14:28:59.683Z",
+  "updatedAt": "2026-11-20T14:28:59.683Z"
+},
+  {
+  "id": "prod-ajwain-honey-1kg",
+  "slug": "ajwain-honey-1kg",
+  "sku": "GM-AJW-1KG",
+  "name": "Ajwain Honey (1kg)",
+  "description": "Distinctive raw honey harvested from white carom flowers. Celebrated in Ayurveda for respiratory comfort, gut health, and soothing digestion.",
+  "price": 74900,
+  "compareAtPrice": 99900,
+  "costPrice": 31000,
+  "categoryId": "cat-ajwain",
+  "category": {
+    "id": "cat-ajwain",
+    "slug": "ajwain-honey",
+    "name": "Organic Ajwain (Carom) Honey",
+    "description": "Distinctive raw honey harvested from white carom flowers. Celebrated in Ayurveda for respiratory comfort, gut health, and soothing digestion.",
+    "isVisible": true
+  },
+  "stockQuantity": 65,
+  "reservedQuantity": 0,
+  "lowStockThreshold": 10,
+  "isPublished": true,
+  "badge": "Best Value",
+  "badgeColor": "emerald",
+  "rating": 4.9,
+  "ratingCount": 885,
+  "answeredQuestionsCount": 28,
+  "weightGrams": 1000,
+  "batchNumber": "BATCH-2026-AJW1KG",
+  "harvestDate": "October 2026",
+  "flavour": "Herbal, Pungent & Warm Digestive Carom Notes",
+  "origin": "Organic Carom Seed Farms, Rajasthan & Gujarat",
+  "packageType": "Heavy Food-Safe Solid Glass Jar with Airtight Seal",
+  "speciality": [
+    "100% Raw & Unheated",
+    "NMR Lab Tested (0% Sugar Syrup)",
+    "Unpasteurized & Coarsely Filtered",
+    "Preserved Live Bee Pollen",
+    "Heavy Solid Glass (Microplastic-Free)"
+  ],
+  "aboutItems": [
+    "【100% COLD-EXTRACTED RAW HONEY】: Single-origin raw honey harvested without heating above hive temperature (38°C), safeguarding living bio-enzymes.",
+    "【GERMAN NMR 400MHz PURITY TESTED】: Molecularly fingerprinted to guarantee 0% adulteration, zero C3/C4 corn syrup, and zero antibiotics.",
+    "【SOLID GLASS PACKAGING (1KG)】: Bottled exclusively in inert food-grade solid flint glass to prevent chemical leaching and protect volatile aromas.",
+    "【NATURAL POLLEN & ENZYMES】: Retains beneficial natural floral pollen, propolis, and bio-available polyphenols.",
+    "【LEGAL METROLOGY & FSSAI COMPLIANT】: Sealed with tamper-evident band, batch-level testing QR code, and standard net weight."
+  ],
+  "technicalDetails": {
+    "Brand": "Ganesh Mule Pure Honey",
+    "Flavour": "Herbal, Pungent & Warm Digestive Carom Notes",
+    "Net Weight": "1kg",
+    "Package Information": "Heavy Food-Grade Solid Glass Jar",
+    "Item Form": "Raw Liquid with Natural Micro-Crystallization",
+    "Diastase Activity": "High Active Enzyme Viability (>12 Schade)",
+    "Moisture Content": "<18% (Compliant with FSSAI Honey Standards)",
+    "Specialty": "Cold Extracted, Unheated, No Added Sugar, Zero Preservatives",
+    "Country of Origin": "India",
+    "Shelf Life": "24 Months (Indefinite if kept dry and sealed)"
+  },
+  "customerReviews": [
+    {
+      "id": "rev-ajwain-honey-1kg-1",
+      "author": "Arun Kulkarni",
+      "rating": 5,
+      "title": "Exceptional aroma and authentic raw Ajwain Honey",
+      "date": "12 November 2026",
+      "verifiedPurchase": true,
+      "content": "You can instantly taste the floral notes and natural goodness. The solid glass jar packaging arrived completely safe in protective cushioning. Highly recommended!",
+      "helpfulCount": 34
+    },
+    {
+      "id": "rev-ajwain-honey-1kg-2",
+      "author": "Meera Sengupta",
+      "rating": 5,
+      "title": "True raw honey that naturally micro-crystallizes",
+      "date": "04 November 2026",
+      "verifiedPurchase": true,
+      "content": "Delighted to find authentic Indian honey that isn't boiled or ultra-filtered sugar water. Great value in the 1kg glass jar.",
+      "helpfulCount": 21
+    }
+  ],
+  "qAndA": [
+    {
+      "question": "Is this honey heated or pasteurized during bottling?",
+      "answer": "Never. Our honey is cold-extracted and coarsely strained through stainless mesh. It is never heated above ambient hive temperature to keep all active enzymes alive.",
+      "votes": 45
+    },
+    {
+      "question": "Is the glass jar safe during courier shipping?",
+      "answer": "Yes! Every jar is shipped in 5-ply engineered shock-proof honeycomb kraft cushioning with a zero-breakage guarantee.",
+      "votes": 38
+    }
+  ],
+  "images": [
+    {
+      "id": "img-ajwain-honey-1kg-1",
+      "url": "/images/honey-brand/Ajwain Honey/1kg/image_1_amazon_main.jpg",
+      "altText": "Ajwain Honey 1kg Amazon Main Studio Shot in Solid Glass",
+      "position": 0
+    },
+    {
+      "id": "img-ajwain-honey-1kg-2",
+      "url": "/images/honey-brand/Ajwain Honey/1kg/image_2_lifestyle.jpg",
+      "altText": "Ajwain Honey 1kg Lifestyle Photography on Teak Wood with Dipper",
+      "position": 1
+    },
+    {
+      "id": "img-ajwain-honey-1kg-3",
+      "url": "/images/honey-brand/Ajwain Honey/1kg/image_3_texture.jpg",
+      "altText": "Raw Unpasteurized Ajwain Honey Slow Micro-Drizzle Macro Texture",
+      "position": 2
+    },
+    {
+      "id": "img-ajwain-honey-1kg-4",
+      "url": "/images/honey-brand/Ajwain Honey/1kg/image_6_size_comparison.jpg",
+      "altText": "Ganesh Mule Raw Honey Trio Size Comparison (250g, 500g, 1kg)",
+      "position": 3
+    }
+  ],
+  "createdAt": "2026-11-20T14:28:59.683Z",
+  "updatedAt": "2026-11-20T14:28:59.683Z"
+},
+  {
+  "id": "prod-saunf-honey-250g",
+  "slug": "saunf-honey-250g",
+  "sku": "GM-SAU-250G",
+  "name": "Saunf (Fennel) Honey (250g)",
+  "description": "Aromatic unpasteurized raw honey harvested from sweet fennel blooms. Imparts a naturally cooling aftertaste and soothing herbal benefits.",
+  "price": 19900,
+  "compareAtPrice": 27500,
+  "costPrice": 9500,
+  "categoryId": "cat-saunf",
+  "category": {
+    "id": "cat-saunf",
+    "slug": "saunf-honey",
+    "name": "Raw Saunf (Fennel) Honey",
+    "description": "Aromatic unpasteurized raw honey harvested from sweet fennel blooms. Imparts a naturally cooling aftertaste and soothing herbal benefits.",
+    "isVisible": true
+  },
+  "stockQuantity": 80,
+  "reservedQuantity": 0,
+  "lowStockThreshold": 10,
+  "isPublished": true,
+  "badge": "Cooling & Calming",
+  "badgeColor": "cyan",
+  "rating": 4.9,
+  "ratingCount": 736,
+  "answeredQuestionsCount": 28,
+  "weightGrams": 250,
+  "batchNumber": "BATCH-2026-SAU250G",
+  "harvestDate": "October 2026",
+  "flavour": "Sweet Licorice & Refreshing Aniseed Notes",
+  "origin": "Fennel Apiaries, Saurashtra, Gujarat",
+  "packageType": "Heavy Food-Safe Solid Glass Jar with Airtight Seal",
+  "speciality": [
+    "100% Raw & Unheated",
+    "NMR Lab Tested (0% Sugar Syrup)",
+    "Unpasteurized & Coarsely Filtered",
+    "Preserved Live Bee Pollen",
+    "Heavy Solid Glass (Microplastic-Free)"
+  ],
+  "aboutItems": [
+    "【100% COLD-EXTRACTED RAW HONEY】: Single-origin raw honey harvested without heating above hive temperature (38°C), safeguarding living bio-enzymes.",
+    "【GERMAN NMR 400MHz PURITY TESTED】: Molecularly fingerprinted to guarantee 0% adulteration, zero C3/C4 corn syrup, and zero antibiotics.",
+    "【SOLID GLASS PACKAGING (250G)】: Bottled exclusively in inert food-grade solid flint glass to prevent chemical leaching and protect volatile aromas.",
+    "【NATURAL POLLEN & ENZYMES】: Retains beneficial natural floral pollen, propolis, and bio-available polyphenols.",
+    "【LEGAL METROLOGY & FSSAI COMPLIANT】: Sealed with tamper-evident band, batch-level testing QR code, and standard net weight."
+  ],
+  "technicalDetails": {
+    "Brand": "Ganesh Mule Pure Honey",
+    "Flavour": "Sweet Licorice & Refreshing Aniseed Notes",
+    "Net Weight": "250g",
+    "Package Information": "Heavy Food-Grade Solid Glass Jar",
+    "Item Form": "Raw Liquid with Natural Micro-Crystallization",
+    "Diastase Activity": "High Active Enzyme Viability (>12 Schade)",
+    "Moisture Content": "<18% (Compliant with FSSAI Honey Standards)",
+    "Specialty": "Cold Extracted, Unheated, No Added Sugar, Zero Preservatives",
+    "Country of Origin": "India",
+    "Shelf Life": "24 Months (Indefinite if kept dry and sealed)"
+  },
+  "customerReviews": [
+    {
+      "id": "rev-saunf-honey-250g-1",
+      "author": "Arun Kulkarni",
+      "rating": 5,
+      "title": "Exceptional aroma and authentic raw Saunf (Fennel) Honey",
+      "date": "12 November 2026",
+      "verifiedPurchase": true,
+      "content": "You can instantly taste the floral notes and natural goodness. The solid glass jar packaging arrived completely safe in protective cushioning. Highly recommended!",
+      "helpfulCount": 34
+    },
+    {
+      "id": "rev-saunf-honey-250g-2",
+      "author": "Meera Sengupta",
+      "rating": 5,
+      "title": "True raw honey that naturally micro-crystallizes",
+      "date": "04 November 2026",
+      "verifiedPurchase": true,
+      "content": "Delighted to find authentic Indian honey that isn't boiled or ultra-filtered sugar water. Great value in the 250g glass jar.",
+      "helpfulCount": 21
+    }
+  ],
+  "qAndA": [
+    {
+      "question": "Is this honey heated or pasteurized during bottling?",
+      "answer": "Never. Our honey is cold-extracted and coarsely strained through stainless mesh. It is never heated above ambient hive temperature to keep all active enzymes alive.",
+      "votes": 45
+    },
+    {
+      "question": "Is the glass jar safe during courier shipping?",
+      "answer": "Yes! Every jar is shipped in 5-ply engineered shock-proof honeycomb kraft cushioning with a zero-breakage guarantee.",
+      "votes": 38
+    }
+  ],
+  "images": [
+    {
+      "id": "img-saunf-honey-250g-1",
+      "url": "/images/honey-brand/Saunf Honey/250g/image_1_amazon_main.jpg",
+      "altText": "Saunf (Fennel) Honey 250g Amazon Main Studio Shot in Solid Glass",
+      "position": 0
+    },
+    {
+      "id": "img-saunf-honey-250g-2",
+      "url": "/images/honey-brand/Saunf Honey/250g/image_2_lifestyle.jpg",
+      "altText": "Saunf (Fennel) Honey 250g Lifestyle Photography on Teak Wood with Dipper",
+      "position": 1
+    },
+    {
+      "id": "img-saunf-honey-250g-3",
+      "url": "/images/honey-brand/Saunf Honey/250g/image_3_texture.jpg",
+      "altText": "Raw Unpasteurized Saunf (Fennel) Honey Slow Micro-Drizzle Macro Texture",
+      "position": 2
+    },
+    {
+      "id": "img-saunf-honey-250g-4",
+      "url": "/images/honey-brand/Saunf Honey/250g/image_6_size_comparison.jpg",
+      "altText": "Ganesh Mule Raw Honey Trio Size Comparison (250g, 500g, 1kg)",
+      "position": 3
+    }
+  ],
+  "createdAt": "2026-11-20T14:28:59.683Z",
+  "updatedAt": "2026-11-20T14:28:59.683Z"
+},
+  {
+  "id": "prod-saunf-honey-500g",
+  "slug": "saunf-honey-500g",
+  "sku": "GM-SAU-500G",
+  "name": "Saunf (Fennel) Honey (500g)",
+  "description": "Aromatic unpasteurized raw honey harvested from sweet fennel blooms. Imparts a naturally cooling aftertaste and soothing herbal benefits.",
+  "price": 39900,
+  "compareAtPrice": 54900,
+  "costPrice": 17000,
+  "categoryId": "cat-saunf",
+  "category": {
+    "id": "cat-saunf",
+    "slug": "saunf-honey",
+    "name": "Raw Saunf (Fennel) Honey",
+    "description": "Aromatic unpasteurized raw honey harvested from sweet fennel blooms. Imparts a naturally cooling aftertaste and soothing herbal benefits.",
+    "isVisible": true
+  },
+  "stockQuantity": 120,
+  "reservedQuantity": 0,
+  "lowStockThreshold": 10,
+  "isPublished": true,
+  "badge": "Most Popular",
+  "badgeColor": "cyan",
+  "rating": 4.9,
+  "ratingCount": 633,
+  "answeredQuestionsCount": 28,
+  "weightGrams": 500,
+  "batchNumber": "BATCH-2026-SAU500G",
+  "harvestDate": "October 2026",
+  "flavour": "Sweet Licorice & Refreshing Aniseed Notes",
+  "origin": "Fennel Apiaries, Saurashtra, Gujarat",
+  "packageType": "Heavy Food-Safe Solid Glass Jar with Airtight Seal",
+  "speciality": [
+    "100% Raw & Unheated",
+    "NMR Lab Tested (0% Sugar Syrup)",
+    "Unpasteurized & Coarsely Filtered",
+    "Preserved Live Bee Pollen",
+    "Heavy Solid Glass (Microplastic-Free)"
+  ],
+  "aboutItems": [
+    "【100% COLD-EXTRACTED RAW HONEY】: Single-origin raw honey harvested without heating above hive temperature (38°C), safeguarding living bio-enzymes.",
+    "【GERMAN NMR 400MHz PURITY TESTED】: Molecularly fingerprinted to guarantee 0% adulteration, zero C3/C4 corn syrup, and zero antibiotics.",
+    "【SOLID GLASS PACKAGING (500G)】: Bottled exclusively in inert food-grade solid flint glass to prevent chemical leaching and protect volatile aromas.",
+    "【NATURAL POLLEN & ENZYMES】: Retains beneficial natural floral pollen, propolis, and bio-available polyphenols.",
+    "【LEGAL METROLOGY & FSSAI COMPLIANT】: Sealed with tamper-evident band, batch-level testing QR code, and standard net weight."
+  ],
+  "technicalDetails": {
+    "Brand": "Ganesh Mule Pure Honey",
+    "Flavour": "Sweet Licorice & Refreshing Aniseed Notes",
+    "Net Weight": "500g",
+    "Package Information": "Heavy Food-Grade Solid Glass Jar",
+    "Item Form": "Raw Liquid with Natural Micro-Crystallization",
+    "Diastase Activity": "High Active Enzyme Viability (>12 Schade)",
+    "Moisture Content": "<18% (Compliant with FSSAI Honey Standards)",
+    "Specialty": "Cold Extracted, Unheated, No Added Sugar, Zero Preservatives",
+    "Country of Origin": "India",
+    "Shelf Life": "24 Months (Indefinite if kept dry and sealed)"
+  },
+  "customerReviews": [
+    {
+      "id": "rev-saunf-honey-500g-1",
+      "author": "Arun Kulkarni",
+      "rating": 5,
+      "title": "Exceptional aroma and authentic raw Saunf (Fennel) Honey",
+      "date": "12 November 2026",
+      "verifiedPurchase": true,
+      "content": "You can instantly taste the floral notes and natural goodness. The solid glass jar packaging arrived completely safe in protective cushioning. Highly recommended!",
+      "helpfulCount": 34
+    },
+    {
+      "id": "rev-saunf-honey-500g-2",
+      "author": "Meera Sengupta",
+      "rating": 5,
+      "title": "True raw honey that naturally micro-crystallizes",
+      "date": "04 November 2026",
+      "verifiedPurchase": true,
+      "content": "Delighted to find authentic Indian honey that isn't boiled or ultra-filtered sugar water. Great value in the 500g glass jar.",
+      "helpfulCount": 21
+    }
+  ],
+  "qAndA": [
+    {
+      "question": "Is this honey heated or pasteurized during bottling?",
+      "answer": "Never. Our honey is cold-extracted and coarsely strained through stainless mesh. It is never heated above ambient hive temperature to keep all active enzymes alive.",
+      "votes": 45
+    },
+    {
+      "question": "Is the glass jar safe during courier shipping?",
+      "answer": "Yes! Every jar is shipped in 5-ply engineered shock-proof honeycomb kraft cushioning with a zero-breakage guarantee.",
+      "votes": 38
+    }
+  ],
+  "images": [
+    {
+      "id": "img-saunf-honey-500g-1",
+      "url": "/images/honey-brand/Saunf Honey/500g/image_1_amazon_main.jpg",
+      "altText": "Saunf (Fennel) Honey 500g Amazon Main Studio Shot in Solid Glass",
+      "position": 0
+    },
+    {
+      "id": "img-saunf-honey-500g-2",
+      "url": "/images/honey-brand/Saunf Honey/500g/image_2_lifestyle.jpg",
+      "altText": "Saunf (Fennel) Honey 500g Lifestyle Photography on Teak Wood with Dipper",
+      "position": 1
+    },
+    {
+      "id": "img-saunf-honey-500g-3",
+      "url": "/images/honey-brand/Saunf Honey/500g/image_3_texture.jpg",
+      "altText": "Raw Unpasteurized Saunf (Fennel) Honey Slow Micro-Drizzle Macro Texture",
+      "position": 2
+    },
+    {
+      "id": "img-saunf-honey-500g-4",
+      "url": "/images/honey-brand/Saunf Honey/500g/image_6_size_comparison.jpg",
+      "altText": "Ganesh Mule Raw Honey Trio Size Comparison (250g, 500g, 1kg)",
+      "position": 3
+    }
+  ],
+  "createdAt": "2026-11-20T14:28:59.683Z",
+  "updatedAt": "2026-11-20T14:28:59.683Z"
+},
+  {
+  "id": "prod-saunf-honey-1kg",
+  "slug": "saunf-honey-1kg",
+  "sku": "GM-SAU-1KG",
+  "name": "Saunf (Fennel) Honey (1kg)",
+  "description": "Aromatic unpasteurized raw honey harvested from sweet fennel blooms. Imparts a naturally cooling aftertaste and soothing herbal benefits.",
+  "price": 74900,
+  "compareAtPrice": 99900,
+  "costPrice": 31000,
+  "categoryId": "cat-saunf",
+  "category": {
+    "id": "cat-saunf",
+    "slug": "saunf-honey",
+    "name": "Raw Saunf (Fennel) Honey",
+    "description": "Aromatic unpasteurized raw honey harvested from sweet fennel blooms. Imparts a naturally cooling aftertaste and soothing herbal benefits.",
+    "isVisible": true
+  },
+  "stockQuantity": 65,
+  "reservedQuantity": 0,
+  "lowStockThreshold": 10,
+  "isPublished": true,
+  "badge": "Best Value",
+  "badgeColor": "cyan",
+  "rating": 4.9,
+  "ratingCount": 477,
+  "answeredQuestionsCount": 28,
+  "weightGrams": 1000,
+  "batchNumber": "BATCH-2026-SAU1KG",
+  "harvestDate": "October 2026",
+  "flavour": "Sweet Licorice & Refreshing Aniseed Notes",
+  "origin": "Fennel Apiaries, Saurashtra, Gujarat",
+  "packageType": "Heavy Food-Safe Solid Glass Jar with Airtight Seal",
+  "speciality": [
+    "100% Raw & Unheated",
+    "NMR Lab Tested (0% Sugar Syrup)",
+    "Unpasteurized & Coarsely Filtered",
+    "Preserved Live Bee Pollen",
+    "Heavy Solid Glass (Microplastic-Free)"
+  ],
+  "aboutItems": [
+    "【100% COLD-EXTRACTED RAW HONEY】: Single-origin raw honey harvested without heating above hive temperature (38°C), safeguarding living bio-enzymes.",
+    "【GERMAN NMR 400MHz PURITY TESTED】: Molecularly fingerprinted to guarantee 0% adulteration, zero C3/C4 corn syrup, and zero antibiotics.",
+    "【SOLID GLASS PACKAGING (1KG)】: Bottled exclusively in inert food-grade solid flint glass to prevent chemical leaching and protect volatile aromas.",
+    "【NATURAL POLLEN & ENZYMES】: Retains beneficial natural floral pollen, propolis, and bio-available polyphenols.",
+    "【LEGAL METROLOGY & FSSAI COMPLIANT】: Sealed with tamper-evident band, batch-level testing QR code, and standard net weight."
+  ],
+  "technicalDetails": {
+    "Brand": "Ganesh Mule Pure Honey",
+    "Flavour": "Sweet Licorice & Refreshing Aniseed Notes",
+    "Net Weight": "1kg",
+    "Package Information": "Heavy Food-Grade Solid Glass Jar",
+    "Item Form": "Raw Liquid with Natural Micro-Crystallization",
+    "Diastase Activity": "High Active Enzyme Viability (>12 Schade)",
+    "Moisture Content": "<18% (Compliant with FSSAI Honey Standards)",
+    "Specialty": "Cold Extracted, Unheated, No Added Sugar, Zero Preservatives",
+    "Country of Origin": "India",
+    "Shelf Life": "24 Months (Indefinite if kept dry and sealed)"
+  },
+  "customerReviews": [
+    {
+      "id": "rev-saunf-honey-1kg-1",
+      "author": "Arun Kulkarni",
+      "rating": 5,
+      "title": "Exceptional aroma and authentic raw Saunf (Fennel) Honey",
+      "date": "12 November 2026",
+      "verifiedPurchase": true,
+      "content": "You can instantly taste the floral notes and natural goodness. The solid glass jar packaging arrived completely safe in protective cushioning. Highly recommended!",
+      "helpfulCount": 34
+    },
+    {
+      "id": "rev-saunf-honey-1kg-2",
+      "author": "Meera Sengupta",
+      "rating": 5,
+      "title": "True raw honey that naturally micro-crystallizes",
+      "date": "04 November 2026",
+      "verifiedPurchase": true,
+      "content": "Delighted to find authentic Indian honey that isn't boiled or ultra-filtered sugar water. Great value in the 1kg glass jar.",
+      "helpfulCount": 21
+    }
+  ],
+  "qAndA": [
+    {
+      "question": "Is this honey heated or pasteurized during bottling?",
+      "answer": "Never. Our honey is cold-extracted and coarsely strained through stainless mesh. It is never heated above ambient hive temperature to keep all active enzymes alive.",
+      "votes": 45
+    },
+    {
+      "question": "Is the glass jar safe during courier shipping?",
+      "answer": "Yes! Every jar is shipped in 5-ply engineered shock-proof honeycomb kraft cushioning with a zero-breakage guarantee.",
+      "votes": 38
+    }
+  ],
+  "images": [
+    {
+      "id": "img-saunf-honey-1kg-1",
+      "url": "/images/honey-brand/Saunf Honey/1kg/image_1_amazon_main.jpg",
+      "altText": "Saunf (Fennel) Honey 1kg Amazon Main Studio Shot in Solid Glass",
+      "position": 0
+    },
+    {
+      "id": "img-saunf-honey-1kg-2",
+      "url": "/images/honey-brand/Saunf Honey/1kg/image_2_lifestyle.jpg",
+      "altText": "Saunf (Fennel) Honey 1kg Lifestyle Photography on Teak Wood with Dipper",
+      "position": 1
+    },
+    {
+      "id": "img-saunf-honey-1kg-3",
+      "url": "/images/honey-brand/Saunf Honey/1kg/image_3_texture.jpg",
+      "altText": "Raw Unpasteurized Saunf (Fennel) Honey Slow Micro-Drizzle Macro Texture",
+      "position": 2
+    },
+    {
+      "id": "img-saunf-honey-1kg-4",
+      "url": "/images/honey-brand/Saunf Honey/1kg/image_6_size_comparison.jpg",
+      "altText": "Ganesh Mule Raw Honey Trio Size Comparison (250g, 500g, 1kg)",
+      "position": 3
+    }
+  ],
+  "createdAt": "2026-11-20T14:28:59.683Z",
+  "updatedAt": "2026-11-20T14:28:59.683Z"
+},
+  {
+  "id": "prod-multiflora-honey-250g",
+  "slug": "multiflora-honey-250g",
+  "sku": "GM-MUL-250G",
+  "name": "Multiflora Honey (250g)",
+  "description": "Harmonious multifloral nectar gathered by bees foraging across dozens of seasonal medicinal herbs and seasonal forest blossoms.",
+  "price": 19900,
+  "compareAtPrice": 27500,
+  "costPrice": 9500,
+  "categoryId": "cat-multiflora",
+  "category": {
+    "id": "cat-multiflora",
+    "slug": "multiflora-honey",
+    "name": "Wild Multiflora Raw Honey",
+    "description": "Harmonious multifloral nectar gathered by bees foraging across dozens of seasonal medicinal herbs and seasonal forest blossoms.",
+    "isVisible": true
+  },
+  "stockQuantity": 80,
+  "reservedQuantity": 0,
+  "lowStockThreshold": 10,
+  "isPublished": true,
+  "badge": "Daily Wellness",
+  "badgeColor": "blue",
+  "rating": 4.9,
+  "ratingCount": 819,
+  "answeredQuestionsCount": 28,
+  "weightGrams": 250,
+  "batchNumber": "BATCH-2026-MUL250G",
+  "harvestDate": "October 2026",
+  "flavour": "Complex Bouquet of Hundreds of Wild Meadows & Herbs",
+  "origin": "Satpura Alpine Meadows & Forest Foothills",
+  "packageType": "Heavy Food-Safe Solid Glass Jar with Airtight Seal",
+  "speciality": [
+    "100% Raw & Unheated",
+    "NMR Lab Tested (0% Sugar Syrup)",
+    "Unpasteurized & Coarsely Filtered",
+    "Preserved Live Bee Pollen",
+    "Heavy Solid Glass (Microplastic-Free)"
+  ],
+  "aboutItems": [
+    "【100% COLD-EXTRACTED RAW HONEY】: Single-origin raw honey harvested without heating above hive temperature (38°C), safeguarding living bio-enzymes.",
+    "【GERMAN NMR 400MHz PURITY TESTED】: Molecularly fingerprinted to guarantee 0% adulteration, zero C3/C4 corn syrup, and zero antibiotics.",
+    "【SOLID GLASS PACKAGING (250G)】: Bottled exclusively in inert food-grade solid flint glass to prevent chemical leaching and protect volatile aromas.",
+    "【NATURAL POLLEN & ENZYMES】: Retains beneficial natural floral pollen, propolis, and bio-available polyphenols.",
+    "【LEGAL METROLOGY & FSSAI COMPLIANT】: Sealed with tamper-evident band, batch-level testing QR code, and standard net weight."
+  ],
+  "technicalDetails": {
+    "Brand": "Ganesh Mule Pure Honey",
+    "Flavour": "Complex Bouquet of Hundreds of Wild Meadows & Herbs",
+    "Net Weight": "250g",
+    "Package Information": "Heavy Food-Grade Solid Glass Jar",
+    "Item Form": "Raw Liquid with Natural Micro-Crystallization",
+    "Diastase Activity": "High Active Enzyme Viability (>12 Schade)",
+    "Moisture Content": "<18% (Compliant with FSSAI Honey Standards)",
+    "Specialty": "Cold Extracted, Unheated, No Added Sugar, Zero Preservatives",
+    "Country of Origin": "India",
+    "Shelf Life": "24 Months (Indefinite if kept dry and sealed)"
+  },
+  "customerReviews": [
+    {
+      "id": "rev-multiflora-honey-250g-1",
+      "author": "Arun Kulkarni",
+      "rating": 5,
+      "title": "Exceptional aroma and authentic raw Multiflora Honey",
+      "date": "12 November 2026",
+      "verifiedPurchase": true,
+      "content": "You can instantly taste the floral notes and natural goodness. The solid glass jar packaging arrived completely safe in protective cushioning. Highly recommended!",
+      "helpfulCount": 34
+    },
+    {
+      "id": "rev-multiflora-honey-250g-2",
+      "author": "Meera Sengupta",
+      "rating": 5,
+      "title": "True raw honey that naturally micro-crystallizes",
+      "date": "04 November 2026",
+      "verifiedPurchase": true,
+      "content": "Delighted to find authentic Indian honey that isn't boiled or ultra-filtered sugar water. Great value in the 250g glass jar.",
+      "helpfulCount": 21
+    }
+  ],
+  "qAndA": [
+    {
+      "question": "Is this honey heated or pasteurized during bottling?",
+      "answer": "Never. Our honey is cold-extracted and coarsely strained through stainless mesh. It is never heated above ambient hive temperature to keep all active enzymes alive.",
+      "votes": 45
+    },
+    {
+      "question": "Is the glass jar safe during courier shipping?",
+      "answer": "Yes! Every jar is shipped in 5-ply engineered shock-proof honeycomb kraft cushioning with a zero-breakage guarantee.",
+      "votes": 38
+    }
+  ],
+  "images": [
+    {
+      "id": "img-multiflora-honey-250g-1",
+      "url": "/images/honey-brand/Multiflora Honey/250g/image_1_amazon_main.jpg",
+      "altText": "Multiflora Honey 250g Amazon Main Studio Shot in Solid Glass",
+      "position": 0
+    },
+    {
+      "id": "img-multiflora-honey-250g-2",
+      "url": "/images/honey-brand/Multiflora Honey/250g/image_2_lifestyle.jpg",
+      "altText": "Multiflora Honey 250g Lifestyle Photography on Teak Wood with Dipper",
+      "position": 1
+    },
+    {
+      "id": "img-multiflora-honey-250g-3",
+      "url": "/images/honey-brand/Multiflora Honey/250g/image_3_texture.jpg",
+      "altText": "Raw Unpasteurized Multiflora Honey Slow Micro-Drizzle Macro Texture",
+      "position": 2
+    },
+    {
+      "id": "img-multiflora-honey-250g-4",
+      "url": "/images/honey-brand/Multiflora Honey/250g/image_6_size_comparison.jpg",
+      "altText": "Ganesh Mule Raw Honey Trio Size Comparison (250g, 500g, 1kg)",
+      "position": 3
+    }
+  ],
+  "createdAt": "2026-11-20T14:28:59.683Z",
+  "updatedAt": "2026-11-20T14:28:59.683Z"
+},
+  {
+  "id": "prod-multiflora-honey-500g",
+  "slug": "multiflora-honey-500g",
+  "sku": "GM-MUL-500G",
+  "name": "Multiflora Honey (500g)",
+  "description": "Harmonious multifloral nectar gathered by bees foraging across dozens of seasonal medicinal herbs and seasonal forest blossoms.",
+  "price": 39900,
+  "compareAtPrice": 54900,
+  "costPrice": 17000,
+  "categoryId": "cat-multiflora",
+  "category": {
+    "id": "cat-multiflora",
+    "slug": "multiflora-honey",
+    "name": "Wild Multiflora Raw Honey",
+    "description": "Harmonious multifloral nectar gathered by bees foraging across dozens of seasonal medicinal herbs and seasonal forest blossoms.",
+    "isVisible": true
+  },
+  "stockQuantity": 120,
+  "reservedQuantity": 0,
+  "lowStockThreshold": 10,
+  "isPublished": true,
+  "badge": "Most Popular",
+  "badgeColor": "blue",
+  "rating": 4.9,
+  "ratingCount": 690,
+  "answeredQuestionsCount": 28,
+  "weightGrams": 500,
+  "batchNumber": "BATCH-2026-MUL500G",
+  "harvestDate": "October 2026",
+  "flavour": "Complex Bouquet of Hundreds of Wild Meadows & Herbs",
+  "origin": "Satpura Alpine Meadows & Forest Foothills",
+  "packageType": "Heavy Food-Safe Solid Glass Jar with Airtight Seal",
+  "speciality": [
+    "100% Raw & Unheated",
+    "NMR Lab Tested (0% Sugar Syrup)",
+    "Unpasteurized & Coarsely Filtered",
+    "Preserved Live Bee Pollen",
+    "Heavy Solid Glass (Microplastic-Free)"
+  ],
+  "aboutItems": [
+    "【100% COLD-EXTRACTED RAW HONEY】: Single-origin raw honey harvested without heating above hive temperature (38°C), safeguarding living bio-enzymes.",
+    "【GERMAN NMR 400MHz PURITY TESTED】: Molecularly fingerprinted to guarantee 0% adulteration, zero C3/C4 corn syrup, and zero antibiotics.",
+    "【SOLID GLASS PACKAGING (500G)】: Bottled exclusively in inert food-grade solid flint glass to prevent chemical leaching and protect volatile aromas.",
+    "【NATURAL POLLEN & ENZYMES】: Retains beneficial natural floral pollen, propolis, and bio-available polyphenols.",
+    "【LEGAL METROLOGY & FSSAI COMPLIANT】: Sealed with tamper-evident band, batch-level testing QR code, and standard net weight."
+  ],
+  "technicalDetails": {
+    "Brand": "Ganesh Mule Pure Honey",
+    "Flavour": "Complex Bouquet of Hundreds of Wild Meadows & Herbs",
+    "Net Weight": "500g",
+    "Package Information": "Heavy Food-Grade Solid Glass Jar",
+    "Item Form": "Raw Liquid with Natural Micro-Crystallization",
+    "Diastase Activity": "High Active Enzyme Viability (>12 Schade)",
+    "Moisture Content": "<18% (Compliant with FSSAI Honey Standards)",
+    "Specialty": "Cold Extracted, Unheated, No Added Sugar, Zero Preservatives",
+    "Country of Origin": "India",
+    "Shelf Life": "24 Months (Indefinite if kept dry and sealed)"
+  },
+  "customerReviews": [
+    {
+      "id": "rev-multiflora-honey-500g-1",
+      "author": "Arun Kulkarni",
+      "rating": 5,
+      "title": "Exceptional aroma and authentic raw Multiflora Honey",
+      "date": "12 November 2026",
+      "verifiedPurchase": true,
+      "content": "You can instantly taste the floral notes and natural goodness. The solid glass jar packaging arrived completely safe in protective cushioning. Highly recommended!",
+      "helpfulCount": 34
+    },
+    {
+      "id": "rev-multiflora-honey-500g-2",
+      "author": "Meera Sengupta",
+      "rating": 5,
+      "title": "True raw honey that naturally micro-crystallizes",
+      "date": "04 November 2026",
+      "verifiedPurchase": true,
+      "content": "Delighted to find authentic Indian honey that isn't boiled or ultra-filtered sugar water. Great value in the 500g glass jar.",
+      "helpfulCount": 21
+    }
+  ],
+  "qAndA": [
+    {
+      "question": "Is this honey heated or pasteurized during bottling?",
+      "answer": "Never. Our honey is cold-extracted and coarsely strained through stainless mesh. It is never heated above ambient hive temperature to keep all active enzymes alive.",
+      "votes": 45
+    },
+    {
+      "question": "Is the glass jar safe during courier shipping?",
+      "answer": "Yes! Every jar is shipped in 5-ply engineered shock-proof honeycomb kraft cushioning with a zero-breakage guarantee.",
+      "votes": 38
+    }
+  ],
+  "images": [
+    {
+      "id": "img-multiflora-honey-500g-1",
+      "url": "/images/honey-brand/Multiflora Honey/500g/image_1_amazon_main.jpg",
+      "altText": "Multiflora Honey 500g Amazon Main Studio Shot in Solid Glass",
+      "position": 0
+    },
+    {
+      "id": "img-multiflora-honey-500g-2",
+      "url": "/images/honey-brand/Multiflora Honey/500g/image_2_lifestyle.jpg",
+      "altText": "Multiflora Honey 500g Lifestyle Photography on Teak Wood with Dipper",
+      "position": 1
+    },
+    {
+      "id": "img-multiflora-honey-500g-3",
+      "url": "/images/honey-brand/Multiflora Honey/500g/image_3_texture.jpg",
+      "altText": "Raw Unpasteurized Multiflora Honey Slow Micro-Drizzle Macro Texture",
+      "position": 2
+    },
+    {
+      "id": "img-multiflora-honey-500g-4",
+      "url": "/images/honey-brand/Multiflora Honey/500g/image_6_size_comparison.jpg",
+      "altText": "Ganesh Mule Raw Honey Trio Size Comparison (250g, 500g, 1kg)",
+      "position": 3
+    }
+  ],
+  "createdAt": "2026-11-20T14:28:59.683Z",
+  "updatedAt": "2026-11-20T14:28:59.683Z"
+},
+  {
+  "id": "prod-multiflora-honey-1kg",
+  "slug": "multiflora-honey-1kg",
+  "sku": "GM-MUL-1KG",
+  "name": "Multiflora Honey (1kg)",
+  "description": "Harmonious multifloral nectar gathered by bees foraging across dozens of seasonal medicinal herbs and seasonal forest blossoms.",
+  "price": 74900,
+  "compareAtPrice": 99900,
+  "costPrice": 31000,
+  "categoryId": "cat-multiflora",
+  "category": {
+    "id": "cat-multiflora",
+    "slug": "multiflora-honey",
+    "name": "Wild Multiflora Raw Honey",
+    "description": "Harmonious multifloral nectar gathered by bees foraging across dozens of seasonal medicinal herbs and seasonal forest blossoms.",
+    "isVisible": true
+  },
+  "stockQuantity": 65,
+  "reservedQuantity": 0,
+  "lowStockThreshold": 10,
+  "isPublished": true,
+  "badge": "Best Value",
+  "badgeColor": "blue",
+  "rating": 4.9,
+  "ratingCount": 794,
+  "answeredQuestionsCount": 28,
+  "weightGrams": 1000,
+  "batchNumber": "BATCH-2026-MUL1KG",
+  "harvestDate": "October 2026",
+  "flavour": "Complex Bouquet of Hundreds of Wild Meadows & Herbs",
+  "origin": "Satpura Alpine Meadows & Forest Foothills",
+  "packageType": "Heavy Food-Safe Solid Glass Jar with Airtight Seal",
+  "speciality": [
+    "100% Raw & Unheated",
+    "NMR Lab Tested (0% Sugar Syrup)",
+    "Unpasteurized & Coarsely Filtered",
+    "Preserved Live Bee Pollen",
+    "Heavy Solid Glass (Microplastic-Free)"
+  ],
+  "aboutItems": [
+    "【100% COLD-EXTRACTED RAW HONEY】: Single-origin raw honey harvested without heating above hive temperature (38°C), safeguarding living bio-enzymes.",
+    "【GERMAN NMR 400MHz PURITY TESTED】: Molecularly fingerprinted to guarantee 0% adulteration, zero C3/C4 corn syrup, and zero antibiotics.",
+    "【SOLID GLASS PACKAGING (1KG)】: Bottled exclusively in inert food-grade solid flint glass to prevent chemical leaching and protect volatile aromas.",
+    "【NATURAL POLLEN & ENZYMES】: Retains beneficial natural floral pollen, propolis, and bio-available polyphenols.",
+    "【LEGAL METROLOGY & FSSAI COMPLIANT】: Sealed with tamper-evident band, batch-level testing QR code, and standard net weight."
+  ],
+  "technicalDetails": {
+    "Brand": "Ganesh Mule Pure Honey",
+    "Flavour": "Complex Bouquet of Hundreds of Wild Meadows & Herbs",
+    "Net Weight": "1kg",
+    "Package Information": "Heavy Food-Grade Solid Glass Jar",
+    "Item Form": "Raw Liquid with Natural Micro-Crystallization",
+    "Diastase Activity": "High Active Enzyme Viability (>12 Schade)",
+    "Moisture Content": "<18% (Compliant with FSSAI Honey Standards)",
+    "Specialty": "Cold Extracted, Unheated, No Added Sugar, Zero Preservatives",
+    "Country of Origin": "India",
+    "Shelf Life": "24 Months (Indefinite if kept dry and sealed)"
+  },
+  "customerReviews": [
+    {
+      "id": "rev-multiflora-honey-1kg-1",
+      "author": "Arun Kulkarni",
+      "rating": 5,
+      "title": "Exceptional aroma and authentic raw Multiflora Honey",
+      "date": "12 November 2026",
+      "verifiedPurchase": true,
+      "content": "You can instantly taste the floral notes and natural goodness. The solid glass jar packaging arrived completely safe in protective cushioning. Highly recommended!",
+      "helpfulCount": 34
+    },
+    {
+      "id": "rev-multiflora-honey-1kg-2",
+      "author": "Meera Sengupta",
+      "rating": 5,
+      "title": "True raw honey that naturally micro-crystallizes",
+      "date": "04 November 2026",
+      "verifiedPurchase": true,
+      "content": "Delighted to find authentic Indian honey that isn't boiled or ultra-filtered sugar water. Great value in the 1kg glass jar.",
+      "helpfulCount": 21
+    }
+  ],
+  "qAndA": [
+    {
+      "question": "Is this honey heated or pasteurized during bottling?",
+      "answer": "Never. Our honey is cold-extracted and coarsely strained through stainless mesh. It is never heated above ambient hive temperature to keep all active enzymes alive.",
+      "votes": 45
+    },
+    {
+      "question": "Is the glass jar safe during courier shipping?",
+      "answer": "Yes! Every jar is shipped in 5-ply engineered shock-proof honeycomb kraft cushioning with a zero-breakage guarantee.",
+      "votes": 38
+    }
+  ],
+  "images": [
+    {
+      "id": "img-multiflora-honey-1kg-1",
+      "url": "/images/honey-brand/Multiflora Honey/1kg/image_1_amazon_main.jpg",
+      "altText": "Multiflora Honey 1kg Amazon Main Studio Shot in Solid Glass",
+      "position": 0
+    },
+    {
+      "id": "img-multiflora-honey-1kg-2",
+      "url": "/images/honey-brand/Multiflora Honey/1kg/image_2_lifestyle.jpg",
+      "altText": "Multiflora Honey 1kg Lifestyle Photography on Teak Wood with Dipper",
+      "position": 1
+    },
+    {
+      "id": "img-multiflora-honey-1kg-3",
+      "url": "/images/honey-brand/Multiflora Honey/1kg/image_3_texture.jpg",
+      "altText": "Raw Unpasteurized Multiflora Honey Slow Micro-Drizzle Macro Texture",
+      "position": 2
+    },
+    {
+      "id": "img-multiflora-honey-1kg-4",
+      "url": "/images/honey-brand/Multiflora Honey/1kg/image_6_size_comparison.jpg",
+      "altText": "Ganesh Mule Raw Honey Trio Size Comparison (250g, 500g, 1kg)",
+      "position": 3
+    }
+  ],
+  "createdAt": "2026-11-20T14:28:59.683Z",
+  "updatedAt": "2026-11-20T14:28:59.683Z"
+},
+  {
+  "id": "prod-ber-honey-250g",
+  "slug": "ber-honey-250g",
+  "sku": "GM-BER-250G",
+  "name": "Ber (Sidr) Honey (250g)",
+  "description": "Revered Sidr honey harvested from thorny desert jujube trees. Uniquely rich in bioactive polyphenols and amber antioxidants.",
+  "price": 19900,
+  "compareAtPrice": 27500,
+  "costPrice": 9500,
+  "categoryId": "cat-ber",
+  "category": {
+    "id": "cat-ber",
+    "slug": "ber-honey",
+    "name": "Raw Ber (Sidr / Jujube) Honey",
+    "description": "Revered Sidr honey harvested from thorny desert jujube trees. Uniquely rich in bioactive polyphenols and amber antioxidants.",
+    "isVisible": true
+  },
+  "stockQuantity": 80,
+  "reservedQuantity": 0,
+  "lowStockThreshold": 10,
+  "isPublished": true,
+  "badge": "Ancient Sidr",
+  "badgeColor": "rose",
+  "rating": 4.9,
+  "ratingCount": 505,
+  "answeredQuestionsCount": 28,
+  "weightGrams": 250,
+  "batchNumber": "BATCH-2026-BER250G",
+  "harvestDate": "October 2026",
+  "flavour": "Rich, Butterscotch & Molasses-like Velvety Sweetness",
+  "origin": "Wild Jujube Forests, Bikaner & Thar Border",
+  "packageType": "Heavy Food-Safe Solid Glass Jar with Airtight Seal",
+  "speciality": [
+    "100% Raw & Unheated",
+    "NMR Lab Tested (0% Sugar Syrup)",
+    "Unpasteurized & Coarsely Filtered",
+    "Preserved Live Bee Pollen",
+    "Heavy Solid Glass (Microplastic-Free)"
+  ],
+  "aboutItems": [
+    "【100% COLD-EXTRACTED RAW HONEY】: Single-origin raw honey harvested without heating above hive temperature (38°C), safeguarding living bio-enzymes.",
+    "【GERMAN NMR 400MHz PURITY TESTED】: Molecularly fingerprinted to guarantee 0% adulteration, zero C3/C4 corn syrup, and zero antibiotics.",
+    "【SOLID GLASS PACKAGING (250G)】: Bottled exclusively in inert food-grade solid flint glass to prevent chemical leaching and protect volatile aromas.",
+    "【NATURAL POLLEN & ENZYMES】: Retains beneficial natural floral pollen, propolis, and bio-available polyphenols.",
+    "【LEGAL METROLOGY & FSSAI COMPLIANT】: Sealed with tamper-evident band, batch-level testing QR code, and standard net weight."
+  ],
+  "technicalDetails": {
+    "Brand": "Ganesh Mule Pure Honey",
+    "Flavour": "Rich, Butterscotch & Molasses-like Velvety Sweetness",
+    "Net Weight": "250g",
+    "Package Information": "Heavy Food-Grade Solid Glass Jar",
+    "Item Form": "Raw Liquid with Natural Micro-Crystallization",
+    "Diastase Activity": "High Active Enzyme Viability (>12 Schade)",
+    "Moisture Content": "<18% (Compliant with FSSAI Honey Standards)",
+    "Specialty": "Cold Extracted, Unheated, No Added Sugar, Zero Preservatives",
+    "Country of Origin": "India",
+    "Shelf Life": "24 Months (Indefinite if kept dry and sealed)"
+  },
+  "customerReviews": [
+    {
+      "id": "rev-ber-honey-250g-1",
+      "author": "Arun Kulkarni",
+      "rating": 5,
+      "title": "Exceptional aroma and authentic raw Ber (Sidr) Honey",
+      "date": "12 November 2026",
+      "verifiedPurchase": true,
+      "content": "You can instantly taste the floral notes and natural goodness. The solid glass jar packaging arrived completely safe in protective cushioning. Highly recommended!",
+      "helpfulCount": 34
+    },
+    {
+      "id": "rev-ber-honey-250g-2",
+      "author": "Meera Sengupta",
+      "rating": 5,
+      "title": "True raw honey that naturally micro-crystallizes",
+      "date": "04 November 2026",
+      "verifiedPurchase": true,
+      "content": "Delighted to find authentic Indian honey that isn't boiled or ultra-filtered sugar water. Great value in the 250g glass jar.",
+      "helpfulCount": 21
+    }
+  ],
+  "qAndA": [
+    {
+      "question": "Is this honey heated or pasteurized during bottling?",
+      "answer": "Never. Our honey is cold-extracted and coarsely strained through stainless mesh. It is never heated above ambient hive temperature to keep all active enzymes alive.",
+      "votes": 45
+    },
+    {
+      "question": "Is the glass jar safe during courier shipping?",
+      "answer": "Yes! Every jar is shipped in 5-ply engineered shock-proof honeycomb kraft cushioning with a zero-breakage guarantee.",
+      "votes": 38
+    }
+  ],
+  "images": [
+    {
+      "id": "img-ber-honey-250g-1",
+      "url": "/images/honey-brand/Ber Honey/250g/image_1_amazon_main.jpg",
+      "altText": "Ber (Sidr) Honey 250g Amazon Main Studio Shot in Solid Glass",
+      "position": 0
+    },
+    {
+      "id": "img-ber-honey-250g-2",
+      "url": "/images/honey-brand/Ber Honey/250g/image_2_lifestyle.jpg",
+      "altText": "Ber (Sidr) Honey 250g Lifestyle Photography on Teak Wood with Dipper",
+      "position": 1
+    },
+    {
+      "id": "img-ber-honey-250g-3",
+      "url": "/images/honey-brand/Ber Honey/250g/image_3_texture.jpg",
+      "altText": "Raw Unpasteurized Ber (Sidr) Honey Slow Micro-Drizzle Macro Texture",
+      "position": 2
+    },
+    {
+      "id": "img-ber-honey-250g-4",
+      "url": "/images/honey-brand/Ber Honey/250g/image_6_size_comparison.jpg",
+      "altText": "Ganesh Mule Raw Honey Trio Size Comparison (250g, 500g, 1kg)",
+      "position": 3
+    }
+  ],
+  "createdAt": "2026-11-20T14:28:59.683Z",
+  "updatedAt": "2026-11-20T14:28:59.683Z"
+},
+  {
+  "id": "prod-ber-honey-500g",
+  "slug": "ber-honey-500g",
+  "sku": "GM-BER-500G",
+  "name": "Ber (Sidr) Honey (500g)",
+  "description": "Revered Sidr honey harvested from thorny desert jujube trees. Uniquely rich in bioactive polyphenols and amber antioxidants.",
+  "price": 39900,
+  "compareAtPrice": 54900,
+  "costPrice": 17000,
+  "categoryId": "cat-ber",
+  "category": {
+    "id": "cat-ber",
+    "slug": "ber-honey",
+    "name": "Raw Ber (Sidr / Jujube) Honey",
+    "description": "Revered Sidr honey harvested from thorny desert jujube trees. Uniquely rich in bioactive polyphenols and amber antioxidants.",
+    "isVisible": true
+  },
+  "stockQuantity": 120,
+  "reservedQuantity": 0,
+  "lowStockThreshold": 10,
+  "isPublished": true,
+  "badge": "Most Popular",
+  "badgeColor": "rose",
+  "rating": 4.9,
+  "ratingCount": 510,
+  "answeredQuestionsCount": 28,
+  "weightGrams": 500,
+  "batchNumber": "BATCH-2026-BER500G",
+  "harvestDate": "October 2026",
+  "flavour": "Rich, Butterscotch & Molasses-like Velvety Sweetness",
+  "origin": "Wild Jujube Forests, Bikaner & Thar Border",
+  "packageType": "Heavy Food-Safe Solid Glass Jar with Airtight Seal",
+  "speciality": [
+    "100% Raw & Unheated",
+    "NMR Lab Tested (0% Sugar Syrup)",
+    "Unpasteurized & Coarsely Filtered",
+    "Preserved Live Bee Pollen",
+    "Heavy Solid Glass (Microplastic-Free)"
+  ],
+  "aboutItems": [
+    "【100% COLD-EXTRACTED RAW HONEY】: Single-origin raw honey harvested without heating above hive temperature (38°C), safeguarding living bio-enzymes.",
+    "【GERMAN NMR 400MHz PURITY TESTED】: Molecularly fingerprinted to guarantee 0% adulteration, zero C3/C4 corn syrup, and zero antibiotics.",
+    "【SOLID GLASS PACKAGING (500G)】: Bottled exclusively in inert food-grade solid flint glass to prevent chemical leaching and protect volatile aromas.",
+    "【NATURAL POLLEN & ENZYMES】: Retains beneficial natural floral pollen, propolis, and bio-available polyphenols.",
+    "【LEGAL METROLOGY & FSSAI COMPLIANT】: Sealed with tamper-evident band, batch-level testing QR code, and standard net weight."
+  ],
+  "technicalDetails": {
+    "Brand": "Ganesh Mule Pure Honey",
+    "Flavour": "Rich, Butterscotch & Molasses-like Velvety Sweetness",
+    "Net Weight": "500g",
+    "Package Information": "Heavy Food-Grade Solid Glass Jar",
+    "Item Form": "Raw Liquid with Natural Micro-Crystallization",
+    "Diastase Activity": "High Active Enzyme Viability (>12 Schade)",
+    "Moisture Content": "<18% (Compliant with FSSAI Honey Standards)",
+    "Specialty": "Cold Extracted, Unheated, No Added Sugar, Zero Preservatives",
+    "Country of Origin": "India",
+    "Shelf Life": "24 Months (Indefinite if kept dry and sealed)"
+  },
+  "customerReviews": [
+    {
+      "id": "rev-ber-honey-500g-1",
+      "author": "Arun Kulkarni",
+      "rating": 5,
+      "title": "Exceptional aroma and authentic raw Ber (Sidr) Honey",
+      "date": "12 November 2026",
+      "verifiedPurchase": true,
+      "content": "You can instantly taste the floral notes and natural goodness. The solid glass jar packaging arrived completely safe in protective cushioning. Highly recommended!",
+      "helpfulCount": 34
+    },
+    {
+      "id": "rev-ber-honey-500g-2",
+      "author": "Meera Sengupta",
+      "rating": 5,
+      "title": "True raw honey that naturally micro-crystallizes",
+      "date": "04 November 2026",
+      "verifiedPurchase": true,
+      "content": "Delighted to find authentic Indian honey that isn't boiled or ultra-filtered sugar water. Great value in the 500g glass jar.",
+      "helpfulCount": 21
+    }
+  ],
+  "qAndA": [
+    {
+      "question": "Is this honey heated or pasteurized during bottling?",
+      "answer": "Never. Our honey is cold-extracted and coarsely strained through stainless mesh. It is never heated above ambient hive temperature to keep all active enzymes alive.",
+      "votes": 45
+    },
+    {
+      "question": "Is the glass jar safe during courier shipping?",
+      "answer": "Yes! Every jar is shipped in 5-ply engineered shock-proof honeycomb kraft cushioning with a zero-breakage guarantee.",
+      "votes": 38
+    }
+  ],
+  "images": [
+    {
+      "id": "img-ber-honey-500g-1",
+      "url": "/images/honey-brand/Ber Honey/500g/image_1_amazon_main.jpg",
+      "altText": "Ber (Sidr) Honey 500g Amazon Main Studio Shot in Solid Glass",
+      "position": 0
+    },
+    {
+      "id": "img-ber-honey-500g-2",
+      "url": "/images/honey-brand/Ber Honey/500g/image_2_lifestyle.jpg",
+      "altText": "Ber (Sidr) Honey 500g Lifestyle Photography on Teak Wood with Dipper",
+      "position": 1
+    },
+    {
+      "id": "img-ber-honey-500g-3",
+      "url": "/images/honey-brand/Ber Honey/500g/image_3_texture.jpg",
+      "altText": "Raw Unpasteurized Ber (Sidr) Honey Slow Micro-Drizzle Macro Texture",
+      "position": 2
+    },
+    {
+      "id": "img-ber-honey-500g-4",
+      "url": "/images/honey-brand/Ber Honey/500g/image_6_size_comparison.jpg",
+      "altText": "Ganesh Mule Raw Honey Trio Size Comparison (250g, 500g, 1kg)",
+      "position": 3
+    }
+  ],
+  "createdAt": "2026-11-20T14:28:59.683Z",
+  "updatedAt": "2026-11-20T14:28:59.683Z"
+},
+  {
+  "id": "prod-ber-honey-1kg",
+  "slug": "ber-honey-1kg",
+  "sku": "GM-BER-1KG",
+  "name": "Ber (Sidr) Honey (1kg)",
+  "description": "Revered Sidr honey harvested from thorny desert jujube trees. Uniquely rich in bioactive polyphenols and amber antioxidants.",
+  "price": 74900,
+  "compareAtPrice": 99900,
+  "costPrice": 31000,
+  "categoryId": "cat-ber",
+  "category": {
+    "id": "cat-ber",
+    "slug": "ber-honey",
+    "name": "Raw Ber (Sidr / Jujube) Honey",
+    "description": "Revered Sidr honey harvested from thorny desert jujube trees. Uniquely rich in bioactive polyphenols and amber antioxidants.",
+    "isVisible": true
+  },
+  "stockQuantity": 65,
+  "reservedQuantity": 0,
+  "lowStockThreshold": 10,
+  "isPublished": true,
+  "badge": "Best Value",
+  "badgeColor": "rose",
+  "rating": 4.9,
+  "ratingCount": 685,
+  "answeredQuestionsCount": 28,
+  "weightGrams": 1000,
+  "batchNumber": "BATCH-2026-BER1KG",
+  "harvestDate": "October 2026",
+  "flavour": "Rich, Butterscotch & Molasses-like Velvety Sweetness",
+  "origin": "Wild Jujube Forests, Bikaner & Thar Border",
+  "packageType": "Heavy Food-Safe Solid Glass Jar with Airtight Seal",
+  "speciality": [
+    "100% Raw & Unheated",
+    "NMR Lab Tested (0% Sugar Syrup)",
+    "Unpasteurized & Coarsely Filtered",
+    "Preserved Live Bee Pollen",
+    "Heavy Solid Glass (Microplastic-Free)"
+  ],
+  "aboutItems": [
+    "【100% COLD-EXTRACTED RAW HONEY】: Single-origin raw honey harvested without heating above hive temperature (38°C), safeguarding living bio-enzymes.",
+    "【GERMAN NMR 400MHz PURITY TESTED】: Molecularly fingerprinted to guarantee 0% adulteration, zero C3/C4 corn syrup, and zero antibiotics.",
+    "【SOLID GLASS PACKAGING (1KG)】: Bottled exclusively in inert food-grade solid flint glass to prevent chemical leaching and protect volatile aromas.",
+    "【NATURAL POLLEN & ENZYMES】: Retains beneficial natural floral pollen, propolis, and bio-available polyphenols.",
+    "【LEGAL METROLOGY & FSSAI COMPLIANT】: Sealed with tamper-evident band, batch-level testing QR code, and standard net weight."
+  ],
+  "technicalDetails": {
+    "Brand": "Ganesh Mule Pure Honey",
+    "Flavour": "Rich, Butterscotch & Molasses-like Velvety Sweetness",
+    "Net Weight": "1kg",
+    "Package Information": "Heavy Food-Grade Solid Glass Jar",
+    "Item Form": "Raw Liquid with Natural Micro-Crystallization",
+    "Diastase Activity": "High Active Enzyme Viability (>12 Schade)",
+    "Moisture Content": "<18% (Compliant with FSSAI Honey Standards)",
+    "Specialty": "Cold Extracted, Unheated, No Added Sugar, Zero Preservatives",
+    "Country of Origin": "India",
+    "Shelf Life": "24 Months (Indefinite if kept dry and sealed)"
+  },
+  "customerReviews": [
+    {
+      "id": "rev-ber-honey-1kg-1",
+      "author": "Arun Kulkarni",
+      "rating": 5,
+      "title": "Exceptional aroma and authentic raw Ber (Sidr) Honey",
+      "date": "12 November 2026",
+      "verifiedPurchase": true,
+      "content": "You can instantly taste the floral notes and natural goodness. The solid glass jar packaging arrived completely safe in protective cushioning. Highly recommended!",
+      "helpfulCount": 34
+    },
+    {
+      "id": "rev-ber-honey-1kg-2",
+      "author": "Meera Sengupta",
+      "rating": 5,
+      "title": "True raw honey that naturally micro-crystallizes",
+      "date": "04 November 2026",
+      "verifiedPurchase": true,
+      "content": "Delighted to find authentic Indian honey that isn't boiled or ultra-filtered sugar water. Great value in the 1kg glass jar.",
+      "helpfulCount": 21
+    }
+  ],
+  "qAndA": [
+    {
+      "question": "Is this honey heated or pasteurized during bottling?",
+      "answer": "Never. Our honey is cold-extracted and coarsely strained through stainless mesh. It is never heated above ambient hive temperature to keep all active enzymes alive.",
+      "votes": 45
+    },
+    {
+      "question": "Is the glass jar safe during courier shipping?",
+      "answer": "Yes! Every jar is shipped in 5-ply engineered shock-proof honeycomb kraft cushioning with a zero-breakage guarantee.",
+      "votes": 38
+    }
+  ],
+  "images": [
+    {
+      "id": "img-ber-honey-1kg-1",
+      "url": "/images/honey-brand/Ber Honey/1kg/image_1_amazon_main.jpg",
+      "altText": "Ber (Sidr) Honey 1kg Amazon Main Studio Shot in Solid Glass",
+      "position": 0
+    },
+    {
+      "id": "img-ber-honey-1kg-2",
+      "url": "/images/honey-brand/Ber Honey/1kg/image_2_lifestyle.jpg",
+      "altText": "Ber (Sidr) Honey 1kg Lifestyle Photography on Teak Wood with Dipper",
+      "position": 1
+    },
+    {
+      "id": "img-ber-honey-1kg-3",
+      "url": "/images/honey-brand/Ber Honey/1kg/image_3_texture.jpg",
+      "altText": "Raw Unpasteurized Ber (Sidr) Honey Slow Micro-Drizzle Macro Texture",
+      "position": 2
+    },
+    {
+      "id": "img-ber-honey-1kg-4",
+      "url": "/images/honey-brand/Ber Honey/1kg/image_6_size_comparison.jpg",
+      "altText": "Ganesh Mule Raw Honey Trio Size Comparison (250g, 500g, 1kg)",
+      "position": 3
+    }
+  ],
+  "createdAt": "2026-11-20T14:28:59.683Z",
+  "updatedAt": "2026-11-20T14:28:59.683Z"
+},
+  {
+  "id": "prod-sheesham-honey-250g",
+  "slug": "sheesham-honey-250g",
+  "sku": "GM-SHF-250G",
+  "name": "Sheesham Honey (250g)",
+  "description": "Rare single-origin raw honey harvested from blooming North Indian Rosewood canopies. Low glycemic index with a soothing smooth finish.",
+  "price": 19900,
+  "compareAtPrice": 27500,
+  "costPrice": 9500,
+  "categoryId": "cat-sheesham",
+  "category": {
+    "id": "cat-sheesham",
+    "slug": "sheesham-honey",
+    "name": "Raw Sheesham (Rosewood) Honey",
+    "description": "Rare single-origin raw honey harvested from blooming North Indian Rosewood canopies. Low glycemic index with a soothing smooth finish.",
+    "isVisible": true
+  },
+  "stockQuantity": 80,
+  "reservedQuantity": 0,
+  "lowStockThreshold": 10,
+  "isPublished": true,
+  "badge": "Single Origin",
+  "badgeColor": "amber",
+  "rating": 4.9,
+  "ratingCount": 760,
+  "answeredQuestionsCount": 28,
+  "weightGrams": 250,
+  "batchNumber": "BATCH-2026-SHF250G",
+  "harvestDate": "October 2026",
+  "flavour": "Delicate Woody, Mild Vanilla & Golden Amber Undertones",
+  "origin": "Dalbergia Sissoo Forest Reserves, Northern Foothills",
+  "packageType": "Heavy Food-Safe Solid Glass Jar with Airtight Seal",
+  "speciality": [
+    "100% Raw & Unheated",
+    "NMR Lab Tested (0% Sugar Syrup)",
+    "Unpasteurized & Coarsely Filtered",
+    "Preserved Live Bee Pollen",
+    "Heavy Solid Glass (Microplastic-Free)"
+  ],
+  "aboutItems": [
+    "【100% COLD-EXTRACTED RAW HONEY】: Single-origin raw honey harvested without heating above hive temperature (38°C), safeguarding living bio-enzymes.",
+    "【GERMAN NMR 400MHz PURITY TESTED】: Molecularly fingerprinted to guarantee 0% adulteration, zero C3/C4 corn syrup, and zero antibiotics.",
+    "【SOLID GLASS PACKAGING (250G)】: Bottled exclusively in inert food-grade solid flint glass to prevent chemical leaching and protect volatile aromas.",
+    "【NATURAL POLLEN & ENZYMES】: Retains beneficial natural floral pollen, propolis, and bio-available polyphenols.",
+    "【LEGAL METROLOGY & FSSAI COMPLIANT】: Sealed with tamper-evident band, batch-level testing QR code, and standard net weight."
+  ],
+  "technicalDetails": {
+    "Brand": "Ganesh Mule Pure Honey",
+    "Flavour": "Delicate Woody, Mild Vanilla & Golden Amber Undertones",
+    "Net Weight": "250g",
+    "Package Information": "Heavy Food-Grade Solid Glass Jar",
+    "Item Form": "Raw Liquid with Natural Micro-Crystallization",
+    "Diastase Activity": "High Active Enzyme Viability (>12 Schade)",
+    "Moisture Content": "<18% (Compliant with FSSAI Honey Standards)",
+    "Specialty": "Cold Extracted, Unheated, No Added Sugar, Zero Preservatives",
+    "Country of Origin": "India",
+    "Shelf Life": "24 Months (Indefinite if kept dry and sealed)"
+  },
+  "customerReviews": [
+    {
+      "id": "rev-sheesham-honey-250g-1",
+      "author": "Arun Kulkarni",
+      "rating": 5,
+      "title": "Exceptional aroma and authentic raw Sheesham Honey",
+      "date": "12 November 2026",
+      "verifiedPurchase": true,
+      "content": "You can instantly taste the floral notes and natural goodness. The solid glass jar packaging arrived completely safe in protective cushioning. Highly recommended!",
+      "helpfulCount": 34
+    },
+    {
+      "id": "rev-sheesham-honey-250g-2",
+      "author": "Meera Sengupta",
+      "rating": 5,
+      "title": "True raw honey that naturally micro-crystallizes",
+      "date": "04 November 2026",
+      "verifiedPurchase": true,
+      "content": "Delighted to find authentic Indian honey that isn't boiled or ultra-filtered sugar water. Great value in the 250g glass jar.",
+      "helpfulCount": 21
+    }
+  ],
+  "qAndA": [
+    {
+      "question": "Is this honey heated or pasteurized during bottling?",
+      "answer": "Never. Our honey is cold-extracted and coarsely strained through stainless mesh. It is never heated above ambient hive temperature to keep all active enzymes alive.",
+      "votes": 45
+    },
+    {
+      "question": "Is the glass jar safe during courier shipping?",
+      "answer": "Yes! Every jar is shipped in 5-ply engineered shock-proof honeycomb kraft cushioning with a zero-breakage guarantee.",
+      "votes": 38
+    }
+  ],
+  "images": [
+    {
+      "id": "img-sheesham-honey-250g-1",
+      "url": "/images/honey-brand/Sheesham Honey/250g/image_1_amazon_main.jpg",
+      "altText": "Sheesham Honey 250g Amazon Main Studio Shot in Solid Glass",
+      "position": 0
+    },
+    {
+      "id": "img-sheesham-honey-250g-2",
+      "url": "/images/honey-brand/Sheesham Honey/250g/image_2_lifestyle.jpg",
+      "altText": "Sheesham Honey 250g Lifestyle Photography on Teak Wood with Dipper",
+      "position": 1
+    },
+    {
+      "id": "img-sheesham-honey-250g-3",
+      "url": "/images/honey-brand/Sheesham Honey/250g/image_3_texture.jpg",
+      "altText": "Raw Unpasteurized Sheesham Honey Slow Micro-Drizzle Macro Texture",
+      "position": 2
+    },
+    {
+      "id": "img-sheesham-honey-250g-4",
+      "url": "/images/honey-brand/Sheesham Honey/250g/image_6_size_comparison.jpg",
+      "altText": "Ganesh Mule Raw Honey Trio Size Comparison (250g, 500g, 1kg)",
+      "position": 3
+    }
+  ],
+  "createdAt": "2026-11-20T14:28:59.683Z",
+  "updatedAt": "2026-11-20T14:28:59.683Z"
+},
+  {
+  "id": "prod-sheesham-honey-500g",
+  "slug": "sheesham-honey-500g",
+  "sku": "GM-SHF-500G",
+  "name": "Sheesham Honey (500g)",
+  "description": "Rare single-origin raw honey harvested from blooming North Indian Rosewood canopies. Low glycemic index with a soothing smooth finish.",
+  "price": 39900,
+  "compareAtPrice": 54900,
+  "costPrice": 17000,
+  "categoryId": "cat-sheesham",
+  "category": {
+    "id": "cat-sheesham",
+    "slug": "sheesham-honey",
+    "name": "Raw Sheesham (Rosewood) Honey",
+    "description": "Rare single-origin raw honey harvested from blooming North Indian Rosewood canopies. Low glycemic index with a soothing smooth finish.",
+    "isVisible": true
+  },
+  "stockQuantity": 120,
+  "reservedQuantity": 0,
+  "lowStockThreshold": 10,
+  "isPublished": true,
+  "badge": "Most Popular",
+  "badgeColor": "amber",
+  "rating": 4.9,
+  "ratingCount": 906,
+  "answeredQuestionsCount": 28,
+  "weightGrams": 500,
+  "batchNumber": "BATCH-2026-SHF500G",
+  "harvestDate": "October 2026",
+  "flavour": "Delicate Woody, Mild Vanilla & Golden Amber Undertones",
+  "origin": "Dalbergia Sissoo Forest Reserves, Northern Foothills",
+  "packageType": "Heavy Food-Safe Solid Glass Jar with Airtight Seal",
+  "speciality": [
+    "100% Raw & Unheated",
+    "NMR Lab Tested (0% Sugar Syrup)",
+    "Unpasteurized & Coarsely Filtered",
+    "Preserved Live Bee Pollen",
+    "Heavy Solid Glass (Microplastic-Free)"
+  ],
+  "aboutItems": [
+    "【100% COLD-EXTRACTED RAW HONEY】: Single-origin raw honey harvested without heating above hive temperature (38°C), safeguarding living bio-enzymes.",
+    "【GERMAN NMR 400MHz PURITY TESTED】: Molecularly fingerprinted to guarantee 0% adulteration, zero C3/C4 corn syrup, and zero antibiotics.",
+    "【SOLID GLASS PACKAGING (500G)】: Bottled exclusively in inert food-grade solid flint glass to prevent chemical leaching and protect volatile aromas.",
+    "【NATURAL POLLEN & ENZYMES】: Retains beneficial natural floral pollen, propolis, and bio-available polyphenols.",
+    "【LEGAL METROLOGY & FSSAI COMPLIANT】: Sealed with tamper-evident band, batch-level testing QR code, and standard net weight."
+  ],
+  "technicalDetails": {
+    "Brand": "Ganesh Mule Pure Honey",
+    "Flavour": "Delicate Woody, Mild Vanilla & Golden Amber Undertones",
+    "Net Weight": "500g",
+    "Package Information": "Heavy Food-Grade Solid Glass Jar",
+    "Item Form": "Raw Liquid with Natural Micro-Crystallization",
+    "Diastase Activity": "High Active Enzyme Viability (>12 Schade)",
+    "Moisture Content": "<18% (Compliant with FSSAI Honey Standards)",
+    "Specialty": "Cold Extracted, Unheated, No Added Sugar, Zero Preservatives",
+    "Country of Origin": "India",
+    "Shelf Life": "24 Months (Indefinite if kept dry and sealed)"
+  },
+  "customerReviews": [
+    {
+      "id": "rev-sheesham-honey-500g-1",
+      "author": "Arun Kulkarni",
+      "rating": 5,
+      "title": "Exceptional aroma and authentic raw Sheesham Honey",
+      "date": "12 November 2026",
+      "verifiedPurchase": true,
+      "content": "You can instantly taste the floral notes and natural goodness. The solid glass jar packaging arrived completely safe in protective cushioning. Highly recommended!",
+      "helpfulCount": 34
+    },
+    {
+      "id": "rev-sheesham-honey-500g-2",
+      "author": "Meera Sengupta",
+      "rating": 5,
+      "title": "True raw honey that naturally micro-crystallizes",
+      "date": "04 November 2026",
+      "verifiedPurchase": true,
+      "content": "Delighted to find authentic Indian honey that isn't boiled or ultra-filtered sugar water. Great value in the 500g glass jar.",
+      "helpfulCount": 21
+    }
+  ],
+  "qAndA": [
+    {
+      "question": "Is this honey heated or pasteurized during bottling?",
+      "answer": "Never. Our honey is cold-extracted and coarsely strained through stainless mesh. It is never heated above ambient hive temperature to keep all active enzymes alive.",
+      "votes": 45
+    },
+    {
+      "question": "Is the glass jar safe during courier shipping?",
+      "answer": "Yes! Every jar is shipped in 5-ply engineered shock-proof honeycomb kraft cushioning with a zero-breakage guarantee.",
+      "votes": 38
+    }
+  ],
+  "images": [
+    {
+      "id": "img-sheesham-honey-500g-1",
+      "url": "/images/honey-brand/Sheesham Honey/500g/image_1_amazon_main.jpg",
+      "altText": "Sheesham Honey 500g Amazon Main Studio Shot in Solid Glass",
+      "position": 0
+    },
+    {
+      "id": "img-sheesham-honey-500g-2",
+      "url": "/images/honey-brand/Sheesham Honey/500g/image_2_lifestyle.jpg",
+      "altText": "Sheesham Honey 500g Lifestyle Photography on Teak Wood with Dipper",
+      "position": 1
+    },
+    {
+      "id": "img-sheesham-honey-500g-3",
+      "url": "/images/honey-brand/Sheesham Honey/500g/image_3_texture.jpg",
+      "altText": "Raw Unpasteurized Sheesham Honey Slow Micro-Drizzle Macro Texture",
+      "position": 2
+    },
+    {
+      "id": "img-sheesham-honey-500g-4",
+      "url": "/images/honey-brand/Sheesham Honey/500g/image_6_size_comparison.jpg",
+      "altText": "Ganesh Mule Raw Honey Trio Size Comparison (250g, 500g, 1kg)",
+      "position": 3
+    }
+  ],
+  "createdAt": "2026-11-20T14:28:59.683Z",
+  "updatedAt": "2026-11-20T14:28:59.683Z"
+},
+  {
+  "id": "prod-sheesham-honey-1kg",
+  "slug": "sheesham-honey-1kg",
+  "sku": "GM-SHF-1KG",
+  "name": "Sheesham Honey (1kg)",
+  "description": "Rare single-origin raw honey harvested from blooming North Indian Rosewood canopies. Low glycemic index with a soothing smooth finish.",
+  "price": 74900,
+  "compareAtPrice": 99900,
+  "costPrice": 31000,
+  "categoryId": "cat-sheesham",
+  "category": {
+    "id": "cat-sheesham",
+    "slug": "sheesham-honey",
+    "name": "Raw Sheesham (Rosewood) Honey",
+    "description": "Rare single-origin raw honey harvested from blooming North Indian Rosewood canopies. Low glycemic index with a soothing smooth finish.",
+    "isVisible": true
+  },
+  "stockQuantity": 65,
+  "reservedQuantity": 0,
+  "lowStockThreshold": 10,
+  "isPublished": true,
+  "badge": "Best Value",
+  "badgeColor": "amber",
+  "rating": 4.9,
+  "ratingCount": 867,
+  "answeredQuestionsCount": 28,
+  "weightGrams": 1000,
+  "batchNumber": "BATCH-2026-SHF1KG",
+  "harvestDate": "October 2026",
+  "flavour": "Delicate Woody, Mild Vanilla & Golden Amber Undertones",
+  "origin": "Dalbergia Sissoo Forest Reserves, Northern Foothills",
+  "packageType": "Heavy Food-Safe Solid Glass Jar with Airtight Seal",
+  "speciality": [
+    "100% Raw & Unheated",
+    "NMR Lab Tested (0% Sugar Syrup)",
+    "Unpasteurized & Coarsely Filtered",
+    "Preserved Live Bee Pollen",
+    "Heavy Solid Glass (Microplastic-Free)"
+  ],
+  "aboutItems": [
+    "【100% COLD-EXTRACTED RAW HONEY】: Single-origin raw honey harvested without heating above hive temperature (38°C), safeguarding living bio-enzymes.",
+    "【GERMAN NMR 400MHz PURITY TESTED】: Molecularly fingerprinted to guarantee 0% adulteration, zero C3/C4 corn syrup, and zero antibiotics.",
+    "【SOLID GLASS PACKAGING (1KG)】: Bottled exclusively in inert food-grade solid flint glass to prevent chemical leaching and protect volatile aromas.",
+    "【NATURAL POLLEN & ENZYMES】: Retains beneficial natural floral pollen, propolis, and bio-available polyphenols.",
+    "【LEGAL METROLOGY & FSSAI COMPLIANT】: Sealed with tamper-evident band, batch-level testing QR code, and standard net weight."
+  ],
+  "technicalDetails": {
+    "Brand": "Ganesh Mule Pure Honey",
+    "Flavour": "Delicate Woody, Mild Vanilla & Golden Amber Undertones",
+    "Net Weight": "1kg",
+    "Package Information": "Heavy Food-Grade Solid Glass Jar",
+    "Item Form": "Raw Liquid with Natural Micro-Crystallization",
+    "Diastase Activity": "High Active Enzyme Viability (>12 Schade)",
+    "Moisture Content": "<18% (Compliant with FSSAI Honey Standards)",
+    "Specialty": "Cold Extracted, Unheated, No Added Sugar, Zero Preservatives",
+    "Country of Origin": "India",
+    "Shelf Life": "24 Months (Indefinite if kept dry and sealed)"
+  },
+  "customerReviews": [
+    {
+      "id": "rev-sheesham-honey-1kg-1",
+      "author": "Arun Kulkarni",
+      "rating": 5,
+      "title": "Exceptional aroma and authentic raw Sheesham Honey",
+      "date": "12 November 2026",
+      "verifiedPurchase": true,
+      "content": "You can instantly taste the floral notes and natural goodness. The solid glass jar packaging arrived completely safe in protective cushioning. Highly recommended!",
+      "helpfulCount": 34
+    },
+    {
+      "id": "rev-sheesham-honey-1kg-2",
+      "author": "Meera Sengupta",
+      "rating": 5,
+      "title": "True raw honey that naturally micro-crystallizes",
+      "date": "04 November 2026",
+      "verifiedPurchase": true,
+      "content": "Delighted to find authentic Indian honey that isn't boiled or ultra-filtered sugar water. Great value in the 1kg glass jar.",
+      "helpfulCount": 21
+    }
+  ],
+  "qAndA": [
+    {
+      "question": "Is this honey heated or pasteurized during bottling?",
+      "answer": "Never. Our honey is cold-extracted and coarsely strained through stainless mesh. It is never heated above ambient hive temperature to keep all active enzymes alive.",
+      "votes": 45
+    },
+    {
+      "question": "Is the glass jar safe during courier shipping?",
+      "answer": "Yes! Every jar is shipped in 5-ply engineered shock-proof honeycomb kraft cushioning with a zero-breakage guarantee.",
+      "votes": 38
+    }
+  ],
+  "images": [
+    {
+      "id": "img-sheesham-honey-1kg-1",
+      "url": "/images/honey-brand/Sheesham Honey/1kg/image_1_amazon_main.jpg",
+      "altText": "Sheesham Honey 1kg Amazon Main Studio Shot in Solid Glass",
+      "position": 0
+    },
+    {
+      "id": "img-sheesham-honey-1kg-2",
+      "url": "/images/honey-brand/Sheesham Honey/1kg/image_2_lifestyle.jpg",
+      "altText": "Sheesham Honey 1kg Lifestyle Photography on Teak Wood with Dipper",
+      "position": 1
+    },
+    {
+      "id": "img-sheesham-honey-1kg-3",
+      "url": "/images/honey-brand/Sheesham Honey/1kg/image_3_texture.jpg",
+      "altText": "Raw Unpasteurized Sheesham Honey Slow Micro-Drizzle Macro Texture",
+      "position": 2
+    },
+    {
+      "id": "img-sheesham-honey-1kg-4",
+      "url": "/images/honey-brand/Sheesham Honey/1kg/image_6_size_comparison.jpg",
+      "altText": "Ganesh Mule Raw Honey Trio Size Comparison (250g, 500g, 1kg)",
+      "position": 3
+    }
+  ],
+  "createdAt": "2026-11-20T14:28:59.683Z",
+  "updatedAt": "2026-11-20T14:28:59.683Z"
+},
+  {
+  "id": "prod-wild-forest-300g",
+  "slug": "wild-forest-raw-honey-300g",
+  "sku": "HNY-WLD-300G",
+  "name": "Wild Forest Raw Honey (300g)",
+  "description": "Pure cold-extracted raw honey gathered from wild cliff bees in pristine deciduous forest canopies.",
+  "price": 44900,
+  "compareAtPrice": 59900,
+  "costPrice": 24000,
+  "categoryId": "cat-wild-forest",
+  "stockQuantity": 65,
+  "reservedQuantity": 0,
+  "lowStockThreshold": 10,
+  "isPublished": true,
+  "weightGrams": 300,
+  "images": [
+    {
+      "id": "img-forest-honey-250g-1",
+      "url": "/images/honey-brand/Forest Honey/250g/image_1_amazon_main.jpg",
+      "altText": "Forest Honey 250g Amazon Main Studio Shot in Solid Glass",
+      "position": 0
+    },
+    {
+      "id": "img-forest-honey-250g-2",
+      "url": "/images/honey-brand/Forest Honey/250g/image_2_lifestyle.jpg",
+      "altText": "Forest Honey 250g Lifestyle Photography on Teak Wood with Dipper",
+      "position": 1
+    },
+    {
+      "id": "img-forest-honey-250g-3",
+      "url": "/images/honey-brand/Forest Honey/250g/image_3_texture.jpg",
+      "altText": "Raw Unpasteurized Forest Honey Slow Micro-Drizzle Macro Texture",
+      "position": 2
+    },
+    {
+      "id": "img-forest-honey-250g-4",
+      "url": "/images/honey-brand/Forest Honey/250g/image_6_size_comparison.jpg",
+      "altText": "Ganesh Mule Raw Honey Trio Size Comparison (250g, 500g, 1kg)",
+      "position": 3
+    }
+  ],
+  "createdAt": "2026-11-20T14:28:59.683Z",
+  "updatedAt": "2026-11-20T14:28:59.683Z"
+},
+  {
+  "id": "prod-wild-forest-500g",
+  "slug": "wild-forest-raw-honey-500g",
+  "sku": "HNY-WLD-500G",
+  "name": "Wild Forest Raw Honey (500g)",
+  "description": "Flagship cold-extracted raw honey in solid glass jar.",
+  "price": 39900,
+  "compareAtPrice": 54900,
+  "costPrice": 17000,
+  "categoryId": "cat-wild-forest",
+  "stockQuantity": 90,
+  "reservedQuantity": 0,
+  "lowStockThreshold": 15,
+  "isPublished": true,
+  "weightGrams": 500,
+  "images": [
+    {
+      "id": "img-forest-honey-500g-1",
+      "url": "/images/honey-brand/Forest Honey/500g/image_1_amazon_main.jpg",
+      "altText": "Forest Honey 500g Amazon Main Studio Shot in Solid Glass",
+      "position": 0
+    },
+    {
+      "id": "img-forest-honey-500g-2",
+      "url": "/images/honey-brand/Forest Honey/500g/image_2_lifestyle.jpg",
+      "altText": "Forest Honey 500g Lifestyle Photography on Teak Wood with Dipper",
+      "position": 1
+    },
+    {
+      "id": "img-forest-honey-500g-3",
+      "url": "/images/honey-brand/Forest Honey/500g/image_3_texture.jpg",
+      "altText": "Raw Unpasteurized Forest Honey Slow Micro-Drizzle Macro Texture",
+      "position": 2
+    },
+    {
+      "id": "img-forest-honey-500g-4",
+      "url": "/images/honey-brand/Forest Honey/500g/image_6_size_comparison.jpg",
+      "altText": "Ganesh Mule Raw Honey Trio Size Comparison (250g, 500g, 1kg)",
+      "position": 3
+    }
+  ],
+  "createdAt": "2026-11-20T14:28:59.683Z",
+  "updatedAt": "2026-11-20T14:28:59.683Z"
+},
+  {
+  "id": "prod-wild-forest-750g",
+  "slug": "wild-forest-raw-honey-750g",
+  "sku": "HNY-WLD-750G",
+  "name": "Wild Forest Raw Honey (750g)",
+  "description": "Flagship cold-extracted raw honey in solid glass jar.",
+  "price": 89900,
+  "compareAtPrice": 119900,
+  "costPrice": 48000,
+  "categoryId": "cat-wild-forest",
+  "stockQuantity": 92,
+  "reservedQuantity": 0,
+  "lowStockThreshold": 15,
+  "isPublished": true,
+  "weightGrams": 750,
+  "images": [
+    {
+      "id": "img-forest-honey-500g-1",
+      "url": "/images/honey-brand/Forest Honey/500g/image_1_amazon_main.jpg",
+      "altText": "Forest Honey 500g Amazon Main Studio Shot in Solid Glass",
+      "position": 0
+    },
+    {
+      "id": "img-forest-honey-500g-2",
+      "url": "/images/honey-brand/Forest Honey/500g/image_2_lifestyle.jpg",
+      "altText": "Forest Honey 500g Lifestyle Photography on Teak Wood with Dipper",
+      "position": 1
+    },
+    {
+      "id": "img-forest-honey-500g-3",
+      "url": "/images/honey-brand/Forest Honey/500g/image_3_texture.jpg",
+      "altText": "Raw Unpasteurized Forest Honey Slow Micro-Drizzle Macro Texture",
+      "position": 2
+    },
+    {
+      "id": "img-forest-honey-500g-4",
+      "url": "/images/honey-brand/Forest Honey/500g/image_6_size_comparison.jpg",
+      "altText": "Ganesh Mule Raw Honey Trio Size Comparison (250g, 500g, 1kg)",
+      "position": 3
+    }
+  ],
+  "createdAt": "2026-11-20T14:28:59.683Z",
+  "updatedAt": "2026-11-20T14:28:59.683Z"
+},
+  {
+  "id": "prod-wild-forest-1050g",
+  "slug": "wild-forest-raw-honey-1050g",
+  "sku": "HNY-WLD-1050G",
+  "name": "Wild Forest Raw Honey (1050g)",
+  "description": "Grand Harvest Reserve in heavy handcrafted solid glass.",
+  "price": 119900,
+  "compareAtPrice": 159900,
+  "costPrice": 62000,
+  "categoryId": "cat-wild-forest",
+  "stockQuantity": 44,
+  "reservedQuantity": 0,
+  "lowStockThreshold": 10,
+  "isPublished": true,
+  "weightGrams": 1050,
+  "images": [
+    {
+      "id": "img-forest-honey-1kg-1",
+      "url": "/images/honey-brand/Forest Honey/1kg/image_1_amazon_main.jpg",
+      "altText": "Forest Honey 1kg Amazon Main Studio Shot in Solid Glass",
+      "position": 0
+    },
+    {
+      "id": "img-forest-honey-1kg-2",
+      "url": "/images/honey-brand/Forest Honey/1kg/image_2_lifestyle.jpg",
+      "altText": "Forest Honey 1kg Lifestyle Photography on Teak Wood with Dipper",
+      "position": 1
+    },
+    {
+      "id": "img-forest-honey-1kg-3",
+      "url": "/images/honey-brand/Forest Honey/1kg/image_3_texture.jpg",
+      "altText": "Raw Unpasteurized Forest Honey Slow Micro-Drizzle Macro Texture",
+      "position": 2
+    },
+    {
+      "id": "img-forest-honey-1kg-4",
+      "url": "/images/honey-brand/Forest Honey/1kg/image_6_size_comparison.jpg",
+      "altText": "Ganesh Mule Raw Honey Trio Size Comparison (250g, 500g, 1kg)",
+      "position": 3
+    }
+  ],
+  "createdAt": "2026-11-20T14:28:59.683Z",
+  "updatedAt": "2026-11-20T14:28:59.683Z"
+}
 ];
 
-// Managers are dynamically managed by the configured Admin
 export const MOCK_MANAGERS: ManagerAccount[] = [];
 
 export const MOCK_ORDERS: OrderRecord[] = [];

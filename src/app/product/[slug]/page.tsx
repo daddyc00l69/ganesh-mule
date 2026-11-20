@@ -34,8 +34,59 @@ export default function ProductDetailPage() {
   const slug = params?.slug as string;
   const { addToCart, setIsCartOpen } = useCart();
 
-  const product =
+  const initialProduct =
     MOCK_PRODUCTS.find((p) => p.slug === slug) || MOCK_PRODUCTS[0];
+
+  const baseSlug =
+    initialProduct.slug.replace(/-(250g|500g|1kg|300g|750g|1050g)$/, '') === 'wild-forest-raw-honey'
+      ? 'forest-honey'
+      : initialProduct.slug.replace(/-(250g|500g|1kg|300g|750g|1050g)$/, '');
+
+  const defaultVariant =
+    initialProduct.weightGrams === 1000 ? '1kg' : initialProduct.weightGrams === 250 ? '250g' : '500g';
+  const [selectedVariant, setSelectedVariant] = useState(defaultVariant);
+
+  const variantOptions = [
+    {
+      label: '250g Solid Glass Jar',
+      weight: '250g',
+      weightGrams: 250,
+      slug: `${baseSlug}-250g`,
+      id: `prod-${baseSlug}-250g`,
+      price: 19900,
+      compareAtPrice: 27500,
+      pricePerKg: '₹796 / kg',
+    },
+    {
+      label: '500g Solid Glass Jar',
+      weight: '500g',
+      weightGrams: 500,
+      slug: `${baseSlug}-500g`,
+      id: `prod-${baseSlug}-500g`,
+      price: 39900,
+      compareAtPrice: 54900,
+      pricePerKg: '₹798 / kg',
+    },
+    {
+      label: '1kg Grand Reserve Jar',
+      weight: '1kg',
+      weightGrams: 1000,
+      slug: `${baseSlug}-1kg`,
+      id: `prod-${baseSlug}-1kg`,
+      price: 74900,
+      compareAtPrice: 99900,
+      pricePerKg: '₹749 / kg (Best Value)',
+    },
+  ];
+
+  const currentVariantObj =
+    variantOptions.find((v) => v.weight === selectedVariant) ||
+    variantOptions.find((v) => v.weight === defaultVariant) ||
+    variantOptions[1];
+
+  const product =
+    MOCK_PRODUCTS.find((p) => p.slug === currentVariantObj.slug) ||
+    initialProduct;
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -45,46 +96,6 @@ export default function ProductDetailPage() {
   const [votedIds, setVotedIds] = useState<Record<string, boolean>>({});
   const [copiedLink, setCopiedLink] = useState(false);
   const [showStickyBar, setShowStickyBar] = useState(false);
-
-  // Variant volume selection and dynamic pricing
-  // Variant volume selection matching the 3 flagship weights (300g, 750g, 1050g)
-  const defaultVariant = product.weightGrams ? `${product.weightGrams}g` : '750g';
-  const [selectedVariant, setSelectedVariant] = useState(defaultVariant);
-
-  const variantOptions = [
-    {
-      label: '300g Solid Glass Jar',
-      weight: '300g',
-      weightGrams: 300,
-      slug: 'wild-forest-raw-honey-300g',
-      id: 'prod-wild-forest-300g',
-      price: 44900,
-      compareAtPrice: 59900,
-    },
-    {
-      label: '750g Solid Glass Jar',
-      weight: '750g',
-      weightGrams: 750,
-      slug: 'wild-forest-raw-honey-750g',
-      id: 'prod-wild-forest-750g',
-      price: 89900,
-      compareAtPrice: 119900,
-    },
-    {
-      label: '1050g Grand Reserve Jar',
-      weight: '1050g',
-      weightGrams: 1050,
-      slug: 'wild-forest-raw-honey-1050g',
-      id: 'prod-wild-forest-1050g',
-      price: 119900,
-      compareAtPrice: 159900,
-    },
-  ];
-
-  const currentVariantObj =
-    variantOptions.find((v) => v.weight === selectedVariant) ||
-    variantOptions.find((v) => v.weight === defaultVariant) ||
-    variantOptions[1];
 
   const activePrice = currentVariantObj.price;
   const activeCompareAtPrice = currentVariantObj.compareAtPrice;
@@ -322,15 +333,21 @@ export default function ProductDetailPage() {
                   </span>
                   {activeCompareAtPrice && (
                     <span className="text-base text-[#86868b] line-through">
-                      {formatCurrency(activeCompareAtPrice)}
+                      MRP: {formatCurrency(activeCompareAtPrice)}
                     </span>
                   )}
                   {discountPercent > 0 && (
                     <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                      Save {discountPercent}%
+                      {discountPercent}% OFF
                     </span>
                   )}
                 </div>
+                {activeCompareAtPrice && activeCompareAtPrice > activePrice && (
+                  <p className="text-xs font-semibold text-emerald-700">
+                    You Save: {formatCurrency(activeCompareAtPrice - activePrice)} ·{' '}
+                    <span className="text-[#6e6e73] font-normal">{currentVariantObj.pricePerKg}</span>
+                  </p>
+                )}
                 <p className="text-xs text-[#6e6e73]">
                   Inclusive of all taxes. Free express delivery across India on orders over ₹999.
                 </p>

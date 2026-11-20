@@ -48,6 +48,9 @@ gh_bin/
 
 # local test web files (not added to git)
 delhivery-local-test.html
+
+# local archive folder
+/Honey Brand/
 local-test/
 local-tester/
 

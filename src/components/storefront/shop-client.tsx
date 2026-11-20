@@ -11,7 +11,7 @@ export function ShopClient() {
   const initialCategory = searchParams.get('category') || 'ALL';
 
   const [categoryFilter, setCategoryFilter] = useState(initialCategory);
-  const [weightFilter, setWeightFilter] = useState<'ALL' | '300' | '750' | '1050'>('ALL');
+  const [weightFilter, setWeightFilter] = useState<'ALL' | '250' | '500' | '1000'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'FEATURED' | 'PRICE_ASC' | 'PRICE_DESC' | 'RATING'>('FEATURED');
 
@@ -118,9 +118,9 @@ export function ShopClient() {
             {(
               [
                 { value: 'ALL', label: 'All Sizes' },
-                { value: '300', label: '300g' },
-                { value: '750', label: '750g' },
-                { value: '1050', label: '1050g' },
+                { value: '250', label: '250g' },
+                { value: '500', label: '500g' },
+                { value: '1000', label: '1kg' },
               ] as const
             ).map((option) => (
               <button
