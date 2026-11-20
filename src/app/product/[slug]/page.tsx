@@ -31,7 +31,7 @@ import {
   CheckCircle2,
   MapPin,
   Zap,
-  Tag,
+  CheckCircle,
 } from 'lucide-react';
 
 export default function ProductDetailPage() {
@@ -48,40 +48,58 @@ export default function ProductDetailPage() {
       ? 'forest-honey'
       : initialProduct.slug.replace(/-(250g|500g|1kg|300g|750g|1050g)$/, '');
 
+  // Clean title without baked-in "(500g)" or "(250g)"
+  const cleanName = initialProduct.name
+    .replace(/\s*\((250g|500g|1kg|300g|750g|1050g)\)/i, '')
+    .trim();
+
   const defaultVariant =
     initialProduct.weightGrams === 1000 ? '1kg' : initialProduct.weightGrams === 250 ? '250g' : '500g';
   const [selectedVariant, setSelectedVariant] = useState(defaultVariant);
 
+  // iPhone-Style Storage / Jar Size Variant Configurations
   const variantOptions = [
     {
-      label: '250g Solid Glass Jar',
       weight: '250g',
+      label: 'Solid Glass Sampler',
+      badge: null,
+      description: 'Ideal for first-time taste trials, tea sweeteners, or sharing distinct monofloral flavours.',
       weightGrams: 250,
       slug: `${baseSlug}-250g`,
       id: `prod-${baseSlug}-250g`,
       price: 19900,
       compareAtPrice: 27500,
+      discountText: '28% OFF',
+      savings: 'Save ₹76',
       pricePerKg: '₹796 / kg',
     },
     {
-      label: '500g Solid Glass Jar',
       weight: '500g',
+      label: 'Solid Glass Standard Jar',
+      badge: 'Most Popular · Daily Routine',
+      description: 'Perfect 30-day supply for morning warm lemon water, Ayurvedic digestive therapy & daily immunity.',
       weightGrams: 500,
       slug: `${baseSlug}-500g`,
       id: `prod-${baseSlug}-500g`,
       price: 39900,
       compareAtPrice: 54900,
+      discountText: '27% OFF',
+      savings: 'Save ₹150',
       pricePerKg: '₹798 / kg',
     },
     {
-      label: '1kg Grand Reserve Jar',
       weight: '1kg',
+      label: 'Grand Reserve Jar',
+      badge: 'Best Value · Lowest Rate',
+      description: 'Heavy solid glass reserve jar. Maximum family economy for full Ayurvedic therapies & natural baking.',
       weightGrams: 1000,
       slug: `${baseSlug}-1kg`,
       id: `prod-${baseSlug}-1kg`,
       price: 74900,
       compareAtPrice: 99900,
-      pricePerKg: '₹749 / kg (Best Value)',
+      discountText: '25% OFF',
+      savings: 'Save ₹250',
+      pricePerKg: '₹749 / kg (Lowest Rate)',
     },
   ];
 
@@ -153,6 +171,7 @@ export default function ProductDetailPage() {
     const customizedItem: any = matched
       ? {
           ...matched,
+          name: `${cleanName} (${currentVariantObj.weight})`,
           price: activePrice,
           compareAtPrice: activeCompareAtPrice,
         }
@@ -160,7 +179,7 @@ export default function ProductDetailPage() {
           ...product,
           id: currentVariantObj.id || `${product.id}-${currentVariantObj.weight}`,
           sku: `${product.sku}-${currentVariantObj.weight.toUpperCase()}`,
-          name: `${product.name.replace(/\(\d+g\)/, '').trim()} (${currentVariantObj.label})`,
+          name: `${cleanName} (${currentVariantObj.weight})`,
           price: activePrice,
           compareAtPrice: activeCompareAtPrice,
           weightGrams: currentVariantObj.weightGrams || product.weightGrams,
@@ -233,7 +252,7 @@ export default function ProductDetailPage() {
                 <span>/</span>
                 <Link href="/shop" className="hover:text-stone-950">Harvests</Link>
                 <span>/</span>
-                <span className="text-stone-900 font-medium truncate max-w-xs">{product.name}</span>
+                <span className="text-stone-900 font-medium truncate max-w-xs">{cleanName}</span>
               </div>
               <button
                 type="button"
@@ -257,7 +276,7 @@ export default function ProductDetailPage() {
                 {product.images[selectedImage] ? (
                   <img
                     src={product.images[selectedImage].url}
-                    alt={product.images[selectedImage].altText || product.name}
+                    alt={`${cleanName} ${currentVariantObj.weight}`}
                     className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700 ease-out drop-shadow-md"
                   />
                 ) : (
@@ -291,7 +310,7 @@ export default function ProductDetailPage() {
                 <div className="flex items-center gap-3 overflow-x-auto pb-1">
                   {product.images.map((img, idx) => (
                     <button
-                      key={img.id}
+                      key={img.id || idx}
                       onClick={() => setSelectedImage(idx)}
                       className={`w-20 h-20 rounded-[18px] overflow-hidden border-2 bg-white p-2 cursor-pointer transition-all shrink-0 ${
                         selectedImage === idx
@@ -320,8 +339,9 @@ export default function ProductDetailPage() {
                   <span>{product.origin || 'Western Ghats'}</span>
                 </div>
                 
+                {/* Clean Product Name without baked-in 500g */}
                 <h1 className="text-3xl sm:text-4xl font-serif font-bold text-stone-950 mt-1.5 leading-tight tracking-tight">
-                  {product.name}
+                  {cleanName}
                 </h1>
 
                 {/* Rating & Tested Tag */}
@@ -392,31 +412,95 @@ export default function ProductDetailPage() {
                 {product.description}
               </p>
 
-              {/* Volume / Weight Variant Selector */}
-              <div className="space-y-2.5 pt-1">
-                <label className="text-xs font-semibold text-stone-900 block">
-                  Select Weight Variant: <span className="text-amber-800 font-medium">{currentVariantObj.label}</span>
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              {/* Apple / iPhone-Style Storage / Size Option Picker */}
+              <div className="space-y-3 pt-2 border-t border-stone-200/80">
+                <div className="space-y-1">
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-amber-800">
+                      Jar Size
+                    </span>
+                    <span className="text-xs font-semibold text-stone-700">
+                      Selected: <strong className="text-stone-950">{currentVariantObj.weight}</strong> ({currentVariantObj.label})
+                    </span>
+                  </div>
+                  <h3 className="text-base font-serif font-bold text-stone-950">
+                    Storage. <span className="font-sans font-normal text-stone-600">Which jar volume is right for you?</span>
+                  </h3>
+                  <p className="text-xs text-stone-500">
+                    All 6 varieties share the exact same price. Bottled exclusively in thick food-grade solid glass.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 pt-1">
                   {variantOptions.map((opt) => {
                     const isSelected = selectedVariant === opt.weight;
-                    const optPrice = opt.price;
                     return (
                       <button
                         key={opt.weight}
                         type="button"
-                        onClick={() => setSelectedVariant(opt.weight)}
-                        className={`p-3.5 text-left rounded-2xl border transition-all cursor-pointer ${
+                        onClick={() => {
+                          setSelectedVariant(opt.weight);
+                          setSelectedImage(0);
+                        }}
+                        className={`p-4 sm:p-5 text-left rounded-2xl border transition-all cursor-pointer relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
                           isSelected
-                            ? 'border-amber-700 ring-2 ring-amber-700/20 bg-amber-50/50 shadow-xs'
-                            : 'border-stone-200 bg-white text-stone-800 hover:border-stone-300'
+                            ? 'border-stone-950 ring-2 ring-stone-950/20 bg-amber-50/40 shadow-sm'
+                            : 'border-stone-200 bg-white hover:border-stone-400 text-stone-700 hover:shadow-2xs'
                         }`}
                       >
-                        <div className="text-xs font-semibold text-stone-950">{opt.label}</div>
-                        <div className={`text-xs mt-0.5 font-medium ${isSelected ? 'text-amber-900 font-bold' : 'text-stone-500'}`}>
-                          {formatCurrency(optPrice)}
+                        {opt.badge && (
+                          <span
+                            className={`absolute -top-2.5 left-4 text-[10px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full shadow-2xs ${
+                              opt.weight === '500g'
+                                ? 'bg-amber-800 text-white'
+                                : 'bg-emerald-800 text-white'
+                            }`}
+                          >
+                            {opt.badge}
+                          </span>
+                        )}
+
+                        <div className="flex items-start gap-3">
+                          {/* Radio Checkmark Circle Indicator */}
+                          <div
+                            className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                              isSelected
+                                ? 'border-stone-950 bg-stone-950 text-white'
+                                : 'border-stone-300 bg-white'
+                            }`}
+                          >
+                            {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                          </div>
+
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xl font-serif font-bold text-stone-950">
+                                {opt.weight}
+                              </span>
+                              <span className="text-xs font-semibold text-stone-700">
+                                {opt.label}
+                              </span>
+                            </div>
+                            <p className="text-xs text-stone-500 max-w-sm leading-relaxed">
+                              {opt.description}
+                            </p>
+                          </div>
                         </div>
-                        <div className="text-[10px] text-stone-400 mt-0.5">{opt.pricePerKg}</div>
+
+                        <div className="flex sm:flex-col items-baseline sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-2 sm:pt-0 border-stone-100 shrink-0 pl-8 sm:pl-0">
+                          <div className="text-xl font-bold text-stone-950">
+                            {formatCurrency(opt.price)}
+                          </div>
+                          <div className="text-xs text-stone-400 line-through">
+                            MRP: {formatCurrency(opt.compareAtPrice)}
+                          </div>
+                          <div className="text-[11px] font-semibold text-emerald-700">
+                            {opt.discountText} · {opt.savings}
+                          </div>
+                          <div className="text-[10px] text-stone-500">
+                            {opt.pricePerKg}
+                          </div>
+                        </div>
                       </button>
                     );
                   })}
@@ -468,7 +552,7 @@ export default function ProductDetailPage() {
                     ) : (
                       <>
                         <ShoppingBag className="w-4 h-4" />
-                        <span>Add to Bag</span>
+                        <span>Add to Bag ({currentVariantObj.weight})</span>
                       </>
                     )}
                   </button>
@@ -480,7 +564,7 @@ export default function ProductDetailPage() {
                     onClick={handleBuyNow}
                     className="py-3 px-6 rounded-full font-semibold text-xs sm:text-sm bg-stone-900 hover:bg-amber-800 active:bg-amber-900 text-white transition-all cursor-pointer shadow-sm active:scale-98"
                   >
-                    Instant Buy
+                    Instant Buy ({currentVariantObj.weight})
                   </button>
                 </div>
 
@@ -575,7 +659,7 @@ export default function ProductDetailPage() {
                       <div className="w-14 h-14 rounded-xl bg-[#F7F4EE] border border-stone-200/60 p-1 shrink-0 relative overflow-hidden">
                         <img
                           src={product.images[0]?.url}
-                          alt={product.name}
+                          alt={cleanName}
                           className="w-full h-full object-contain"
                         />
                       </div>
@@ -588,7 +672,9 @@ export default function ProductDetailPage() {
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-stone-900 line-clamp-1">{product.name} + {comboPair.name}</p>
+                        <p className="text-xs font-medium text-stone-900 line-clamp-1">
+                          {cleanName} ({currentVariantObj.weight}) + {comboPair.name}
+                        </p>
                         <div className="flex items-baseline gap-2 mt-0.5">
                           <span className="text-xs font-bold text-stone-950">
                             {formatCurrency(activePrice + comboPair.price)}
@@ -940,10 +1026,10 @@ export default function ProductDetailPage() {
                 </div>
                 <div>
                   <h4 className="text-xs sm:text-sm font-semibold text-stone-950 truncate max-w-xs sm:max-w-sm">
-                    {product.name}
+                    {cleanName}
                   </h4>
                   <div className="flex items-center gap-2 text-[11px] text-stone-500">
-                    <span>{currentVariantObj.label}</span>
+                    <span className="font-medium text-stone-700">{currentVariantObj.weight}</span>
                     <span>•</span>
                     <span className="font-bold text-stone-950">{formatCurrency(activePrice)}</span>
                   </div>
@@ -968,7 +1054,7 @@ export default function ProductDetailPage() {
                   ) : (
                     <>
                       <ShoppingBag className="w-3.5 h-3.5" />
-                      <span>Add to Bag</span>
+                      <span>Add to Bag ({currentVariantObj.weight})</span>
                     </>
                   )}
                 </button>
@@ -977,7 +1063,7 @@ export default function ProductDetailPage() {
                   onClick={handleBuyNow}
                   className="py-2 px-5 rounded-full text-xs font-semibold bg-stone-900 hover:bg-amber-800 text-white transition-all cursor-pointer shadow-xs active:scale-98"
                 >
-                  Instant Buy
+                  Instant Buy ({currentVariantObj.weight})
                 </button>
               </div>
             </div>
