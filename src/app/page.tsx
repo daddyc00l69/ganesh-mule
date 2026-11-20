@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { StoreProvider } from '@/components/storefront/store-provider';
 import { ProductCard } from '@/components/storefront/product-card';
-import { VarietyShowcaseCard } from '@/components/storefront/variety-showcase-card';
 import { MOCK_PRODUCTS, MOCK_CATEGORIES } from '@/lib/mock-data';
 import { formatCurrency } from '@/lib/utils';
 import { useCart } from '@/lib/cart/cart-context';
@@ -52,20 +51,38 @@ export default function HomePage() {
     }
   };
 
-  // Filter products for homepage showcase
+  // Filter products for homepage showcase: exactly 6 main products
   const displayedProducts = useMemo(() => {
-    let list = [...MOCK_PRODUCTS];
+    const activeCategoryIds = [
+      'cat-forest',
+      'cat-sesame',
+      'cat-ajwain',
+      'cat-multiflora',
+      'cat-ber',
+      'cat-sheesham',
+    ];
 
     if (selectedCategory !== 'ALL') {
-      list = list.filter((p) => p.categoryId === selectedCategory);
+      let list = MOCK_PRODUCTS.filter((p) => p.categoryId === selectedCategory);
+      if (selectedWeight !== 'ALL') {
+        const targetWeight = parseInt(selectedWeight, 10);
+        list = list.filter((p) => p.weightGrams === targetWeight);
+      }
+      return list;
     }
 
-    if (selectedWeight !== 'ALL') {
-      const targetWeight = parseInt(selectedWeight, 10);
-      list = list.filter((p) => p.weightGrams === targetWeight);
-    }
+    const targetWeight = selectedWeight !== 'ALL' ? parseInt(selectedWeight, 10) : 500;
+    const sixProducts: typeof MOCK_PRODUCTS = [];
+    activeCategoryIds.forEach((catId) => {
+      const prod =
+        MOCK_PRODUCTS.find((p) => p.categoryId === catId && p.weightGrams === targetWeight) ||
+        MOCK_PRODUCTS.find((p) => p.categoryId === catId);
+      if (prod) {
+        sixProducts.push(prod);
+      }
+    });
 
-    return list;
+    return sixProducts;
   }, [selectedCategory, selectedWeight]);
 
   return (
@@ -316,15 +333,40 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* 6 Main Honey Product Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-6">
+          {/* Variety Filter Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto py-4 scrollbar-none">
+            <button
+              type="button"
+              onClick={() => setSelectedCategory('ALL')}
+              className={`px-4 py-2 rounded-full text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                selectedCategory === 'ALL'
+                  ? 'bg-amber-800 text-white'
+                  : 'bg-white border border-stone-200 text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              All 6 Varieties
+            </button>
+
             {MOCK_CATEGORIES.filter((c) => c.isVisible !== false && c.id !== 'cat-wild-forest' && c.id !== 'cat-saunf').map((cat) => (
-              <VarietyShowcaseCard
+              <button
                 key={cat.id}
-                category={cat}
-                products={MOCK_PRODUCTS}
-                activeWeightFilter={selectedWeight}
-              />
+                type="button"
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`px-4 py-2 rounded-full text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                  selectedCategory === cat.id
+                    ? 'bg-amber-800 text-white'
+                    : 'bg-white border border-stone-200 text-stone-600 hover:text-stone-900'
+                }`}
+              >
+                {cat.name.replace(' Raw Honey', '').replace(' Blossom Honey', '')}
+              </button>
+            ))}
+          </div>
+
+          {/* 6 Main Honey Product Cards Grid (Original ProductCard Theme Preserved) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
+            {displayedProducts.map((prod) => (
+              <ProductCard key={prod.id} product={prod} />
             ))}
           </div>
 

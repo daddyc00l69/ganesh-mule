@@ -29,6 +29,7 @@ import {
   Tag,
   UserCheck,
   AlertCircle,
+  Download,
 } from 'lucide-react';
 
 export default function AdminOrdersPage() {
@@ -521,6 +522,12 @@ export default function AdminOrdersPage() {
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-amber-500' : ''}`} />
             <span>{isRefreshing ? 'Syncing...' : 'Refresh Orders'}</span>
           </GlassButton>
+          <a href="/api/admin/reports/export?type=orders" download>
+            <GlassButton variant="primary" size="sm" className="gap-1.5 shadow-sm">
+              <Download className="w-3.5 h-3.5" />
+              <span>Export Orders (Excel)</span>
+            </GlassButton>
+          </a>
         </div>
       </div>
 
@@ -763,12 +770,19 @@ export default function AdminOrdersPage() {
                 {selectedOrder.items.map((item) => (
                   <div key={item.id} className="py-2.5 px-2 flex items-center justify-between text-xs">
                     <div>
-                      <p className="font-semibold text-foreground">{item.productName}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-foreground">{item.productName}</p>
+                        {(item.weight || item.weightGrams) && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                            {item.weight || `${item.weightGrams}g`}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[11px] font-mono text-muted-foreground">
-                        SKU: {item.sku} × {item.quantity}
+                        SKU: {item.sku} · {formatCurrency(item.price)} each × {item.quantity}
                       </p>
                     </div>
-                    <span className="font-semibold text-foreground">
+                    <span className="font-semibold text-foreground font-mono">
                       {formatCurrency(item.total)}
                     </span>
                   </div>

@@ -16,26 +16,41 @@ export const StorefrontFooter: React.FC = () => {
           </div>
 
           <div>
-            <h4 className="font-semibold text-stone-900 mb-3">Jars</h4>
+            <h4 className="font-semibold text-stone-900 mb-3">6 Pure Harvests</h4>
             <ul className="space-y-2">
               <li>
                 <Link href="/shop" className="hover:text-stone-950 transition-colors">
-                  All Harvests
+                  All 6 Harvests
                 </Link>
               </li>
               <li>
-                <Link href="/product/wild-forest-raw-honey-300g" className="hover:text-stone-950 transition-colors">
-                  Wild Forest Honey (300g)
+                <Link href="/product/forest-honey-500g" className="hover:text-stone-950 transition-colors">
+                  Wild Forest Honey (500g)
                 </Link>
               </li>
               <li>
-                <Link href="/product/wild-forest-raw-honey-750g" className="hover:text-stone-950 transition-colors">
-                  Wild Forest Honey (750g)
+                <Link href="/product/sesame-honey-500g" className="hover:text-stone-950 transition-colors">
+                  Sesame Blossom Honey (500g)
                 </Link>
               </li>
               <li>
-                <Link href="/product/wild-forest-raw-honey-1050g" className="hover:text-stone-950 transition-colors">
-                  Wild Forest Honey (1050g)
+                <Link href="/product/ajwain-honey-500g" className="hover:text-stone-950 transition-colors">
+                  Ajwain (Carom) Honey (500g)
+                </Link>
+              </li>
+              <li>
+                <Link href="/product/multiflora-honey-500g" className="hover:text-stone-950 transition-colors">
+                  Wild Multiflora Honey (500g)
+                </Link>
+              </li>
+              <li>
+                <Link href="/product/ber-honey-500g" className="hover:text-stone-950 transition-colors">
+                  Raw Ber (Sidr) Honey (500g)
+                </Link>
+              </li>
+              <li>
+                <Link href="/product/sheesham-honey-500g" className="hover:text-stone-950 transition-colors">
+                  Sheesham Honey (500g)
                 </Link>
               </li>
             </ul>

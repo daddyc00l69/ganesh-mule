@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { StoreProvider } from '@/components/storefront/store-provider';
 import { ProductCard } from '@/components/storefront/product-card';
 import { MOCK_PRODUCTS } from '@/lib/mock-data';
@@ -36,6 +37,7 @@ import {
 export default function ProductDetailPage() {
   const params = useParams();
   const slug = params?.slug as string;
+  const router = useRouter();
   const { addToCart, setIsCartOpen } = useCart();
 
   const initialProduct =
@@ -101,6 +103,18 @@ export default function ProductDetailPage() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [showStickyBar, setShowStickyBar] = useState(false);
 
+  // Delhivery Pincode Checker State
+  const [pincode, setPincode] = useState('');
+  const [pinCity, setPinCity] = useState('');
+  const [pinState, setPinState] = useState('');
+  const [pinChecked, setPinChecked] = useState(false);
+
+  // Combo Offer State
+  const comboPair = MOCK_PRODUCTS.find(
+    (p) => p.categoryId !== product.categoryId && (p.weightGrams === 500 || p.weightGrams === 250)
+  );
+  const [comboAdded, setComboAdded] = useState(false);
+
   const activePrice = currentVariantObj.price;
   const activeCompareAtPrice = currentVariantObj.compareAtPrice;
 
@@ -114,7 +128,9 @@ export default function ProductDetailPage() {
   const rating = product.rating || 4.9;
   const ratingCount = product.ratingCount || 1420;
 
-  const relatedProducts = MOCK_PRODUCTS.filter((p) => p.id !== product.id).slice(0, 3);
+  const relatedProducts = MOCK_PRODUCTS.filter(
+    (p) => p.id !== product.id && p.categoryId !== product.categoryId
+  ).slice(0, 3);
 
   // Monitor scroll for sticky bottom bar
   useEffect(() => {
@@ -130,7 +146,6 @@ export default function ProductDetailPage() {
   }, []);
 
   const handleAddToCart = () => {
-    // Resolve dedicated product or build unique variant item so every weight shows as its own distinct item in cart
     const matched =
       MOCK_PRODUCTS.find((p) => p.slug === currentVariantObj.slug) ||
       MOCK_PRODUCTS.find((p) => p.id === currentVariantObj.id);
@@ -156,18 +171,19 @@ export default function ProductDetailPage() {
     setTimeout(() => setIsAdded(false), 2000);
   };
 
-  const router = useRouter();
-
   const handleBuyNow = () => {
     handleAddToCart();
+    setIsCartOpen(false);
     router.push('/checkout');
   };
 
-  // Pincode Delivery Check
-  const [pincode, setPincode] = useState('');
-  const [pinCity, setPinCity] = useState<string | null>(null);
-  const [pinState, setPinState] = useState<string | null>(null);
-  const [pinChecked, setPinChecked] = useState(false);
+  const handleAddCombo = () => {
+    if (!comboPair) return;
+    handleAddToCart();
+    addToCart(comboPair, 1);
+    setComboAdded(true);
+    setTimeout(() => setComboAdded(false), 2500);
+  };
 
   const handleCheckPincode = (e: React.FormEvent) => {
     e.preventDefault();
@@ -177,26 +193,6 @@ export default function ProductDetailPage() {
       setPinState(resolved?.state || 'India');
       setPinChecked(true);
     }
-  };
-
-  // Frequently Bought Together combo pair (e.g. 250g Sampler from another variety)
-  const comboPair =
-    MOCK_PRODUCTS.find(
-      (p) =>
-        p.id !== product.id &&
-        !p.slug.includes(baseSlug) &&
-        p.weightGrams === 250 &&
-        p.isPublished
-    ) || MOCK_PRODUCTS[0];
-
-  const [comboAdded, setComboAdded] = useState(false);
-
-  const handleAddCombo = () => {
-    handleAddToCart();
-    addToCart(comboPair, 1);
-    setComboAdded(true);
-    setTimeout(() => setComboAdded(false), 2000);
-    setIsCartOpen(true);
   };
 
   const handleUpvoteReview = (reviewId: string, currentCount: number) => {
@@ -218,46 +214,46 @@ export default function ProductDetailPage() {
 
   return (
     <StoreProvider>
-      <div className="bg-[#f5f5f7] min-h-screen pb-24 text-[#1d1d1f] selection:bg-[#0071e3]/20">
+      <div className="bg-[#FAF9F5] min-h-screen pb-24 text-stone-900 selection:bg-amber-500/20 selection:text-amber-900">
         
-        {/* Apple Sub-Navbar Breadcrumb & Share */}
-        <div className="border-b border-[#d2d2d7]/40 bg-white/70 backdrop-blur-md sticky top-11 sm:top-12 z-30">
+        {/* Sub-Navbar Breadcrumb & Share */}
+        <div className="border-b border-stone-200/70 bg-[#FCFBF7]/90 backdrop-blur-md sticky top-11 sm:top-12 z-30">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between text-xs">
             <Link
               href="/shop"
-              className="inline-flex items-center gap-1.5 text-[#1d1d1f] hover:text-[#0071e3] font-medium transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-stone-700 hover:text-amber-900 font-medium transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to The Shop</span>
             </Link>
 
             <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-2 text-[#86868b]">
-                <Link href="/" className="hover:text-[#1d1d1f]">Store</Link>
+              <div className="hidden sm:flex items-center gap-2 text-stone-500">
+                <Link href="/" className="hover:text-stone-950">Store</Link>
                 <span>/</span>
-                <Link href="/shop" className="hover:text-[#1d1d1f]">Harvests</Link>
+                <Link href="/shop" className="hover:text-stone-950">Harvests</Link>
                 <span>/</span>
-                <span className="text-[#1d1d1f] font-medium truncate max-w-xs">{product.name}</span>
+                <span className="text-stone-900 font-medium truncate max-w-xs">{product.name}</span>
               </div>
               <button
                 type="button"
                 onClick={handleShare}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-[#d2d2d7] bg-white text-[#1d1d1f] hover:bg-[#f5f5f7] text-xs font-medium cursor-pointer shadow-2xs"
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-stone-200 bg-white text-stone-800 hover:bg-stone-50 text-xs font-medium cursor-pointer shadow-2xs"
               >
-                <Share2 className="w-3.5 h-3.5 text-[#0071e3]" />
+                <Share2 className="w-3.5 h-3.5 text-amber-800" />
                 <span>{copiedLink ? 'Link Copied!' : 'Share'}</span>
               </button>
             </div>
           </div>
         </div>
 
-        {/* Studio Product Showcase (Apple Store 2-Col Split) */}
+        {/* Product Showcase */}
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
             
             {/* Gallery Column (6 Cols) */}
             <div className="lg:col-span-6 space-y-4 lg:sticky lg:top-28">
-              <div className="relative aspect-square rounded-[28px] overflow-hidden bg-white border border-[#d2d2d7]/50 flex items-center justify-center p-8 sm:p-12 shadow-sm group">
+              <div className="relative aspect-square rounded-[28px] overflow-hidden bg-white border border-stone-200/80 flex items-center justify-center p-8 sm:p-12 shadow-sm group">
                 {product.images[selectedImage] ? (
                   <img
                     src={product.images[selectedImage].url}
@@ -265,39 +261,27 @@ export default function ProductDetailPage() {
                     className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700 ease-out drop-shadow-md"
                   />
                 ) : (
-                  <div className="text-[#86868b] font-mono">{product.sku}</div>
+                  <div className="text-stone-400 font-mono">{product.sku}</div>
                 )}
 
-                {/* Apple Floating Badges */}
+                {/* Floating Badges */}
                 <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
                   {product.badge && (
-                    <span className={`text-[11px] font-semibold tracking-wide px-3 py-1 rounded-full border shadow-2xs backdrop-blur-md flex items-center gap-1.5 ${
-                      product.badgeColor === 'amber'
-                        ? 'bg-amber-500/20 text-amber-950 border-amber-500/40'
-                        : product.badgeColor === 'cyan'
-                        ? 'bg-cyan-500/20 text-cyan-950 border-cyan-500/40'
-                        : product.badgeColor === 'purple'
-                        ? 'bg-purple-500/20 text-purple-950 border-purple-500/40'
-                        : product.badgeColor === 'emerald'
-                        ? 'bg-emerald-500/20 text-emerald-950 border-emerald-500/40'
-                        : product.badgeColor === 'rose'
-                        ? 'bg-rose-500/20 text-rose-950 border-rose-500/40'
-                        : 'bg-blue-500/20 text-blue-950 border-blue-500/40'
-                    }`}>
+                    <span className="text-[11px] font-semibold tracking-wide px-3 py-1 rounded-full border shadow-2xs backdrop-blur-md flex items-center gap-1.5 bg-amber-500/20 text-amber-950 border-amber-500/40">
                       <Sparkles className="w-3 h-3 text-amber-600" />
                       <span>{product.badge}</span>
                     </span>
                   )}
-                  <span className="bg-[#1d1d1f] text-white text-[11px] font-medium tracking-wider px-3 py-1 rounded-full shadow-2xs">
+                  <span className="bg-stone-900 text-white text-[11px] font-medium tracking-wider px-3 py-1 rounded-full shadow-2xs">
                     {product.batchNumber || 'FLAGSHIP HARVEST'}
                   </span>
-                  <span className="bg-white/95 text-[#1d1d1f] text-[10px] font-medium px-2.5 py-0.5 rounded-full border border-[#d2d2d7] flex items-center gap-1 shadow-2xs">
-                    <ShieldCheck className="w-3.5 h-3.5 text-[#0071e3]" />
+                  <span className="bg-emerald-50 text-emerald-800 text-[10px] font-medium px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1 shadow-2xs">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                     NMR Certified Pure
                   </span>
                 </div>
 
-                <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-xs px-3 py-1 rounded-full text-[11px] text-[#6e6e73] border border-[#d2d2d7]/60 shadow-2xs">
+                <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-xs px-3 py-1 rounded-full text-[11px] text-stone-500 border border-stone-200 shadow-2xs">
                   {selectedImage + 1} of {product.images.length}
                 </div>
               </div>
@@ -311,8 +295,8 @@ export default function ProductDetailPage() {
                       onClick={() => setSelectedImage(idx)}
                       className={`w-20 h-20 rounded-[18px] overflow-hidden border-2 bg-white p-2 cursor-pointer transition-all shrink-0 ${
                         selectedImage === idx
-                          ? 'border-[#0071e3] ring-2 ring-[#0071e3]/20 shadow-xs'
-                          : 'border-[#d2d2d7]/60 hover:border-[#86868b] opacity-80 hover:opacity-100'
+                          ? 'border-amber-700 ring-2 ring-amber-700/20 shadow-xs'
+                          : 'border-stone-200 hover:border-stone-400 opacity-80 hover:opacity-100'
                       }`}
                     >
                       <img src={img.url} alt="" className="w-full h-full object-contain" />
@@ -325,21 +309,9 @@ export default function ProductDetailPage() {
             {/* Product Purchase & Configurator Column (6 Cols) */}
             <div className="lg:col-span-6 space-y-6">
               <div>
-                <div className="flex items-center gap-2 text-xs font-semibold tracking-wider uppercase text-[#0071e3] flex-wrap">
+                <div className="flex items-center gap-2 text-xs font-semibold tracking-wider uppercase text-amber-800 flex-wrap">
                   {product.badge && (
-                    <span className={`px-2.5 py-0.5 rounded-full border text-[10px] font-bold tracking-normal ${
-                      product.badgeColor === 'amber'
-                        ? 'bg-amber-100 text-amber-900 border-amber-300'
-                        : product.badgeColor === 'cyan'
-                        ? 'bg-cyan-100 text-cyan-900 border-cyan-300'
-                        : product.badgeColor === 'purple'
-                        ? 'bg-purple-100 text-purple-900 border-purple-300'
-                        : product.badgeColor === 'emerald'
-                        ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
-                        : product.badgeColor === 'rose'
-                        ? 'bg-rose-100 text-rose-900 border-rose-300'
-                        : 'bg-blue-100 text-blue-900 border-blue-300'
-                    }`}>
+                    <span className="px-2.5 py-0.5 rounded-full border text-[10px] font-bold tracking-normal bg-amber-100 text-amber-900 border-amber-300">
                       {product.badge}
                     </span>
                   )}
@@ -348,19 +320,19 @@ export default function ProductDetailPage() {
                   <span>{product.origin || 'Western Ghats'}</span>
                 </div>
                 
-                <h1 className="text-3xl sm:text-4xl font-semibold text-[#1d1d1f] mt-1.5 leading-tight tracking-tight">
+                <h1 className="text-3xl sm:text-4xl font-serif font-bold text-stone-950 mt-1.5 leading-tight tracking-tight">
                   {product.name}
                 </h1>
 
                 {/* Rating & Tested Tag */}
                 <div className="flex items-center gap-3 mt-3">
-                  <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-white border border-[#d2d2d7] text-xs font-semibold text-[#1d1d1f] shadow-2xs">
-                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                  <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-white border border-stone-200 text-xs font-semibold text-stone-900 shadow-2xs">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
                     <span>{rating}</span>
-                    <span className="text-[#86868b] font-normal">({ratingCount} reviews)</span>
+                    <span className="text-stone-500 font-normal">({ratingCount} reviews)</span>
                   </div>
-                  <span className="text-xs text-[#d2d2d7]">•</span>
-                  <span className="text-xs text-emerald-700 font-medium flex items-center gap-1">
+                  <span className="text-xs text-stone-300">•</span>
+                  <span className="text-xs text-emerald-800 font-medium flex items-center gap-1">
                     <Check className="w-3.5 h-3.5 text-emerald-600" />
                     Batch {product.batchNumber || '2026'} NMR Passed
                   </span>
@@ -368,13 +340,13 @@ export default function ProductDetailPage() {
               </div>
 
               {/* Price Presentation */}
-              <div className="pt-2 border-t border-[#d2d2d7]/40 space-y-1">
+              <div className="pt-2 border-t border-stone-200/80 space-y-1">
                 <div className="flex items-baseline gap-3">
-                  <span className="text-3xl sm:text-4xl font-semibold text-[#1d1d1f] tracking-tight">
+                  <span className="text-3xl sm:text-4xl font-bold text-stone-950 tracking-tight">
                     {formatCurrency(activePrice)}
                   </span>
                   {activeCompareAtPrice && (
-                    <span className="text-base text-[#86868b] line-through">
+                    <span className="text-base text-stone-400 line-through">
                       MRP: {formatCurrency(activeCompareAtPrice)}
                     </span>
                   )}
@@ -387,45 +359,45 @@ export default function ProductDetailPage() {
                 {activeCompareAtPrice && activeCompareAtPrice > activePrice && (
                   <p className="text-xs font-semibold text-emerald-700">
                     You Save: {formatCurrency(activeCompareAtPrice - activePrice)} ·{' '}
-                    <span className="text-[#6e6e73] font-normal">{currentVariantObj.pricePerKg}</span>
+                    <span className="text-stone-600 font-normal">{currentVariantObj.pricePerKg}</span>
                   </p>
                 )}
-                <p className="text-xs text-[#6e6e73]">
+                <p className="text-xs text-stone-500">
                   Inclusive of all taxes. Free express delivery across India on orders over ₹999.
                 </p>
               </div>
 
               {/* Sensory 4-Tile Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-4 rounded-[20px] bg-white border border-[#d2d2d7]/50 text-xs shadow-2xs">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-4 rounded-2xl bg-white border border-stone-200/80 text-xs shadow-2xs">
                 <div>
-                  <span className="text-[#86868b] block text-[10px] uppercase font-semibold">Flora</span>
-                  <span className="font-semibold text-[#1d1d1f] line-clamp-1">{product.flavour?.split(' ')[0] || 'Wild'} Bloom</span>
+                  <span className="text-stone-400 block text-[10px] uppercase font-semibold">Flora</span>
+                  <span className="font-semibold text-stone-900 line-clamp-1">{product.flavour?.split(' ')[0] || 'Wild'} Bloom</span>
                 </div>
                 <div>
-                  <span className="text-[#86868b] block text-[10px] uppercase font-semibold">Heat</span>
-                  <span className="font-semibold text-[#1d1d1f]">0.0% Cold</span>
+                  <span className="text-stone-400 block text-[10px] uppercase font-semibold">Heat</span>
+                  <span className="font-semibold text-stone-900">0.0% Cold</span>
                 </div>
                 <div>
-                  <span className="text-[#86868b] block text-[10px] uppercase font-semibold">Enzymes</span>
+                  <span className="text-stone-400 block text-[10px] uppercase font-semibold">Enzymes</span>
                   <span className="font-semibold text-emerald-700">100% Active</span>
                 </div>
                 <div>
-                  <span className="text-[#86868b] block text-[10px] uppercase font-semibold">Glass</span>
-                  <span className="font-semibold text-[#1d1d1f]">Solid Flint</span>
+                  <span className="text-stone-400 block text-[10px] uppercase font-semibold">Glass</span>
+                  <span className="font-semibold text-stone-900">Solid Flint</span>
                 </div>
               </div>
 
               {/* Description */}
-              <p className="text-xs sm:text-sm text-[#6e6e73] leading-relaxed">
+              <p className="text-xs sm:text-sm text-stone-600 leading-relaxed">
                 {product.description}
               </p>
 
-              {/* Apple Storage/Volume Selector */}
+              {/* Volume / Weight Variant Selector */}
               <div className="space-y-2.5 pt-1">
-                <label className="text-xs font-semibold text-[#1d1d1f] block">
-                  Select Volume: <span className="text-[#0071e3] font-medium">{currentVariantObj.label}</span>
+                <label className="text-xs font-semibold text-stone-900 block">
+                  Select Weight Variant: <span className="text-amber-800 font-medium">{currentVariantObj.label}</span>
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   {variantOptions.map((opt) => {
                     const isSelected = selectedVariant === opt.weight;
                     const optPrice = opt.price;
@@ -434,40 +406,41 @@ export default function ProductDetailPage() {
                         key={opt.weight}
                         type="button"
                         onClick={() => setSelectedVariant(opt.weight)}
-                        className={`p-3.5 text-left rounded-[16px] border transition-all cursor-pointer ${
+                        className={`p-3.5 text-left rounded-2xl border transition-all cursor-pointer ${
                           isSelected
-                            ? 'border-[#0071e3] ring-2 ring-[#0071e3]/20 bg-white shadow-xs'
-                            : 'border-[#d2d2d7] bg-[#f5f5f7]/60 text-[#1d1d1f] hover:border-[#86868b]'
+                            ? 'border-amber-700 ring-2 ring-amber-700/20 bg-amber-50/50 shadow-xs'
+                            : 'border-stone-200 bg-white text-stone-800 hover:border-stone-300'
                         }`}
                       >
-                        <div className="text-xs font-semibold text-[#1d1d1f]">{opt.label}</div>
-                        <div className={`text-xs mt-0.5 font-medium ${isSelected ? 'text-[#0071e3]' : 'text-[#6e6e73]'}`}>
+                        <div className="text-xs font-semibold text-stone-950">{opt.label}</div>
+                        <div className={`text-xs mt-0.5 font-medium ${isSelected ? 'text-amber-900 font-bold' : 'text-stone-500'}`}>
                           {formatCurrency(optPrice)}
                         </div>
+                        <div className="text-[10px] text-stone-400 mt-0.5">{opt.pricePerKg}</div>
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Quantity Stepper & Apple Action Buttons */}
+              {/* Quantity Stepper & Action Buttons */}
               <div className="space-y-3 pt-2">
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                   {/* Quantity Stepper */}
-                  <div className="flex items-center justify-between border border-[#d2d2d7] rounded-full bg-white px-3 py-2 w-32 shrink-0">
+                  <div className="flex items-center justify-between border border-stone-200 rounded-full bg-white px-3 py-2 w-32 shrink-0">
                     <button
                       type="button"
                       onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                      className="p-1 text-[#1d1d1f] hover:text-[#0071e3] transition-colors cursor-pointer"
+                      className="p-1 text-stone-700 hover:text-stone-950 transition-colors cursor-pointer"
                       aria-label="Decrease quantity"
                     >
                       <Minus className="w-3.5 h-3.5" />
                     </button>
-                    <span className="font-semibold text-xs text-[#1d1d1f]">{quantity}</span>
+                    <span className="font-semibold text-xs text-stone-950">{quantity}</span>
                     <button
                       type="button"
                       onClick={() => setQuantity((q) => Math.min(product.stockQuantity, q + 1))}
-                      className="p-1 text-[#1d1d1f] hover:text-[#0071e3] transition-colors cursor-pointer"
+                      className="p-1 text-stone-700 hover:text-stone-950 transition-colors cursor-pointer"
                       aria-label="Increase quantity"
                     >
                       <Plus className="w-3.5 h-3.5" />
@@ -479,12 +452,12 @@ export default function ProductDetailPage() {
                     type="button"
                     disabled={isOutOfStock}
                     onClick={handleAddToCart}
-                    className={`flex-1 py-3 px-6 rounded-full font-medium text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs active:scale-98 ${
+                    className={`flex-1 py-3 px-6 rounded-full font-semibold text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs active:scale-98 ${
                       isAdded
-                        ? 'bg-emerald-600 text-white'
+                        ? 'bg-emerald-700 text-white'
                         : isOutOfStock
-                        ? 'bg-[#e5e5e7] text-[#86868b] cursor-not-allowed'
-                        : 'border border-[#1d1d1f] text-[#1d1d1f] hover:bg-[#1d1d1f] hover:text-white bg-white'
+                        ? 'bg-stone-100 text-stone-400 cursor-not-allowed'
+                        : 'border border-stone-300 bg-white hover:bg-stone-100 text-stone-900'
                     }`}
                   >
                     {isAdded ? (
@@ -500,54 +473,54 @@ export default function ProductDetailPage() {
                     )}
                   </button>
 
-                  {/* Instant Buy (Apple Blue) */}
+                  {/* Instant Buy */}
                   <button
                     type="button"
                     disabled={isOutOfStock}
                     onClick={handleBuyNow}
-                    className="py-3 px-6 rounded-full font-medium text-xs sm:text-sm bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4] text-white transition-all cursor-pointer shadow-sm active:scale-98"
+                    className="py-3 px-6 rounded-full font-semibold text-xs sm:text-sm bg-stone-900 hover:bg-amber-800 active:bg-amber-900 text-white transition-all cursor-pointer shadow-sm active:scale-98"
                   >
                     Instant Buy
                   </button>
                 </div>
 
                 {/* Stock & Express Freight Notification */}
-                <div className="p-3.5 rounded-[16px] bg-white border border-[#d2d2d7]/50 flex items-center justify-between text-xs text-[#6e6e73] shadow-2xs">
+                <div className="p-3.5 rounded-2xl bg-white border border-stone-200/80 flex items-center justify-between text-xs text-stone-600 shadow-2xs">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="font-medium text-[#1d1d1f]">In Stock ({product.stockQuantity} jars ready)</span>
+                    <span className="font-medium text-stone-900">In Stock ({product.stockQuantity} jars ready)</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[#0071e3] font-medium">
-                    <Clock className="w-3.5 h-3.5" />
+                  <div className="flex items-center gap-1.5 text-amber-900 font-medium">
+                    <Clock className="w-3.5 h-3.5 text-amber-700" />
                     <span>Dispatches in 24 hours</span>
                   </div>
                 </div>
               </div>
 
-              {/* Apple Service Strip */}
-              <div className="pt-4 border-t border-[#d2d2d7]/40 grid grid-cols-2 gap-3 text-xs text-[#6e6e73]">
+              {/* Service Badges */}
+              <div className="pt-4 border-t border-stone-200/80 grid grid-cols-2 gap-3 text-xs text-stone-600">
                 <div className="flex items-center gap-2">
-                  <Truck className="w-4 h-4 text-[#0071e3] shrink-0" />
+                  <Truck className="w-4 h-4 text-amber-800 shrink-0" />
                   <span>Free insured air freight over ₹999</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-[#0071e3] shrink-0" />
+                  <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0" />
                   <span>100% Zero-breakage glass guarantee</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Award className="w-4 h-4 text-[#0071e3] shrink-0" />
+                  <Award className="w-4 h-4 text-amber-800 shrink-0" />
                   <span>NMR Spectroscopy tested pure</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <RotateCcw className="w-4 h-4 text-[#0071e3] shrink-0" />
+                  <RotateCcw className="w-4 h-4 text-stone-700 shrink-0" />
                   <span>7-Day seamless replacement</span>
                 </div>
               </div>
 
               {/* Interactive Delhivery Pincode Checker */}
-              <div className="pt-4 border-t border-[#d2d2d7]/40 space-y-2">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-[#1d1d1f]">
-                  <MapPin className="w-3.5 h-3.5 text-[#0071e3]" />
+              <div className="pt-4 border-t border-stone-200/80 space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-900">
+                  <MapPin className="w-3.5 h-3.5 text-amber-800" />
                   <span>Check Delivery Date & Pincode Serviceability</span>
                 </div>
                 <form onSubmit={handleCheckPincode} className="flex gap-2">
@@ -568,11 +541,11 @@ export default function ProductDetailPage() {
                       }
                     }}
                     placeholder="Enter 6-digit Pincode (e.g. 400001)"
-                    className="flex-1 px-3.5 py-2 text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] placeholder:text-stone-400 focus:outline-none focus:border-[#0071e3]"
+                    className="flex-1 px-3.5 py-2 text-xs rounded-xl border border-stone-300 bg-white text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-amber-700"
                   />
                   <button
                     type="submit"
-                    className="px-4 py-2 text-xs font-semibold rounded-xl bg-[#1d1d1f] text-white hover:bg-stone-800 transition-colors cursor-pointer"
+                    className="px-4 py-2 text-xs font-semibold rounded-xl bg-stone-900 text-white hover:bg-amber-800 transition-colors cursor-pointer"
                   >
                     Check
                   </button>
@@ -588,16 +561,16 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* Amazon-Style Frequently Bought Together Combo */}
+              {/* Frequently Bought Together Combo */}
               {comboPair && (
-                <div className="pt-4 border-t border-[#d2d2d7]/40 space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-[#1d1d1f]">
+                <div className="pt-4 border-t border-stone-200/80 space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-stone-950">
                     <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
                     <span>Frequently Bought Together</span>
-                    <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">Save ₹50</span>
+                    <span className="text-[10px] font-bold text-amber-900 bg-amber-100 px-2 py-0.5 rounded-full border border-amber-200">Save ₹50</span>
                   </div>
 
-                  <div className="p-3.5 rounded-[20px] bg-white border border-[#d2d2d7]/60 shadow-2xs space-y-3">
+                  <div className="p-4 rounded-2xl bg-white border border-stone-200/80 shadow-2xs space-y-3">
                     <div className="flex items-center gap-3">
                       <div className="w-14 h-14 rounded-xl bg-[#F7F4EE] border border-stone-200/60 p-1 shrink-0 relative overflow-hidden">
                         <img
@@ -630,7 +603,7 @@ export default function ProductDetailPage() {
                     <button
                       type="button"
                       onClick={handleAddCombo}
-                      className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold bg-stone-900 hover:bg-amber-900 text-white transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-98"
+                      className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold bg-stone-900 hover:bg-amber-800 text-white transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-98"
                     >
                       {comboAdded ? (
                         <>
@@ -651,12 +624,12 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {/* Extended Interactive Information Section */}
-        <section className="bg-white border-t border-[#d2d2d7]/50 py-16">
+        {/* Extended Information Section */}
+        <section className="bg-white border-t border-stone-200/70 py-16">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
             
-            {/* Apple Segmented Nav Tabs */}
-            <div className="flex items-center justify-center gap-2 border-b border-[#d2d2d7]/40 pb-4 flex-wrap">
+            {/* Segmented Nav Tabs */}
+            <div className="flex items-center justify-center gap-2 border-b border-stone-200 pb-4 flex-wrap">
               {[
                 { id: 'STORY', label: 'The Harvest & Origin' },
                 { id: 'SPECS', label: 'Technical Specifications' },
@@ -669,8 +642,8 @@ export default function ProductDetailPage() {
                   onClick={() => setActiveTab(t.id as any)}
                   className={`px-4 py-2 text-xs font-medium rounded-full transition-all cursor-pointer ${
                     activeTab === t.id
-                      ? 'bg-[#1d1d1f] text-white shadow-2xs'
-                      : 'bg-[#f5f5f7] border border-[#d2d2d7] text-[#6e6e73] hover:text-[#1d1d1f]'
+                      ? 'bg-stone-900 text-white shadow-2xs'
+                      : 'bg-stone-50 border border-stone-200 text-stone-600 hover:text-stone-950'
                   }`}
                 >
                   {t.label}
@@ -680,18 +653,18 @@ export default function ProductDetailPage() {
 
             {/* Tab 1: Story */}
             {activeTab === 'STORY' && (
-              <div className="bg-[#f5f5f7] rounded-[24px] border border-[#d2d2d7]/50 p-8 space-y-6 shadow-2xs animate-in fade-in">
-                <h3 className="text-xl font-semibold text-[#1d1d1f]">
+              <div className="bg-[#FAF9F5] rounded-3xl border border-stone-200/80 p-8 space-y-6 shadow-2xs animate-in fade-in">
+                <h3 className="text-xl font-serif font-bold text-stone-950">
                   Ethically Harvested by Indigenous Forest Beekeepers
                 </h3>
-                <p className="text-xs sm:text-sm text-[#6e6e73] leading-relaxed">
+                <p className="text-xs sm:text-sm text-stone-600 leading-relaxed">
                   Unlike commercial beekeeping operations where hives are fed sugar syrup and treated with synthetic antibiotics, our raw honey is collected directly from wild bee colonies in remote bio-reserves. We partner directly with tribal beekeeper collectives using non-destructive traditional smoke methods that keep colonies safe.
                 </p>
 
                 {product.aboutItems && (
                   <div className="space-y-3 pt-2">
                     {product.aboutItems.map((item, idx) => (
-                      <div key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-[#1d1d1f]">
+                      <div key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-stone-800">
                         <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                         <span>{item}</span>
                       </div>
@@ -699,18 +672,18 @@ export default function ProductDetailPage() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-[#d2d2d7]/40">
-                  <div className="p-5 rounded-[18px] bg-white border border-[#d2d2d7]/40 space-y-1">
-                    <span className="text-xs font-semibold text-[#1d1d1f]">Never Boiled / Heated</span>
-                    <p className="text-xs text-[#6e6e73]">Extracted cold below 38°C to keep enzymes and beneficial bacteria alive.</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-stone-200">
+                  <div className="p-5 rounded-2xl bg-white border border-stone-200/70 space-y-1">
+                    <span className="text-xs font-semibold text-stone-950">Never Boiled / Heated</span>
+                    <p className="text-xs text-stone-500">Extracted cold below 38°C to keep enzymes and beneficial bacteria alive.</p>
                   </div>
-                  <div className="p-5 rounded-[18px] bg-white border border-[#d2d2d7]/40 space-y-1">
-                    <span className="text-xs font-semibold text-[#1d1d1f]">Unfiltered Pollen</span>
-                    <p className="text-xs text-[#6e6e73]">Coarsely strained so microscopic wildflower bee pollen remains intact.</p>
+                  <div className="p-5 rounded-2xl bg-white border border-stone-200/70 space-y-1">
+                    <span className="text-xs font-semibold text-stone-950">Unfiltered Pollen</span>
+                    <p className="text-xs text-stone-500">Coarsely strained so microscopic wildflower bee pollen remains intact.</p>
                   </div>
-                  <div className="p-5 rounded-[18px] bg-white border border-[#d2d2d7]/40 space-y-1">
-                    <span className="text-xs font-semibold text-[#1d1d1f]">Solid Glass Jars</span>
-                    <p className="text-xs text-[#6e6e73]">Inert glass eliminates microplastic contamination forever.</p>
+                  <div className="p-5 rounded-2xl bg-white border border-stone-200/70 space-y-1">
+                    <span className="text-xs font-semibold text-stone-950">Solid Glass Jars</span>
+                    <p className="text-xs text-stone-500">Inert solid glass eliminates microplastic contamination forever.</p>
                   </div>
                 </div>
               </div>
@@ -718,15 +691,15 @@ export default function ProductDetailPage() {
 
             {/* Tab 2: Specs */}
             {activeTab === 'SPECS' && (
-              <div className="bg-[#f5f5f7] rounded-[24px] border border-[#d2d2d7]/50 p-8 shadow-2xs animate-in fade-in space-y-6">
+              <div className="bg-[#FAF9F5] rounded-3xl border border-stone-200/80 p-8 shadow-2xs animate-in fade-in space-y-6">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-semibold text-[#1d1d1f]">Technical Specifications</h3>
-                  <span className="text-xs font-mono text-[#86868b]">SKU: {product.sku}</span>
+                  <h3 className="text-xl font-serif font-bold text-stone-950">Technical Specifications</h3>
+                  <span className="text-xs font-mono text-stone-500">SKU: {product.sku}</span>
                 </div>
                 
-                <div className="rounded-[18px] border border-[#d2d2d7]/50 overflow-hidden text-xs bg-white">
+                <div className="rounded-2xl border border-stone-200/80 overflow-hidden text-xs bg-white">
                   <table className="w-full text-left">
-                    <tbody className="divide-y divide-[#d2d2d7]/30">
+                    <tbody className="divide-y divide-stone-100">
                       {Object.entries(
                         product.technicalDetails || {
                           'Brand': 'Ganesh Mule Pure Honey',
@@ -736,17 +709,17 @@ export default function ProductDetailPage() {
                           'Shelf Life': '24 Months',
                         }
                       ).map(([key, val], idx) => (
-                        <tr key={key} className={idx % 2 === 0 ? 'bg-[#f5f5f7]/40' : 'bg-white'}>
-                          <td className="py-3 px-4 font-semibold text-[#6e6e73] w-1/3">{key}</td>
-                          <td className="py-3 px-4 text-[#1d1d1f] font-medium">{val}</td>
+                        <tr key={key} className={idx % 2 === 0 ? 'bg-stone-50/50' : 'bg-white'}>
+                          <td className="py-3 px-4 font-semibold text-stone-600 w-1/3">{key}</td>
+                          <td className="py-3 px-4 text-stone-900 font-medium">{val}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
 
-                <div className="p-4 rounded-[16px] bg-white border border-[#d2d2d7]/40 text-xs text-[#6e6e73] leading-relaxed">
-                  <span className="font-semibold text-[#1d1d1f] block mb-1">Dietary Information:</span>
+                <div className="p-4 rounded-2xl bg-white border border-stone-200/70 text-xs text-stone-600 leading-relaxed">
+                  <span className="font-semibold text-stone-950 block mb-1">Dietary Information:</span>
                   100% natural and vegetarian. Naturally free from gluten, dairy, artificial preservatives, additives, and refined sugars. Not recommended for infants under 12 months.
                 </div>
               </div>
@@ -754,46 +727,46 @@ export default function ProductDetailPage() {
 
             {/* Tab 3: Purity & NMR */}
             {activeTab === 'PURITY' && (
-              <div className="bg-[#f5f5f7] rounded-[24px] border border-[#d2d2d7]/50 p-8 shadow-2xs animate-in fade-in space-y-6">
+              <div className="bg-[#FAF9F5] rounded-3xl border border-stone-200/80 p-8 shadow-2xs animate-in fade-in space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <h3 className="text-xl font-semibold text-[#1d1d1f]">NMR Spectroscopy Batch Analysis</h3>
-                    <span className="text-xs text-[#6e6e73] font-mono">Apiary Identifier: {product.batchNumber || 'BATCH-2026-WF04'}</span>
+                    <h3 className="text-xl font-serif font-bold text-stone-950">NMR Spectroscopy Batch Analysis</h3>
+                    <span className="text-xs text-stone-500 font-mono">Apiary Identifier: {product.batchNumber || 'BATCH-2026-WF04'}</span>
                   </div>
-                  <span className="text-xs font-medium text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 w-fit">
+                  <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 w-fit">
                     PASSED • 100% PURE RAW HONEY
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="p-5 rounded-[18px] bg-white border border-[#d2d2d7]/40 space-y-1.5 text-center">
-                    <span className="text-xs text-[#86868b] font-medium">Diastase Activity</span>
-                    <p className="text-2xl font-semibold text-[#1d1d1f]">14.2 Schade</p>
-                    <p className="text-[11px] text-[#6e6e73]">Standard &gt; 8. Confirms zero heat exposure.</p>
+                  <div className="p-5 rounded-2xl bg-white border border-stone-200/70 space-y-1.5 text-center">
+                    <span className="text-xs text-stone-500 font-medium">Diastase Activity</span>
+                    <p className="text-2xl font-bold text-stone-950">14.2 Schade</p>
+                    <p className="text-[11px] text-stone-500">Standard &gt; 8. Confirms zero heat exposure.</p>
                   </div>
-                  <div className="p-5 rounded-[18px] bg-white border border-[#d2d2d7]/40 space-y-1.5 text-center">
-                    <span className="text-xs text-[#86868b] font-medium">C3 / C4 Added Sugars</span>
-                    <p className="text-2xl font-semibold text-emerald-700">0.0% (Zero)</p>
-                    <p className="text-[11px] text-[#6e6e73]">Zero corn syrup, rice syrup, or cane sugar.</p>
+                  <div className="p-5 rounded-2xl bg-white border border-stone-200/70 space-y-1.5 text-center">
+                    <span className="text-xs text-stone-500 font-medium">C3 / C4 Added Sugars</span>
+                    <p className="text-2xl font-bold text-emerald-700">0.0% (Zero)</p>
+                    <p className="text-[11px] text-stone-500">Zero corn syrup, rice syrup, or cane sugar.</p>
                   </div>
-                  <div className="p-5 rounded-[18px] bg-white border border-[#d2d2d7]/40 space-y-1.5 text-center">
-                    <span className="text-xs text-[#86868b] font-medium">Moisture Density</span>
-                    <p className="text-2xl font-semibold text-[#1d1d1f]">17.6%</p>
-                    <p className="text-[11px] text-[#6e6e73]">Naturally capped honeycomb ripeness.</p>
+                  <div className="p-5 rounded-2xl bg-white border border-stone-200/70 space-y-1.5 text-center">
+                    <span className="text-xs text-stone-500 font-medium">Moisture Density</span>
+                    <p className="text-2xl font-bold text-stone-950">17.6%</p>
+                    <p className="text-[11px] text-stone-500">Naturally capped honeycomb ripeness.</p>
                   </div>
                 </div>
 
-                <div className="p-5 rounded-[18px] border border-[#d2d2d7]/40 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="text-xs text-[#6e6e73]">
-                    <span className="font-semibold text-[#1d1d1f] block">Certificate of Authenticity Available</span>
+                <div className="p-5 rounded-2xl border border-stone-200/70 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="text-xs text-stone-600">
+                    <span className="font-semibold text-stone-950 block">Certificate of Authenticity Available</span>
                     Testing conducted in accordance with German NMR and Codex Alimentarius honey purity standards.
                   </div>
                   <button
                     type="button"
                     onClick={() => alert(`Certificate for ${product.batchNumber || 'Batch 2026'} downloaded successfully (Simulated PDF).`)}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#f5f5f7] border border-[#d2d2d7] text-[#1d1d1f] hover:bg-[#e8e8ed] text-xs font-medium cursor-pointer shadow-2xs shrink-0"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-stone-50 border border-stone-200 text-stone-900 hover:bg-stone-100 text-xs font-semibold cursor-pointer shadow-2xs shrink-0"
                   >
-                    <Download className="w-3.5 h-3.5 text-[#0071e3]" />
+                    <Download className="w-3.5 h-3.5 text-amber-800" />
                     <span>Download Report</span>
                   </button>
                 </div>
@@ -802,10 +775,10 @@ export default function ProductDetailPage() {
 
             {/* Tab 4: Q&A */}
             {activeTab === 'QA' && (
-              <div className="bg-[#f5f5f7] rounded-[24px] border border-[#d2d2d7]/50 p-8 shadow-2xs animate-in fade-in space-y-6">
+              <div className="bg-[#FAF9F5] rounded-3xl border border-stone-200/80 p-8 shadow-2xs animate-in fade-in space-y-6">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-semibold text-[#1d1d1f]">Questions &amp; Answers</h3>
-                  <span className="text-xs text-[#86868b]">{product.qAndA?.length || 3} questions answered</span>
+                  <h3 className="text-xl font-serif font-bold text-stone-950">Questions &amp; Answers</h3>
+                  <span className="text-xs text-stone-500">{product.qAndA?.length || 3} questions answered</span>
                 </div>
 
                 <div className="space-y-4">
@@ -821,12 +794,12 @@ export default function ProductDetailPage() {
                       votes: 18,
                     },
                   ]).map((item, idx) => (
-                    <div key={idx} className="p-5 rounded-[18px] bg-white border border-[#d2d2d7]/40 space-y-2">
-                      <div className="text-xs font-semibold text-[#1d1d1f] flex items-start gap-2">
-                        <span className="text-[#0071e3] font-bold">Q:</span>
+                    <div key={idx} className="p-5 rounded-2xl bg-white border border-stone-200/70 space-y-2">
+                      <div className="text-xs font-semibold text-stone-950 flex items-start gap-2">
+                        <span className="text-amber-800 font-bold">Q:</span>
                         <span>{item.question}</span>
                       </div>
-                      <div className="text-xs text-[#6e6e73] leading-relaxed pl-4 border-l-2 border-[#0071e3]/40">
+                      <div className="text-xs text-stone-600 leading-relaxed pl-4 border-l-2 border-amber-800/40">
                         {item.answer}
                       </div>
                     </div>
@@ -838,20 +811,20 @@ export default function ProductDetailPage() {
         </section>
 
         {/* Customer Reviews Section */}
-        <section className="py-16 bg-[#f5f5f7] border-t border-[#d2d2d7]/40">
+        <section className="py-16 bg-[#F4F1EA] border-t border-stone-200/70">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
               <div>
-                <span className="text-xs font-semibold uppercase tracking-wider text-[#0071e3]">
+                <span className="text-xs font-semibold uppercase tracking-wider text-amber-800">
                   Verified Experiences
                 </span>
-                <h2 className="text-2xl sm:text-3xl font-semibold text-[#1d1d1f] mt-1">
+                <h2 className="text-2xl sm:text-3xl font-serif font-bold text-stone-950 mt-1">
                   Customer Ratings &amp; Reviews
                 </h2>
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-[#6e6e73] font-medium">
-                <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                <span className="font-semibold text-[#1d1d1f] text-sm">{rating}</span>
+              <div className="flex items-center gap-1.5 text-xs text-stone-600 font-medium">
+                <Star className="w-4 h-4 fill-amber-400 text-amber-500" />
+                <span className="font-bold text-stone-950 text-sm">{rating}</span>
                 <span>out of 5 ({ratingCount} verified customers)</span>
               </div>
             </div>
@@ -893,24 +866,24 @@ export default function ProductDetailPage() {
                 const hasVoted = votedIds[rev.id];
 
                 return (
-                  <div key={rev.id} className="p-6 rounded-[20px] bg-white border border-[#d2d2d7]/50 space-y-3 shadow-2xs">
+                  <div key={rev.id} className="p-6 rounded-2xl bg-white border border-stone-200/80 space-y-3 shadow-2xs">
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex text-amber-400">
                         {[...Array(rev.rating)].map((_, i) => (
-                          <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                          <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
                         ))}
                       </div>
-                      <span className="text-[10px] font-medium text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                      <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
                         Verified Purchase
                       </span>
                     </div>
-                    <h4 className="font-semibold text-[#1d1d1f] text-sm">{rev.title}</h4>
-                    <p className="text-xs text-[#6e6e73] leading-relaxed italic">
+                    <h4 className="font-semibold text-stone-950 text-sm">{rev.title}</h4>
+                    <p className="text-xs text-stone-600 leading-relaxed italic">
                       "{rev.content}"
                     </p>
-                    <div className="pt-2 border-t border-[#d2d2d7]/30 flex items-center justify-between text-[11px] text-[#86868b]">
+                    <div className="pt-2 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-500">
                       <div>
-                        <span className="font-medium text-[#1d1d1f] block">{rev.author}</span>
+                        <span className="font-semibold text-stone-900 block">{rev.author}</span>
                         <span>{rev.date}</span>
                       </div>
                       <button
@@ -918,8 +891,8 @@ export default function ProductDetailPage() {
                         onClick={() => handleUpvoteReview(rev.id, rev.helpfulCount)}
                         className={`inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full border transition-all cursor-pointer ${
                           hasVoted
-                            ? 'border-emerald-300 bg-emerald-50 text-emerald-800 font-medium'
-                            : 'border-[#d2d2d7] bg-white text-[#6e6e73] hover:text-[#1d1d1f]'
+                            ? 'border-emerald-300 bg-emerald-50 text-emerald-800 font-semibold'
+                            : 'border-stone-200 bg-white text-stone-600 hover:text-stone-950'
                         }`}
                       >
                         <ThumbsUp className="w-3 h-3" />
@@ -933,12 +906,32 @@ export default function ProductDetailPage() {
           </div>
         </section>
 
-        {/* Floating Sticky Quick-Add Bar (Apple Store Style) */}
+        {/* You May Also Like / Related Harvests */}
+        {relatedProducts.length > 0 && (
+          <section className="py-16 max-w-6xl mx-auto px-4 sm:px-6">
+            <div className="flex items-end justify-between mb-8 pb-4 border-b border-stone-200">
+              <div>
+                <span className="text-xs font-semibold text-amber-800 uppercase tracking-wider">Explore More Harvests</span>
+                <h3 className="text-2xl font-serif font-bold text-stone-950 mt-1">Single-Origin Monoflorals</h3>
+              </div>
+              <Link href="/shop" className="text-xs font-semibold text-stone-800 hover:text-amber-800">
+                View All Jars →
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {relatedProducts.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Floating Sticky Quick-Add Bar */}
         {showStickyBar && (
-          <div className="fixed bottom-0 left-0 right-0 bg-white/85 backdrop-blur-md border-t border-[#d2d2d7]/50 shadow-xl z-40 py-3 px-4 transition-all animate-in slide-in-from-bottom">
+          <div className="fixed bottom-0 left-0 right-0 bg-[#FCFBF7]/95 backdrop-blur-md border-t border-stone-200/80 shadow-xl z-40 py-3 px-4 transition-all animate-in slide-in-from-bottom">
             <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#f5f5f7] border border-[#d2d2d7]/60 overflow-hidden shrink-0 hidden sm:flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-white border border-stone-200 overflow-hidden shrink-0 hidden sm:flex items-center justify-center">
                   <img
                     src={product.images[0]?.url}
                     alt=""
@@ -946,13 +939,13 @@ export default function ProductDetailPage() {
                   />
                 </div>
                 <div>
-                  <h4 className="text-xs sm:text-sm font-semibold text-[#1d1d1f] truncate max-w-xs sm:max-w-sm">
+                  <h4 className="text-xs sm:text-sm font-semibold text-stone-950 truncate max-w-xs sm:max-w-sm">
                     {product.name}
                   </h4>
-                  <div className="flex items-center gap-2 text-[11px] text-[#6e6e73]">
+                  <div className="flex items-center gap-2 text-[11px] text-stone-500">
                     <span>{currentVariantObj.label}</span>
                     <span>•</span>
-                    <span className="font-semibold text-[#1d1d1f]">{formatCurrency(activePrice)}</span>
+                    <span className="font-bold text-stone-950">{formatCurrency(activePrice)}</span>
                   </div>
                 </div>
               </div>
@@ -961,10 +954,10 @@ export default function ProductDetailPage() {
                 <button
                   type="button"
                   onClick={handleAddToCart}
-                  className={`py-2 px-5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95 ${
+                  className={`py-2 px-5 rounded-full text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95 ${
                     isAdded
-                      ? 'bg-emerald-600 text-white'
-                      : 'border border-[#1d1d1f] text-[#1d1d1f] bg-white hover:bg-[#1d1d1f] hover:text-white'
+                      ? 'bg-emerald-700 text-white'
+                      : 'border border-stone-300 text-stone-900 bg-white hover:bg-stone-100'
                   }`}
                 >
                   {isAdded ? (
@@ -982,7 +975,7 @@ export default function ProductDetailPage() {
                 <button
                   type="button"
                   onClick={handleBuyNow}
-                  className="py-2 px-5 rounded-full text-xs font-medium bg-[#0071e3] hover:bg-[#0077ed] text-white transition-all cursor-pointer shadow-xs active:scale-95"
+                  className="py-2 px-5 rounded-full text-xs font-semibold bg-stone-900 hover:bg-amber-800 text-white transition-all cursor-pointer shadow-xs active:scale-98"
                 >
                   Instant Buy
                 </button>

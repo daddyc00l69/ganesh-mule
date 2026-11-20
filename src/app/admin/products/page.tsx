@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/dashboard/dashboard-layout';
 import { DataTable, Column } from '@/components/ui/data-table';
 import { GlassButton } from '@/components/ui/glass-button';
@@ -13,12 +13,31 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { MOCK_PRODUCTS, MOCK_CATEGORIES } from '@/lib/mock-data';
 import { ProductItem } from '@/types';
 import { formatCurrency, slugify } from '@/lib/utils';
-import { Plus, Edit2, Trash2, Image as ImageIcon, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, Image as ImageIcon, AlertTriangle, CheckCircle2, Download, RefreshCw } from 'lucide-react';
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<ProductItem[]>(MOCK_PRODUCTS);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const fetchLiveProducts = async () => {
+    setIsRefreshing(true);
+    try {
+      const res = await fetch('/api/products');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.products && Array.isArray(data.products) && data.products.length > 0) {
+          setProducts(data.products);
+        }
+      }
+    } catch {}
+    setIsRefreshing(false);
+  };
+
+  useEffect(() => {
+    fetchLiveProducts();
+  }, []);
 
   // Modals
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -175,9 +194,16 @@ export default function AdminProductsPage() {
   const handleConfirmDelete = async () => {
     if (!deletingProduct) return;
     try {
-      await fetch(`/api/products/${deletingProduct.id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/products/${deletingProduct.id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data?.discontinued) {
+        setProducts((prev) =>
+          prev.map((p) => (p.id === deletingProduct.id ? { ...p, isPublished: false } : p))
+        );
+      } else {
+        setProducts((prev) => prev.filter((p) => p.id !== deletingProduct.id));
+      }
     } catch {}
-    setProducts((prev) => prev.filter((p) => p.id !== deletingProduct.id));
     setDeletingProduct(null);
   };
 
@@ -311,10 +337,28 @@ export default function AdminProductsPage() {
             Manage merchandise items, specifications, pricing, and stock limits
           </p>
         </div>
-        <GlassButton variant="primary" size="md" onClick={handleOpenCreate} className="gap-2">
-          <Plus className="w-4 h-4" />
-          <span>Add New Product</span>
-        </GlassButton>
+        <div className="flex items-center gap-2 flex-wrap">
+          <GlassButton
+            variant="outline"
+            size="md"
+            onClick={fetchLiveProducts}
+            isLoading={isRefreshing}
+            className="gap-1.5"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span>Refresh</span>
+          </GlassButton>
+          <a href="/api/admin/reports/export?type=products" download>
+            <GlassButton variant="outline" size="md" className="gap-1.5 shadow-sm">
+              <Download className="w-4 h-4" />
+              <span>Export CSV</span>
+            </GlassButton>
+          </a>
+          <GlassButton variant="primary" size="md" onClick={handleOpenCreate} className="gap-2">
+            <Plus className="w-4 h-4" />
+            <span>Add New Product</span>
+          </GlassButton>
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
