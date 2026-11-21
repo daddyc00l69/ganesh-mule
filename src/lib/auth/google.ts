@@ -339,7 +339,7 @@ export async function authenticateGoogleUser(
   // 5. Generate secure HMAC-SHA256 session token
   const token = createUserSessionToken(safeUser);
 
-  // 6. Record session in Prisma if DB is online
+  // 6. Record session and audit log in Prisma if DB is online
   if (dbOnline) {
     try {
       await prisma.session.create({
@@ -349,6 +349,22 @@ export async function authenticateGoogleUser(
           expiresAt: new Date(Date.now() + SESSION_MAX_AGE * 1000),
         },
       });
+
+      if (safeUser.role === 'DEVELOPER' || safeUser.role === 'ADMIN' || safeUser.role === 'MANAGER') {
+        await prisma.auditLog.create({
+          data: {
+            actorId: userRecord.id,
+            action: 'STAFF_LOGIN_GOOGLE',
+            entityType: 'User',
+            entityId: userRecord.id,
+            metadata: {
+              role: safeUser.role,
+              authMethod: 'GOOGLE_OAUTH_2_0',
+              email: safeUser.email,
+            },
+          },
+        });
+      }
     } catch (sessionErr) {
       console.warn('[Session Persist Warning]', sessionErr);
     }

@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
       dbLatencyMs = Math.round(performance.now() - probeStart);
     }
 
-    // Account counts from live database
+    // Account counts and store telemetry from live database
     const [
       totalDevelopers,
       totalAdmins,
@@ -28,6 +28,11 @@ export async function GET(req: NextRequest) {
       activeStaff,
       disabledStaff,
       recentAuditLogs,
+      totalProducts,
+      totalCategories,
+      totalOrders,
+      activeSessions,
+      lowStockProducts,
     ] = await Promise.all([
       prisma.user.count({ where: { role: 'DEVELOPER' } }),
       prisma.user.count({ where: { role: 'ADMIN' } }),
@@ -40,6 +45,11 @@ export async function GET(req: NextRequest) {
         orderBy: { createdAt: 'desc' },
         include: { actor: { select: { name: true, email: true, role: true } } },
       }),
+      prisma.product.count(),
+      prisma.category.count(),
+      prisma.order.count(),
+      prisma.session.count({ where: { expiresAt: { gt: new Date() } } }),
+      prisma.product.count({ where: { stockQuantity: { lte: 5 } } }),
     ]);
 
     // Integration status verification
@@ -103,6 +113,13 @@ export async function GET(req: NextRequest) {
         activeStaff,
         disabledStaff,
       },
+      storeMetrics: {
+        totalProducts,
+        totalCategories,
+        totalOrders,
+        activeSessions,
+        lowStockProducts,
+      },
       system,
       integrations,
       recentAuditLogs: recentAuditLogs.map((log) => ({
@@ -122,6 +139,31 @@ export async function GET(req: NextRequest) {
   } catch (err: any) {
     return NextResponse.json(
       { error: 'Failed to collect developer telemetry', details: err.message },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(req: NextRequest) {
+  const auth = await requireAuth('DEVELOPER');
+  if ('error' in auth) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
+  try {
+    const start = performance.now();
+    await prisma.$queryRaw`SELECT 1`;
+    const latencyMs = Math.round(performance.now() - start);
+
+    return NextResponse.json({
+      success: true,
+      online: true,
+      latencyMs,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: 'Database ping test failed', details: err.message, online: false },
       { status: 500 }
     );
   }

@@ -25,6 +25,12 @@ import {
   Zap,
   CheckCircle2,
   AlertTriangle,
+  ShieldCheck,
+  ShoppingBag,
+  Boxes,
+  Package,
+  TicketPercent,
+  ExternalLink,
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
@@ -32,6 +38,8 @@ export default function DeveloperDashboardPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isPinging, setIsPinging] = useState(false);
+  const [livePing, setLivePing] = useState<number | null>(null);
 
   const fetchHealth = async () => {
     setIsRefreshing(true);
@@ -50,6 +58,21 @@ export default function DeveloperDashboardPage() {
     } finally {
       setIsRefreshing(false);
       setLoading(false);
+    }
+  };
+
+  const handlePingDb = async () => {
+    setIsPinging(true);
+    try {
+      const res = await fetch('/api/developer/health', { method: 'POST' });
+      if (res.ok) {
+        const json = await res.json();
+        setLivePing(json.latencyMs);
+      }
+    } catch (err) {
+      console.warn('Database ping test failed:', err);
+    } finally {
+      setIsPinging(false);
     }
   };
 
@@ -136,7 +159,114 @@ export default function DeveloperDashboardPage() {
           />
         </div>
 
-        {/* 2. System Telemetry & Integration Grids */}
+        {/* 2. Store Catalog & Commerce Telemetry */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="p-4 rounded-xl bg-accent/20 border border-border/40 space-y-1">
+            <div className="flex items-center justify-between text-muted-foreground text-xs">
+              <span>Catalog SKUs</span>
+              <Package className="w-3.5 h-3.5 text-blue-500" />
+            </div>
+            <p className="text-xl font-bold text-foreground font-mono">
+              {data?.storeMetrics?.totalProducts ?? 24}
+            </p>
+            <span className="text-[10px] text-emerald-600 font-medium">Active Products</span>
+          </div>
+
+          <div className="p-4 rounded-xl bg-accent/20 border border-border/40 space-y-1">
+            <div className="flex items-center justify-between text-muted-foreground text-xs">
+              <span>Categories</span>
+              <Boxes className="w-3.5 h-3.5 text-amber-500" />
+            </div>
+            <p className="text-xl font-bold text-foreground font-mono">
+              {data?.storeMetrics?.totalCategories ?? 4}
+            </p>
+            <span className="text-[10px] text-blue-600 font-medium">Product Taxonomies</span>
+          </div>
+
+          <div className="p-4 rounded-xl bg-accent/20 border border-border/40 space-y-1">
+            <div className="flex items-center justify-between text-muted-foreground text-xs">
+              <span>Customer Orders</span>
+              <ShoppingBag className="w-3.5 h-3.5 text-purple-500" />
+            </div>
+            <p className="text-xl font-bold text-foreground font-mono">
+              {data?.storeMetrics?.totalOrders ?? 0}
+            </p>
+            <span className="text-[10px] text-purple-600 font-medium">Orders Placed</span>
+          </div>
+
+          <div className="p-4 rounded-xl bg-accent/20 border border-border/40 space-y-1">
+            <div className="flex items-center justify-between text-muted-foreground text-xs">
+              <span>Active Sessions</span>
+              <UserCheck className="w-3.5 h-3.5 text-emerald-500" />
+            </div>
+            <p className="text-xl font-bold text-foreground font-mono">
+              {data?.storeMetrics?.activeSessions ?? 1}
+            </p>
+            <span className="text-[10px] text-emerald-600 font-medium">Live Auth Tokens</span>
+          </div>
+
+          <div className="p-4 rounded-xl bg-accent/20 border border-border/40 space-y-1 col-span-2 sm:col-span-1">
+            <div className="flex items-center justify-between text-muted-foreground text-xs">
+              <span>Low Stock Alerts</span>
+              <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
+            </div>
+            <p className="text-xl font-bold text-foreground font-mono">
+              {data?.storeMetrics?.lowStockProducts ?? 0}
+            </p>
+            <span className="text-[10px] text-amber-600 font-medium">Threshold &le; 5 units</span>
+          </div>
+        </div>
+
+        {/* Quick Fast Navigation Bar */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+          <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap pl-1">
+            Quick Panels:
+          </span>
+          <Link href="/developer/accounts">
+            <GlassBadge variant="default" size="sm" className="gap-1.5 cursor-pointer hover:bg-accent/40 transition-colors">
+              <Users className="w-3 h-3 text-blue-500" />
+              <span>Staff Accounts</span>
+            </GlassBadge>
+          </Link>
+          <Link href="/admin/orders">
+            <GlassBadge variant="outline" size="sm" className="gap-1.5 cursor-pointer hover:bg-accent/40 transition-colors">
+              <ShoppingBag className="w-3 h-3 text-purple-500" />
+              <span>Orders &amp; Dispatch</span>
+            </GlassBadge>
+          </Link>
+          <Link href="/admin/inventory">
+            <GlassBadge variant="outline" size="sm" className="gap-1.5 cursor-pointer hover:bg-accent/40 transition-colors">
+              <Boxes className="w-3 h-3 text-amber-500" />
+              <span>Inventory Desk</span>
+            </GlassBadge>
+          </Link>
+          <Link href="/admin/products">
+            <GlassBadge variant="outline" size="sm" className="gap-1.5 cursor-pointer hover:bg-accent/40 transition-colors">
+              <Package className="w-3 h-3 text-emerald-500" />
+              <span>Product Catalogue</span>
+            </GlassBadge>
+          </Link>
+          <Link href="/admin/coupons">
+            <GlassBadge variant="outline" size="sm" className="gap-1.5 cursor-pointer hover:bg-accent/40 transition-colors">
+              <TicketPercent className="w-3 h-3 text-pink-500" />
+              <span>Coupons &amp; Offers</span>
+            </GlassBadge>
+          </Link>
+          <Link href="/admin/audit-logs">
+            <GlassBadge variant="outline" size="sm" className="gap-1.5 cursor-pointer hover:bg-accent/40 transition-colors">
+              <ShieldAlert className="w-3 h-3 text-rose-500" />
+              <span>Security Logs</span>
+            </GlassBadge>
+          </Link>
+          <Link href="/shop" target="_blank">
+            <GlassBadge variant="outline" size="sm" className="gap-1.5 cursor-pointer hover:bg-accent/40 transition-colors">
+              <ExternalLink className="w-3 h-3 text-sky-500" />
+              <span>View Storefront</span>
+            </GlassBadge>
+          </Link>
+        </div>
+
+        {/* 3. System Telemetry & Integration Grids */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Server & Database Telemetry */}
           <GlassCard className="p-5 space-y-4">
@@ -145,19 +275,32 @@ export default function DeveloperDashboardPage() {
                 <Database className="w-4 h-4 text-blue-500" />
                 <h2 className="text-sm font-bold text-foreground">PostgreSQL &amp; Node Runtime</h2>
               </div>
-              <GlassBadge
-                variant={data?.system?.database?.online ? 'success' : 'destructive'}
-                size="sm"
-              >
-                {data?.system?.database?.online ? 'DB Online' : 'DB Offline'}
-              </GlassBadge>
+              <div className="flex items-center gap-2">
+                <GlassButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={handlePingDb}
+                  disabled={isPinging}
+                  className="h-6 text-[10px] gap-1 px-2 border border-border/40"
+                  title="Test round-trip latency to database"
+                >
+                  <Activity className={`w-3 h-3 ${isPinging ? 'animate-pulse text-amber-500' : 'text-blue-500'}`} />
+                  <span>{isPinging ? 'Pinging...' : livePing !== null ? `${livePing} ms` : 'Ping DB'}</span>
+                </GlassButton>
+                <GlassBadge
+                  variant={data?.system?.database?.online ? 'success' : 'destructive'}
+                  size="sm"
+                >
+                  {data?.system?.database?.online ? 'DB Online' : 'DB Offline'}
+                </GlassBadge>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 text-xs">
               <div className="p-3 rounded-xl bg-accent/20 space-y-1">
                 <span className="text-[11px] text-muted-foreground">Database Latency</span>
                 <p className="text-base font-bold text-foreground font-mono">
-                  {data?.system?.database?.latencyMs ?? 15} ms
+                  {livePing !== null ? livePing : (data?.system?.database?.latencyMs ?? 15)} ms
                 </p>
                 <span className="text-[10px] text-emerald-600 font-medium">Direct connection verified</span>
               </div>
@@ -201,7 +344,23 @@ export default function DeveloperDashboardPage() {
               <GlassBadge variant="info" size="sm">Live Gateways</GlassBadge>
             </div>
 
-            <div className="space-y-2.5 text-xs">
+            <div className="space-y-2 text-xs">
+              {/* Google OAuth 2.0 */}
+              <div className="p-2.5 rounded-xl bg-accent/20 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                  <div>
+                    <p className="font-semibold text-foreground">Google OAuth 2.0 Identity</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      Client ID: {data?.integrations?.googleOAuth?.clientIdMasked} · Flow: OpenID Connect
+                    </p>
+                  </div>
+                </div>
+                <GlassBadge variant={data?.integrations?.googleOAuth?.configured ? 'success' : 'warning'} size="sm">
+                  {data?.integrations?.googleOAuth?.configured ? 'Active' : 'Unconfigured'}
+                </GlassBadge>
+              </div>
+
               {/* Razorpay */}
               <div className="p-2.5 rounded-xl bg-accent/20 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">

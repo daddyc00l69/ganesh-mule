@@ -100,6 +100,20 @@ export async function POST(req: NextRequest) {
               expiresAt,
             },
           });
+          await prisma.auditLog.create({
+            data: {
+              actorId: user.id,
+              action: 'STAFF_LOGIN_PASSWORD',
+              entityType: 'User',
+              entityId: user.id,
+              metadata: {
+                role: user.role,
+                authMethod: 'PASSWORD',
+                clientIp: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'internal',
+              },
+              ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || undefined,
+            },
+          });
         } catch {}
 
         const response = NextResponse.json({

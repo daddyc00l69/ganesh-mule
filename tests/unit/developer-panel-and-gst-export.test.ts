@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
-import { GET as developerHealthGet } from '@/app/api/developer/health/route';
-import { GET as developerAccountsGet } from '@/app/api/developer/accounts/route';
+import { GET as developerHealthGet, POST as developerHealthPost } from '@/app/api/developer/health/route';
+import { GET as developerAccountsGet, DELETE as developerAccountsDelete } from '@/app/api/developer/accounts/route';
 import { GET as exportReportsGet } from '@/app/api/admin/reports/export/route';
 import * as serverAuth from '@/lib/auth/server';
 import * as dbModule from '@/lib/db';
@@ -156,5 +156,91 @@ describe('Developer Panel & GST Export Integrity', () => {
     expect(csv).toContain('SGST (2.5%)');
     expect(csv).toContain('IGST (5.0%)');
     expect(csv).toContain('Aarav Sharma');
+  });
+
+  it('should allow DEVELOPER to ping database via POST /api/developer/health', async () => {
+    vi.spyOn(serverAuth, 'requireAuth').mockResolvedValue({
+      user: {
+        id: 'usr-dev-master',
+        email: 'tushar0p.test@gmail.com',
+        name: 'Tushar Developer',
+        role: 'DEVELOPER',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        permissions: [],
+      },
+    });
+
+    vi.spyOn(dbModule.prisma, '$queryRaw').mockResolvedValue([{ '?column?': 1 }]);
+
+    const req = new NextRequest('http://localhost:3000/api/developer/health', { method: 'POST' });
+    const res = await developerHealthPost(req);
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    expect(data.online).toBe(true);
+    expect(typeof data.latencyMs).toBe('number');
+  });
+
+  it('should prevent deleting own active Developer account via DELETE /api/developer/accounts', async () => {
+    vi.spyOn(serverAuth, 'requireAuth').mockResolvedValue({
+      user: {
+        id: 'usr-dev-master',
+        email: 'tushar0p.test@gmail.com',
+        name: 'Tushar Developer',
+        role: 'DEVELOPER',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        permissions: [],
+      },
+    });
+
+    vi.spyOn(dbModule.prisma.user, 'findUnique').mockResolvedValue({
+      id: 'usr-dev-master',
+      email: 'tushar0p.test@gmail.com',
+      name: 'Tushar Developer',
+      role: 'DEVELOPER',
+      isActive: true,
+      createdAt: new Date(),
+    } as any);
+
+    const req = new NextRequest('http://localhost:3000/api/developer/accounts?userId=usr-dev-master', {
+      method: 'DELETE',
+    });
+    const res = await developerAccountsDelete(req);
+    expect(res.status).toBe(403);
+    const data = await res.json();
+    expect(data.error).toContain('cannot delete your own active Developer account');
+  });
+
+  it('should prevent deleting the root Developer account email via DELETE /api/developer/accounts', async () => {
+    vi.spyOn(serverAuth, 'requireAuth').mockResolvedValue({
+      user: {
+        id: 'usr-other-dev',
+        email: 'other@test.com',
+        name: 'Other Dev',
+        role: 'DEVELOPER',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        permissions: [],
+      },
+    });
+
+    vi.spyOn(dbModule.prisma.user, 'findUnique').mockResolvedValue({
+      id: 'usr-dev-root',
+      email: 'tushar0p.test@gmail.com',
+      name: 'Root Developer',
+      role: 'DEVELOPER',
+      isActive: true,
+      createdAt: new Date(),
+    } as any);
+
+    const req = new NextRequest('http://localhost:3000/api/developer/accounts?userId=usr-dev-root', {
+      method: 'DELETE',
+    });
+    const res = await developerAccountsDelete(req);
+    expect(res.status).toBe(403);
+    const data = await res.json();
+    expect(data.error).toContain('root Developer account cannot be deleted');
   });
 });

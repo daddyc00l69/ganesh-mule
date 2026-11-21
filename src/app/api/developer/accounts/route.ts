@@ -253,3 +253,105 @@ export async function PATCH(req: NextRequest) {
     );
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  const auth = await requireAuth('DEVELOPER');
+  if ('error' in auth) {
+    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  }
+
+  try {
+    const url = new URL(req.url);
+    let userId = url.searchParams.get('userId');
+
+    if (!userId) {
+      try {
+        const body = await req.json();
+        userId = body.userId;
+      } catch {}
+    }
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Target userId is required for deletion' }, { status: 400 });
+    }
+
+    const targetUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!targetUser) {
+      return NextResponse.json({ error: 'Target staff account not found' }, { status: 404 });
+    }
+
+    // Safety rule 1: Developer cannot delete their own active account
+    if (targetUser.id === auth.user.id) {
+      return NextResponse.json(
+        { error: 'Action rejected: You cannot delete your own active Developer account.' },
+        { status: 403 }
+      );
+    }
+
+    // Safety rule 2: Primary developer account cannot be deleted
+    const configuredDeveloperEmail = (process.env.DEVELOPER_EMAIL || 'tushar0p.test@gmail.com').toLowerCase().trim();
+    if (targetUser.email.toLowerCase() === configuredDeveloperEmail || targetUser.email.toLowerCase() === 'tushar0p.test@gmail.com') {
+      return NextResponse.json(
+        { error: 'Action rejected: The root Developer account cannot be deleted.' },
+        { status: 403 }
+      );
+    }
+
+    // Safety rule 3: Protect existing order records
+    const orderCount = await prisma.order.count({ where: { userId } });
+    if (orderCount > 0) {
+      return NextResponse.json(
+        {
+          error: `Cannot delete account: This staff account is linked to ${orderCount} customer order(s). Please suspend access instead to protect order history.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Safe transactional deletion
+    await prisma.$transaction(async (tx) => {
+      // 1. Unlink historical AuditLog actor references to preserve security logs
+      await tx.auditLog.updateMany({
+        where: { actorId: userId },
+        data: { actorId: null },
+      });
+
+      // 2. Remove dependent user records
+      await tx.session.deleteMany({ where: { userId } });
+      await tx.managerProfile.deleteMany({ where: { userId } });
+      await tx.customerProfile.deleteMany({ where: { userId } });
+      await tx.address.deleteMany({ where: { userId } });
+
+      // 3. Delete the User entity
+      await tx.user.delete({ where: { id: userId } });
+
+      // 4. Record Developer audit trail
+      await tx.auditLog.create({
+        data: {
+          actorId: auth.user.id,
+          action: 'DEVELOPER_STAFF_DELETE',
+          entityType: 'User',
+          entityId: userId,
+          metadata: {
+            deletedEmail: targetUser.email,
+            deletedName: targetUser.name,
+            deletedRole: targetUser.role,
+          },
+        },
+      });
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `Staff account for ${targetUser.name} (${targetUser.email}) has been permanently deleted.`,
+    });
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: 'Failed to delete staff account', details: err.message },
+      { status: 500 }
+    );
+  }
+}
