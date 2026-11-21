@@ -16,7 +16,7 @@ export interface GoogleOAuthState {
   csrf: string;
   nonce: string;
   redirect: string;
-  expectedRole?: 'ADMIN' | 'MANAGER' | 'CUSTOMER';
+  expectedRole?: 'DEVELOPER' | 'ADMIN' | 'MANAGER' | 'CUSTOMER';
   exp: number;
 }
 
@@ -130,7 +130,7 @@ export function verifyOAuthState(signedState: string): GoogleOAuthState | null {
  */
 export function createGoogleAuthUrl(options: {
   redirect?: string;
-  expectedRole?: 'ADMIN' | 'MANAGER' | 'CUSTOMER';
+  expectedRole?: 'DEVELOPER' | 'ADMIN' | 'MANAGER' | 'CUSTOMER';
   req?: NextRequest;
 }): { url: string; stateCookieValue: string } {
   const clientId = process.env.GOOGLE_CLIENT_ID?.trim();

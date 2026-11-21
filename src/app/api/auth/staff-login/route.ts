@@ -28,11 +28,11 @@ export async function POST(req: NextRequest) {
     try {
       let result;
       try {
-        result = await authenticateStaffLogin({ email, password, expectedRole: resolvedRole });
+        result = await authenticateStaffLogin({ email: cleanEmail, password, expectedRole: resolvedRole });
       } catch (err: any) {
         // Try other role if expectedRole didn't match
         const altRole = resolvedRole === 'ADMIN' ? 'MANAGER' : 'ADMIN';
-        result = await authenticateStaffLogin({ email, password, expectedRole: altRole });
+        result = await authenticateStaffLogin({ email: cleanEmail, password, expectedRole: altRole });
       }
 
       if (result && result.success) {
@@ -49,14 +49,14 @@ export async function POST(req: NextRequest) {
         });
         return response;
       }
-    } catch (err: any) {
-      return NextResponse.json({ error: err.message || 'Authentication failed' }, { status: 401 });
+    } catch {
+      // In-memory staff store did not match, fall through to PostgreSQL database check
     }
 
     // 2. Check Database Users if DB is online
     try {
       const user = await prisma.user.findUnique({
-        where: { email },
+        where: { email: cleanEmail },
         include: { managerProfile: true },
       });
 
@@ -65,12 +65,12 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: 'Account has been suspended. Contact administrator.' }, { status: 403 });
         }
 
-        if (user.role !== expectedRole && user.role !== 'ADMIN') {
-          return NextResponse.json({ error: 'Access denied: unauthorized for this portal' }, { status: 403 });
+        if (user.role !== 'DEVELOPER' && user.role !== 'ADMIN' && user.role !== 'MANAGER') {
+          return NextResponse.json({ error: 'Access denied: Staff or Developer credentials required.' }, { status: 403 });
         }
 
         if (!user.passwordHash) {
-          return NextResponse.json({ error: 'This staff account was created with Google. Please click Sign in with Google.' }, { status: 400 });
+          return NextResponse.json({ error: 'This staff account was created with Google. Please click "Continue with Google".' }, { status: 400 });
         }
 
         const isValid = await verifyPassword(password, user.passwordHash);
@@ -84,6 +84,7 @@ export async function POST(req: NextRequest) {
           name: user.name,
           role: user.role as any,
           permissions: user.managerProfile?.permissions || [],
+          department: user.managerProfile?.department || undefined,
           isActive: true,
           createdAt: user.createdAt.toISOString(),
         };
@@ -117,8 +118,10 @@ export async function POST(req: NextRequest) {
         return response;
       }
     } catch {
-      // Database offline or table empty
+      // Database query error or unreachable
     }
+
+    return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
 
     // Check if system is unconfigured
     const adminStatus = getAdminConfigStatus();

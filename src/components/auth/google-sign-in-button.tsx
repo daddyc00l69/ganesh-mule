@@ -6,7 +6,7 @@ import { Loader2 } from 'lucide-react';
 interface GoogleSignInButtonProps {
   label?: string;
   redirect?: string;
-  expectedRole?: 'ADMIN' | 'MANAGER' | 'CUSTOMER';
+  expectedRole?: 'DEVELOPER' | 'ADMIN' | 'MANAGER' | 'CUSTOMER';
   variant?: 'light' | 'dark' | 'glass';
   className?: string;
 }

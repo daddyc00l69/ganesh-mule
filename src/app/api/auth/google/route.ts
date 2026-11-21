@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     const redirect = searchParams.get('redirect') || undefined;
     const expectedRoleParam = searchParams.get('expectedRole');
     const expectedRole =
-      expectedRoleParam === 'ADMIN' || expectedRoleParam === 'MANAGER' || expectedRoleParam === 'CUSTOMER'
+      expectedRoleParam === 'DEVELOPER' || expectedRoleParam === 'ADMIN' || expectedRoleParam === 'MANAGER' || expectedRoleParam === 'CUSTOMER'
         ? expectedRoleParam
         : undefined;
 
