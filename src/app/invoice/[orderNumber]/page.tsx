@@ -348,7 +348,7 @@ export default function InvoicePage() {
                   <span className="font-medium">Place of Supply:</span> {invoice.customer.placeOfSupply}
                 </p>
                 <p className="text-[10px] text-stone-500 font-mono">
-                  Delivery PIN: {invoice.customer.pincode} • Carrier: Delhivery One Express
+                  Delivery PIN: {invoice.customer.pincode} • Carrier: Insured Express Courier
                 </p>
               </div>
             </div>
@@ -490,13 +490,13 @@ export default function InvoicePage() {
                     <div className="flex justify-between items-center text-stone-900 font-semibold font-sans">
                       <span className="flex items-center gap-1">
                         <Truck className="w-3 h-3 text-amber-700" />
-                        <span>Delhivery One Verified Logistics:</span>
+                        <span>Insured Express Logistics:</span>
                       </span>
                       <span>{invoice.delhiveryLogistics.zone}</span>
                     </div>
                     {invoice.delhiveryLogistics.waybill && (
                       <div className="flex justify-between">
-                        <span>• Delhivery AWB:</span>
+                        <span>• Consignment AWB:</span>
                         <span className="font-bold text-stone-900">{invoice.delhiveryLogistics.waybill}</span>
                       </div>
                     )}
@@ -589,7 +589,7 @@ export default function InvoicePage() {
               {/* Barcode / Reference Simulation */}
               <div className="mt-4 pt-3 border-t border-stone-200 flex flex-wrap justify-between items-center text-[10px] text-stone-500 font-mono">
                 <span>BARCODE REF: *{invoice.orderNumber.replace(/[^A-Za-z0-9]/g, '')}*</span>
-                <span>CARRIER: DELHIVERY ONE EXPRESS</span>
+                <span>CARRIER: INSURED EXPRESS COURIER</span>
                 <span>TOTAL CONSIGNMENT UNITS: {totalUnits} JARS</span>
               </div>
             </div>
@@ -628,7 +628,7 @@ export default function InvoicePage() {
                 <div className="text-xs space-y-1 text-stone-700">
                   <p>
                     <span className="font-medium text-stone-900">Courier Partner:</span>{' '}
-                    {invoice.delhiveryLogistics?.carrier || order?.carrier || 'Delhivery One (Surface)'}
+                    {invoice.delhiveryLogistics?.carrier || order?.carrier || 'Insured Express Courier'}
                   </p>
                   <p>
                     <span className="font-medium text-stone-900">Waybill / Tracking:</span>{' '}

@@ -502,7 +502,7 @@ export default function CustomerAccountPage() {
                       Direct Order Tracking
                     </h3>
                     <p className="text-xs text-stone-500 max-w-sm mx-auto leading-relaxed">
-                      Track the real-time fulfillment and Delhivery dispatch status of any order without signing in.
+                      Track the real-time fulfillment and express dispatch status of any order without signing in.
                     </p>
                   </div>
 
@@ -566,11 +566,11 @@ export default function CustomerAccountPage() {
                       <div className="text-xs space-y-2 text-stone-600">
                         <div className="flex justify-between">
                           <span className="text-stone-500">Logistics Carrier:</span>
-                          <span className="font-semibold text-stone-900">{trackedOrder.carrier || 'Delhivery One'}</span>
+                          <span className="font-semibold text-stone-900">{trackedOrder.carrier || 'Insured Express Courier'}</span>
                         </div>
                         {trackedOrder.trackingNumber && (
                           <div className="flex justify-between">
-                            <span className="text-stone-500">Delhivery AWB:</span>
+                            <span className="text-stone-500">Courier AWB:</span>
                             <span className="font-mono font-bold text-amber-800">{trackedOrder.trackingNumber}</span>
                           </div>
                         )}
@@ -713,11 +713,11 @@ export default function CustomerAccountPage() {
                             <div className="flex items-center justify-between text-xs font-semibold text-stone-900">
                               <span className="flex items-center gap-1.5">
                                 <Clock className="w-3.5 h-3.5 text-amber-700" />
-                                <span>Delhivery One Fulfillment Progress</span>
+                                <span>Fulfillment &amp; Express Dispatch Progress</span>
                               </span>
                               {order.trackingNumber && (
                                 <span className="text-[11px] font-mono text-amber-800 font-bold">
-                                  {order.carrier || 'Delhivery One'} • AWB: {order.trackingNumber}
+                                  {order.carrier || 'Insured Express Courier'} • AWB: {order.trackingNumber}
                                 </span>
                               )}
                             </div>
@@ -791,7 +791,7 @@ export default function CustomerAccountPage() {
                               </div>
                             )}
                             <div className="flex justify-between">
-                              <span>Shipping &amp; Delivery (Delhivery One):</span>
+                              <span>Shipping &amp; Delivery (Insured Express):</span>
                               <span className="text-stone-900 font-medium font-mono">
                                 {formatCurrency(order.shippingCost || 7000)} (incl. 18% GST)
                               </span>
@@ -892,7 +892,7 @@ export default function CustomerAccountPage() {
 
                       <div className="text-xs space-y-2">
                         <p className="text-stone-900 font-medium">
-                          Carrier: <strong className="font-bold">{trackedOrder.carrier || 'Delhivery One'}</strong>
+                          Carrier: <strong className="font-bold">{trackedOrder.carrier || 'Insured Express Courier'}</strong>
                         </p>
                         {trackedOrder.trackingNumber ? (
                           <p className="text-amber-800 font-mono font-bold">

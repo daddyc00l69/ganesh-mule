@@ -458,6 +458,24 @@ function CheckoutContent() {
     grandTotal: totalAmount,
   } = feeBreakdown;
 
+  // Strict Form Validation for Pay button and Preview Card gating
+  const isContactComplete = Boolean(
+    fullName.trim() &&
+    phone.length === 10 &&
+    email.trim() &&
+    email.includes('@')
+  );
+
+  const isDestinationComplete = Boolean(
+    flatBuilding.trim() &&
+    areaStreet.trim() &&
+    postalCode.length === 6 &&
+    isValidIndianPin(postalCode) &&
+    city.trim()
+  );
+
+  const isFormValid = isContactComplete && isDestinationComplete && items.length > 0;
+
   // Coupon handling
   const validateAndApplyCoupon = async (codeToTest?: string) => {
     const code = (codeToTest || couponInput).trim().toUpperCase();
@@ -655,12 +673,17 @@ function CheckoutContent() {
     }
 
     if (!isValidIndianPin(postalCode)) {
-      setErrorMessage('Please enter a valid 6-digit Indian PIN Code to calculate Delhivery courier rates.');
+      setErrorMessage('Please enter a valid 6-digit Indian PIN Code to calculate courier delivery rates.');
       return;
     }
 
     if (!flatBuilding.trim() || !areaStreet.trim()) {
       setErrorMessage('Please provide your complete street address (Flat/Building & Area/Road).');
+      return;
+    }
+
+    if (!isContactComplete || !isDestinationComplete) {
+      setErrorMessage('Please fill your complete Contact Details and Delivery Destination to proceed.');
       return;
     }
 
@@ -882,7 +905,7 @@ function CheckoutContent() {
             <div className="space-y-2">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wider bg-emerald-100/80 text-emerald-900 border border-emerald-300">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
-                Payment Verified • Delhivery Insured Booking
+                Payment Verified • Insured Courier Booking
               </span>
               <h1 className="text-3xl font-bold tracking-tight text-[#1d1d1f]">
                 Thank You for Your Order.
@@ -919,7 +942,7 @@ function CheckoutContent() {
               <div className="flex justify-between items-center pb-3 border-b border-[#d2d2d7]/50 text-xs">
                 <span className="text-[#86868b]">Dispatched Via</span>
                 <span className="font-semibold text-[#1d1d1f]">
-                  Delhivery One Insured Delivery
+                  Insured Express Courier Delivery
                 </span>
               </div>
               <div className="flex justify-between items-center text-xs pt-1">
@@ -1008,7 +1031,7 @@ function CheckoutContent() {
               Checkout
             </h1>
             <p className="text-xs sm:text-sm text-[#86868b] max-w-xl leading-relaxed">
-              Encrypted 256-bit checkout with Delhivery One insured solid glass direct delivery.
+              Encrypted 256-bit checkout with 100% insured solid glass direct delivery across India.
             </p>
           </div>
 
@@ -1144,7 +1167,7 @@ function CheckoutContent() {
                       required
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      placeholder="e.g. Vikramaditya Sharma"
+                      placeholder="Customer Full Name"
                       className="w-full h-12 sm:h-11 px-3.5 text-base sm:text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-medium"
                     />
                   </div>
@@ -1168,7 +1191,7 @@ function CheckoutContent() {
                         required
                         value={phone}
                         onChange={(e) => handlePhoneChange(e.target.value)}
-                        placeholder="98200 00000"
+                        placeholder="10-digit mobile number"
                         className="w-full h-12 sm:h-11 pl-20 pr-3.5 text-base sm:text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-mono font-medium"
                       />
                     </div>
@@ -1186,7 +1209,7 @@ function CheckoutContent() {
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="vikram@example.com"
+                      placeholder="Email address for tax invoice"
                       className="w-full h-12 sm:h-11 px-3.5 text-base sm:text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-medium"
                     />
                   </div>
@@ -1233,7 +1256,7 @@ function CheckoutContent() {
                       required
                       value={flatBuilding}
                       onChange={(e) => setFlatBuilding(e.target.value)}
-                      placeholder="e.g. Flat 402, 4th Floor, Oberoi Splendor"
+                      placeholder="Flat, House no., Building, Apartment"
                       className="w-full h-12 sm:h-11 px-3.5 text-base sm:text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-medium"
                     />
                   </div>
@@ -1248,7 +1271,7 @@ function CheckoutContent() {
                       required
                       value={areaStreet}
                       onChange={(e) => setAreaStreet(e.target.value)}
-                      placeholder="e.g. JVLR Road, Andheri East"
+                      placeholder="Area, Street, Sector, Road"
                       className="w-full h-12 sm:h-11 px-3.5 text-base sm:text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-medium"
                     />
                   </div>
@@ -1263,7 +1286,7 @@ function CheckoutContent() {
                       type="text"
                       value={landmark}
                       onChange={(e) => setLandmark(e.target.value)}
-                      placeholder="e.g. Near Seepz Main Gate / Opposite High Point Restaurant"
+                      placeholder="Nearby landmark (optional)"
                       className="w-full h-12 sm:h-11 px-3.5 text-base sm:text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-medium"
                     />
                   </div>
@@ -1289,7 +1312,7 @@ function CheckoutContent() {
                           maxLength={6}
                           value={postalCode}
                           onChange={(e) => handlePincodeChange(e.target.value)}
-                          placeholder="e.g. 400093"
+                          placeholder="6-digit PIN code"
                           className="w-full h-12 sm:h-11 px-3.5 pr-8 text-base sm:text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-mono font-bold"
                         />
                         {pinLoading && (
@@ -1321,11 +1344,11 @@ function CheckoutContent() {
                           <span className="text-stone-900 font-bold">{district}</span>
                           {districtVerified ? (
                             <span className="inline-flex items-center gap-0.5 text-emerald-800 font-bold bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded-full text-[9px]">
-                              <Check className="w-2.5 h-2.5 text-emerald-600" /> Verified by Delhivery: YES
+                              <Check className="w-2.5 h-2.5 text-emerald-600" /> Pincode Serviceable: YES
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-0.5 text-rose-700 font-bold bg-rose-50 border border-rose-200 px-1.5 py-0.2 rounded-full text-[9px]">
-                              ✕ Verified by Delhivery: NO
+                              ✕ Pincode Serviceable: NO
                             </span>
                           )}
                         </div>
@@ -1410,7 +1433,7 @@ function CheckoutContent() {
                 </div>
               </div>
 
-              {/* 3. Insured Delivery (Delhivery One) */}
+              {/* 3. Insured Delivery */}
               <div className="bg-white rounded-3xl border border-[#d2d2d7]/80 p-6 sm:p-7 space-y-4 shadow-sm">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#d2d2d7]/50 pb-3">
                   <div>
@@ -1419,7 +1442,7 @@ function CheckoutContent() {
                       <span>Insured Delivery</span>
                     </h2>
                     <p className="text-[11px] text-[#86868b] mt-0.5">
-                      Direct insured dispatch via Delhivery One Logistics
+                      Direct insured dispatch across India
                     </p>
                   </div>
 
@@ -1455,7 +1478,7 @@ function CheckoutContent() {
                         <div className="flex items-center gap-2">
                           <h3 className="text-sm font-bold text-[#1d1d1f]">Insured Standard Delivery</h3>
                           <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-white border border-[#0071e3]/30 text-[#0071e3]">
-                            Delhivery One
+                            Express Insured
                           </span>
                         </div>
                         <p className="text-xs text-[#6e6e73] mt-0.5">
@@ -1495,90 +1518,54 @@ function CheckoutContent() {
                   </div>
                 </div>
 
-                {/* Live Airway Bill (AWB) & Shipping Destination Confirmation */}
-                <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/90 text-xs space-y-2">
-                  <div className="flex items-center justify-between text-[10px] uppercase font-bold text-stone-500 tracking-wider">
-                    <span className="flex items-center gap-1.5">
-                      <Truck className="w-3.5 h-3.5 text-[#0071e3]" />
-                      Delhivery One Airway Bill (AWB) Preview
-                    </span>
-                    <span className="text-emerald-800 font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                      Insured Glass Safe
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                    <div>
-                      <p className="text-[10px] text-stone-500 uppercase font-semibold">Consignee (Receiver)</p>
-                      <p className="font-bold text-stone-900 text-xs">
-                        {fullName || 'Vikramaditya Sharma'}
-                      </p>
-                      <p className="text-stone-600 font-mono text-[11px]">
-                        {phone.length === 10 ? `+91 ${phone.slice(0, 5)} ${phone.slice(5)}` : '+91 98200 00000'}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-[10px] text-stone-500 uppercase font-semibold">Destination Address</p>
-                      <p className="text-stone-700 leading-relaxed text-[11px]">
-                        {flatBuilding || 'Flat / House No.'}, {areaStreet || 'Road / Street'}
-                        {landmark ? `, Near ${landmark}` : ''}
-                        <br />
-                        {city || 'Town/City'}, {state} - <span className="font-mono font-bold">{postalCode || '400093'}</span>
-                      </p>
-                    </div>
-                  </div>
-
-                  {delhiveryRate && (
-                    <div className="pt-2 border-t border-stone-200/60 flex items-center justify-between text-[10px] text-stone-600">
-                      <span>
-                        Courier: <strong className="text-stone-950 font-bold">{delhiveryRate.carrier}</strong> ({delhiveryRate.zoneName})
+                {/* Live Airway Bill (AWB) Preview - ONLY shown when required contact and destination are complete */}
+                {isFormValid && (
+                  <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/90 text-xs space-y-2 animate-in fade-in duration-300">
+                    <div className="flex items-center justify-between text-[10px] uppercase font-bold text-stone-500 tracking-wider">
+                      <span className="flex items-center gap-1.5">
+                        <Truck className="w-3.5 h-3.5 text-[#0071e3]" />
+                        Insured Airway Bill (AWB) Preview
                       </span>
-                      <span className="font-mono font-bold text-stone-900">
-                        {delhiveryRate.billableWeightGrams}g Consignment Weight
+                      <span className="text-emerald-800 font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                        Insured Glass Safe
                       </span>
                     </div>
-                  )}
-                </div>
 
-                {/* 4. Payment Method: Strictly 100% Prepaid */}
-                <div className="space-y-2 pt-2 border-t border-stone-100">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-[#1d1d1f] uppercase tracking-wider flex items-center gap-1.5">
-                      <CreditCard className="w-3.5 h-3.5 text-[#0071e3]" />
-                      <span>Payment Method</span>
-                    </label>
-                    <span className="text-[10px] text-emerald-900 bg-emerald-100/70 border border-emerald-300 px-2.5 py-0.5 rounded-full font-bold">
-                      100% Prepaid Online
-                    </span>
-                  </div>
-
-                  <div className="p-4 rounded-2xl border-2 border-[#0071e3] bg-[#0071e3]/5 flex items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-[#1d1d1f]">
-                          Instant Online Payment (Razorpay Encrypted)
-                        </span>
-                        <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">
-                          ✓ 256-Bit SSL
-                        </span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      <div>
+                        <p className="text-[10px] text-stone-500 uppercase font-semibold">Consignee (Receiver)</p>
+                        <p className="font-bold text-stone-900 text-xs">
+                          {fullName}
+                        </p>
+                        <p className="text-stone-600 font-mono text-[11px]">
+                          +91 {phone.slice(0, 5)} {phone.slice(5)}
+                        </p>
+                        <p className="text-stone-500 text-[10px] truncate">{email}</p>
                       </div>
-                      <p className="text-[11px] text-[#6e6e73] leading-relaxed">
-                        Instant checkout via UPI (Google Pay, PhonePe, Paytm, BHIM), Credit/Debit Cards &amp; NetBanking.
-                        No Cash on Delivery (COD) to safeguard tamper-evident sealed glass consignments.
-                      </p>
-                      <div className="flex items-center gap-2 pt-1 flex-wrap text-[10px] font-semibold text-[#86868b]">
-                        <span className="bg-white border border-[#d2d2d7] px-2 py-0.5 rounded-md">Google Pay</span>
-                        <span className="bg-white border border-[#d2d2d7] px-2 py-0.5 rounded-md">PhonePe</span>
-                        <span className="bg-white border border-[#d2d2d7] px-2 py-0.5 rounded-md">Paytm</span>
-                        <span className="bg-white border border-[#d2d2d7] px-2 py-0.5 rounded-md">Visa / Mastercard / RuPay</span>
+
+                      <div>
+                        <p className="text-[10px] text-stone-500 uppercase font-semibold">Destination Address</p>
+                        <p className="text-stone-700 leading-relaxed text-[11px]">
+                          {flatBuilding}, {areaStreet}
+                          {landmark ? `, Near ${landmark}` : ''}
+                          <br />
+                          {city}, {state} - <span className="font-mono font-bold">{postalCode}</span>
+                        </p>
                       </div>
                     </div>
-                    <div className="w-5 h-5 rounded-full border-2 border-[#0071e3] bg-[#0071e3] text-white flex items-center justify-center shrink-0 mt-0.5">
-                      <Check className="w-3 h-3 stroke-[3]" />
-                    </div>
+
+                    {delhiveryRate && (
+                      <div className="pt-2 border-t border-stone-200/60 flex items-center justify-between text-[10px] text-stone-600">
+                        <span>
+                          Logistics Zone: <strong className="text-stone-950 font-bold">{delhiveryRate.zoneName}</strong>
+                        </span>
+                        <span className="font-mono font-bold text-stone-900">
+                          {delhiveryRate.billableWeightGrams}g Consignment Weight
+                        </span>
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
               </div>
             </div>
 
@@ -1812,7 +1799,7 @@ function CheckoutContent() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="font-semibold text-xs text-stone-900">
-                          Shipping &amp; Delivery (Delhivery One)
+                          Shipping &amp; Delivery (Insured Express)
                         </span>
                         <span className="text-[9px] px-1.5 py-0.2 rounded bg-stone-100 text-stone-700 font-bold font-mono whitespace-nowrap border border-stone-200">
                           18% GST
@@ -1835,7 +1822,7 @@ function CheckoutContent() {
                       ) : (
                         <p className="text-[10px] text-[#86868b] mt-0.5 leading-relaxed">
                           {isCalculatingFreight
-                            ? 'Calculating live freight with Delhivery One API...'
+                            ? 'Calculating live express freight...'
                             : isFreeShipping
                             ? 'Free Insured Delivery Applied'
                             : postalCode.length === 6 && isValidIndianPin(postalCode)
@@ -1916,8 +1903,8 @@ function CheckoutContent() {
                   <button
                     type="button"
                     onClick={(e) => handleInitiatePayment(e, false)}
-                    disabled={isProcessing}
-                    className="w-full py-4 px-6 rounded-full text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-sm hover:shadow transition-all cursor-pointer disabled:opacity-60 bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4]"
+                    disabled={!isFormValid || isProcessing}
+                    className="w-full py-4 px-6 rounded-full text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-sm hover:shadow transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4]"
                   >
                     <Lock className="w-4 h-4 text-white/80" />
                     <span>
@@ -1926,6 +1913,12 @@ function CheckoutContent() {
                         : `Pay ${formatCurrency(totalAmount)} with Razorpay`}
                     </span>
                   </button>
+
+                  {!isFormValid && (
+                    <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl text-center font-medium">
+                      Fill Contact Details and Delivery Destination to enable payment
+                    </p>
+                  )}
 
                   <div className="flex items-center justify-center gap-1.5 text-[11px] text-[#86868b] text-center">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
@@ -1949,12 +1942,12 @@ function CheckoutContent() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 flex-1 justify-end">
+                <div className="flex flex-col items-end gap-1 flex-1">
                   <button
                     type="button"
                     onClick={(e) => handleInitiatePayment(e, false)}
-                    disabled={isProcessing}
-                    className="w-full max-w-[260px] py-3.5 px-5 rounded-full text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-60 bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4]"
+                    disabled={!isFormValid || isProcessing}
+                    className="w-full max-w-[260px] py-3.5 px-5 rounded-full text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4]"
                   >
                     <Lock className="w-3.5 h-3.5 shrink-0 text-white/80" />
                     <span>
@@ -1963,6 +1956,11 @@ function CheckoutContent() {
                         : `Pay ${formatCurrency(totalAmount)}`}
                     </span>
                   </button>
+                  {!isFormValid && (
+                    <span className="text-[9px] text-amber-700 font-medium">
+                      Fill required details to pay
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

@@ -19,6 +19,7 @@ import {
   Minus,
   Check,
   ArrowLeft,
+  ArrowRight,
   Sparkles,
   Award,
   ShoppingBag,
@@ -125,7 +126,7 @@ export default function ProductDetailPage() {
   const params = useParams();
   const rawSlug = (params?.slug as string) || 'forest-honey';
   const router = useRouter();
-  const { addToCart, setIsCartOpen } = useCart();
+  const { items, addToCart, setIsCartOpen } = useCart();
 
   const categoryMeta = useMemo(() => resolveCategoryFromSlug(rawSlug), [rawSlug]);
 
@@ -256,6 +257,12 @@ export default function ProductDetailPage() {
   // Current active variant based on customer selection
   const currentOption =
     sizeOptions.find((opt) => opt.weight === selectedWeight) || sizeOptions[1];
+
+  // Cart status for single Checkout action
+  const isItemInCart = items.some(
+    (item) => item.productId === (currentOption.productRecord?.id ?? `prod-${categoryMeta.baseSlug}-${currentOption.weight}`) || item.sku === currentOption.sku
+  );
+  const hasItemsInCart = items.length > 0;
 
   // Dynamic Image Gallery switching based on selected size
   const galleryImages = useMemo(() => {
@@ -659,42 +666,43 @@ export default function ProductDetailPage() {
                     </button>
                   </div>
 
-                  {/* Add to Cart - Apple Blue */}
-                  <button
-                    type="button"
-                    disabled={isOutOfStock}
-                    onClick={handleAddToCart}
-                    className={`flex-1 py-3 px-6 rounded-full font-medium text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-98 ${
-                      isAdded
-                        ? 'bg-emerald-700 text-white'
-                        : isOutOfStock
-                        ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
-                        : 'bg-[#0071e3] hover:bg-[#0077ed] text-white'
-                    }`}
-                  >
-                    {isAdded ? (
-                      <>
-                        <Check className="w-4 h-4 text-white" />
-                        <span>Added to Cart</span>
-                      </>
-                    ) : (
-                      <>
-                        <ShoppingBag className="w-4 h-4" />
-                        <span>Add to Cart ({currentOption.weight})</span>
-                      </>
-                    )}
-                  </button>
-
-                  {/* Instant Buy - Apple Obsidian */}
-                  <button
-                    type="button"
-                    disabled={isOutOfStock}
-                    onClick={handleBuyNow}
-                    className="py-3 px-6 rounded-full font-medium text-xs sm:text-sm bg-[#1d1d1f] hover:bg-[#333336] text-white transition-all cursor-pointer shadow-sm active:scale-98"
-                  >
-                    Instant Buy ({currentOption.weight})
-                  </button>
+                  {/* Single Checkout or Add to Bag Action - Clean Apple Minimal */}
+                  {isItemInCart || isAdded ? (
+                    <Link
+                      href="/checkout"
+                      className="flex-1 py-3.5 px-6 rounded-full font-semibold text-xs sm:text-sm bg-[#0071e3] hover:bg-[#0077ed] text-white transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer active:scale-98"
+                    >
+                      <ShoppingBag className="w-4 h-4" />
+                      <span>Checkout</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={isOutOfStock}
+                      onClick={handleAddToCart}
+                      className={`flex-1 py-3.5 px-6 rounded-full font-medium text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-98 ${
+                        isOutOfStock
+                          ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
+                          : 'bg-[#0071e3] hover:bg-[#0077ed] text-white'
+                      }`}
+                    >
+                      <ShoppingBag className="w-4 h-4" />
+                      <span>Add to Bag ({currentOption.weight})</span>
+                    </button>
+                  )}
                 </div>
+                {hasItemsInCart && !isItemInCart && !isAdded && (
+                  <div className="text-center pt-1">
+                    <Link
+                      href="/checkout"
+                      className="inline-flex items-center gap-1 text-xs text-[#0071e3] font-medium hover:underline"
+                    >
+                      <span>Or proceed to Checkout ({items.length} {items.length === 1 ? 'item' : 'items'} in Bag)</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </Link>
+                  </div>
+                )}
 
                 {/* Stock Availability from Database */}
                 <div className="p-3.5 rounded-2xl bg-white border border-[#d2d2d7]/70 flex items-center justify-between text-xs text-[#6e6e73] shadow-2xs">
@@ -1011,38 +1019,26 @@ export default function ProductDetailPage() {
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={handleAddToCart}
-                  disabled={isOutOfStock}
-                  className={`py-2.5 px-3.5 sm:px-5 rounded-full text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-95 ${
-                    isAdded
-                      ? 'bg-emerald-700 text-white'
-                      : isOutOfStock
-                      ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
-                      : 'bg-[#0071e3] hover:bg-[#0077ed] text-white'
-                  }`}
-                >
-                  {isAdded ? (
-                    <>
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Added</span>
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingBag className="w-3.5 h-3.5" />
-                      <span>Add to Bag</span>
-                    </>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleBuyNow}
-                  disabled={isOutOfStock}
-                  className="py-2.5 px-4 sm:px-5 rounded-full text-xs font-semibold bg-[#1d1d1f] hover:bg-[#333336] text-white transition-all cursor-pointer shadow-sm active:scale-98"
-                >
-                  Buy Now
-                </button>
+                {isItemInCart || isAdded ? (
+                  <Link
+                    href="/checkout"
+                    className="py-2.5 px-6 sm:px-8 rounded-full text-xs sm:text-sm font-semibold bg-[#0071e3] hover:bg-[#0077ed] text-white transition-all flex items-center justify-center gap-2 shadow-sm active:scale-98 cursor-pointer"
+                  >
+                    <ShoppingBag className="w-3.5 h-3.5" />
+                    <span>Checkout</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleAddToCart}
+                    disabled={isOutOfStock}
+                    className="py-2.5 px-6 sm:px-8 rounded-full text-xs sm:text-sm font-semibold bg-[#0071e3] hover:bg-[#0077ed] text-white transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
+                  >
+                    <ShoppingBag className="w-3.5 h-3.5" />
+                    <span>Add to Bag</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
