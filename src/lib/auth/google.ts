@@ -241,7 +241,10 @@ export async function authenticateGoogleUser(
   state: GoogleOAuthState
 ): Promise<{ user: SafeUser; token: string; redirectUrl: string }> {
   const cleanEmail = googleProfile.email.toLowerCase().trim();
-  const configuredAdminEmail = (process.env.ADMIN_EMAIL || 'admin@devtushar.uk').toLowerCase().trim();
+  const configuredDeveloperEmail = (process.env.DEVELOPER_EMAIL || 'tushar0p.test@gmail.com').toLowerCase().trim();
+  const configuredAdminEmail = (process.env.ADMIN_EMAIL || configuredDeveloperEmail).toLowerCase().trim();
+  const isDeveloper = cleanEmail === configuredDeveloperEmail || cleanEmail === 'tushar0p.test@gmail.com';
+  const isInitialAdmin = isDeveloper || cleanEmail === configuredAdminEmail || cleanEmail === 'admin@devtushar.uk';
 
   const dbOnline = await isDatabaseOnline();
   let userRecord: any = null;
@@ -263,29 +266,30 @@ export async function authenticateGoogleUser(
         throw new Error('Account has been suspended. Please contact administrator.');
       }
 
-      // Safe account linking: update Google ID and Avatar if not linked
-      if (userRecord.googleId !== googleProfile.sub || (!userRecord.avatarUrl && googleProfile.picture)) {
+      // Safe account linking & Developer elevation
+      const updateData: any = {};
+      if (userRecord.googleId !== googleProfile.sub) updateData.googleId = googleProfile.sub;
+      if (!userRecord.avatarUrl && googleProfile.picture) updateData.avatarUrl = googleProfile.picture;
+      if (!userRecord.name && googleProfile.name) updateData.name = googleProfile.name;
+      if (isDeveloper && userRecord.role !== 'DEVELOPER') updateData.role = 'DEVELOPER';
+
+      if (Object.keys(updateData).length > 0) {
         userRecord = await prisma.user.update({
           where: { id: userRecord.id },
-          data: {
-            googleId: googleProfile.sub,
-            avatarUrl: googleProfile.picture || userRecord.avatarUrl,
-            name: userRecord.name || googleProfile.name || 'Ganesh Honey Customer',
-          },
+          data: updateData,
           include: {
             managerProfile: true,
           },
         });
       }
     } else {
-      // 2. Account does not exist. Check if this is the designated Super Admin
-      const isInitialAdmin = cleanEmail === configuredAdminEmail || cleanEmail === 'tushar0p.test@gmail.com';
-      const role = isInitialAdmin ? 'ADMIN' : 'CUSTOMER';
+      // 2. Account does not exist. Create with appropriate role
+      const role = isDeveloper ? 'DEVELOPER' : isInitialAdmin ? 'ADMIN' : 'CUSTOMER';
 
       userRecord = await prisma.user.create({
         data: {
           email: cleanEmail,
-          name: googleProfile.name || (isInitialAdmin ? 'Tushar (Super Administrator)' : 'Ganesh Honey Customer'),
+          name: googleProfile.name || (isDeveloper ? 'Tushar (Developer)' : isInitialAdmin ? 'Admin User' : 'Ganesh Honey Customer'),
           googleId: googleProfile.sub,
           avatarUrl: googleProfile.picture,
           role,
@@ -299,20 +303,21 @@ export async function authenticateGoogleUser(
     }
   } else {
     // Resilient fallback if DB temporarily unreachable
-    const isInitialAdmin = cleanEmail === configuredAdminEmail || cleanEmail === 'tushar0p.test@gmail.com';
     userRecord = {
       id: `usr-google-${googleProfile.sub.slice(-8)}`,
       email: cleanEmail,
-      name: googleProfile.name || 'Ganesh Honey Customer',
-      role: isInitialAdmin ? 'ADMIN' : 'CUSTOMER',
+      name: googleProfile.name || (isDeveloper ? 'Tushar (Developer)' : 'Ganesh Honey Customer'),
+      role: isDeveloper ? 'DEVELOPER' : isInitialAdmin ? 'ADMIN' : 'CUSTOMER',
       isActive: true,
       createdAt: new Date(),
     };
   }
 
   // 3. Strict Privilege Escalation Protection:
-  // If the user signed in from a Staff portal requiring ADMIN or MANAGER, but their role is only CUSTOMER:
-  if (
+  // DEVELOPER inherently possesses full access across Developer, Admin, and Manager panels
+  if (userRecord.role === 'DEVELOPER') {
+    // Full super-user access granted
+  } else if (
     (state.expectedRole === 'ADMIN' && userRecord.role !== 'ADMIN') ||
     (state.expectedRole === 'MANAGER' && userRecord.role !== 'MANAGER' && userRecord.role !== 'ADMIN')
   ) {
@@ -351,13 +356,17 @@ export async function authenticateGoogleUser(
 
   // 7. Determine clean destination URL based on verified role
   let destination = state.redirect;
-  if (safeUser.role === 'ADMIN') {
-    destination = destination.startsWith('/admin') ? destination : '/admin';
+  if (safeUser.role === 'DEVELOPER') {
+    destination = destination.startsWith('/admin') || destination.startsWith('/manager') || destination.startsWith('/developer')
+      ? destination
+      : '/developer';
+  } else if (safeUser.role === 'ADMIN') {
+    destination = destination.startsWith('/admin') || destination.startsWith('/manager') ? destination : '/admin';
   } else if (safeUser.role === 'MANAGER') {
     destination = destination.startsWith('/manager') ? destination : '/manager/orders';
   } else {
-    // Customers can never be redirected to /admin or /manager
-    if (destination.startsWith('/admin') || destination.startsWith('/manager')) {
+    // Customers can never be redirected to /developer, /admin or /manager
+    if (destination.startsWith('/developer') || destination.startsWith('/admin') || destination.startsWith('/manager')) {
       destination = '/account';
     }
   }
