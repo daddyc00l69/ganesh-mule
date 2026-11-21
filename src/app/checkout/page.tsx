@@ -1430,142 +1430,56 @@ function CheckoutContent() {
                       </select>
                     </div>
                   </div>
-                </div>
-              </div>
 
-              {/* 3. Insured Delivery */}
-              <div className="bg-white rounded-3xl border border-[#d2d2d7]/80 p-6 sm:p-7 space-y-4 shadow-sm">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#d2d2d7]/50 pb-3">
-                  <div>
-                    <h2 className="text-xs font-bold text-[#1d1d1f] uppercase tracking-wider flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-full bg-[#1d1d1f] text-white flex items-center justify-center text-[10px] font-semibold">3</span>
-                      <span>Insured Delivery</span>
-                    </h2>
-                    <p className="text-[11px] text-[#86868b] mt-0.5">
-                      Direct insured dispatch across India
-                    </p>
-                  </div>
+                  {/* Live Airway Bill (AWB) Preview - ONLY shown when required contact and destination are complete */}
+                  {isFormValid && (
+                    <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/90 text-xs space-y-2 animate-in fade-in duration-300 mt-2">
+                      <div className="flex items-center justify-between text-[10px] uppercase font-bold text-stone-500 tracking-wider">
+                        <span className="flex items-center gap-1.5">
+                          <Truck className="w-3.5 h-3.5 text-[#0071e3]" />
+                          Insured Airway Bill (AWB) Preview
+                        </span>
+                        <span className="text-emerald-800 font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                          Insured Glass Safe
+                        </span>
+                      </div>
 
-                  {postalCode.length === 6 && isValidIndianPin(postalCode) && (
-                    <div className="flex items-center gap-1.5 self-start sm:self-auto">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#f5f5f7] text-[#1d1d1f] border border-[#d2d2d7]">
-                        <Truck className="w-3 h-3 text-[#0071e3]" />
-                        PIN: {postalCode}
-                      </span>
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                        <Check className="w-3 h-3 text-emerald-600" />
-                        Serviceable
-                      </span>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        <div>
+                          <p className="text-[10px] text-stone-500 uppercase font-semibold">Consignee (Receiver)</p>
+                          <p className="font-bold text-stone-900 text-xs">
+                            {fullName}
+                          </p>
+                          <p className="text-stone-600 font-mono text-[11px]">
+                            +91 {phone.slice(0, 5)} {phone.slice(5)}
+                          </p>
+                          <p className="text-stone-500 text-[10px] truncate">{email}</p>
+                        </div>
+
+                        <div>
+                          <p className="text-[10px] text-stone-500 uppercase font-semibold">Destination Address</p>
+                          <p className="text-stone-700 leading-relaxed text-[11px]">
+                            {flatBuilding}, {areaStreet}
+                            {landmark ? `, Near ${landmark}` : ''}
+                            <br />
+                            {city}, {state} - <span className="font-mono font-bold">{postalCode}</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      {delhiveryRate && (
+                        <div className="pt-2 border-t border-stone-200/60 flex items-center justify-between text-[10px] text-stone-600">
+                          <span>
+                            Logistics Zone: <strong className="text-stone-950 font-bold">{delhiveryRate.zoneName}</strong>
+                          </span>
+                          <span className="font-mono font-bold text-stone-900">
+                            {delhiveryRate.billableWeightGrams}g Consignment Weight
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
-
-                {isCalculatingFreight && (
-                  <div className="flex items-center justify-center gap-2 p-3 rounded-xl bg-[#f5f5f7] border border-[#d2d2d7] text-xs text-[#1d1d1f] font-medium animate-pulse">
-                    <Loader2 className="w-4 h-4 animate-spin text-[#0071e3]" />
-                    <span>Calculating live courier rate for PIN {postalCode}...</span>
-                  </div>
-                )}
-
-                {/* Single Premium Insured Delivery Card */}
-                <div className="p-4 sm:p-5 rounded-2xl border-2 border-[#0071e3] bg-[#0071e3]/5 space-y-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-[#0071e3] text-white flex items-center justify-center shadow-xs shrink-0">
-                        <Truck className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-sm font-bold text-[#1d1d1f]">Insured Standard Delivery</h3>
-                          <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-white border border-[#0071e3]/30 text-[#0071e3]">
-                            Express Insured
-                          </span>
-                        </div>
-                        <p className="text-xs text-[#6e6e73] mt-0.5">
-                          100% Zero-Breakage Insured Solid Glass Transit · Shock-absorbing kraft packaging
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="w-5 h-5 rounded-full border-2 border-[#0071e3] bg-[#0071e3] text-white flex items-center justify-center shrink-0 mt-1">
-                      <Check className="w-3 h-3 stroke-[3]" />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-[#0071e3]/20 text-xs">
-                    <div className="flex items-center justify-between sm:justify-start sm:gap-2">
-                      <span className="text-[#86868b]">Estimated Delivery:</span>
-                      <span className="font-semibold text-[#1d1d1f]">
-                        {speedQuotes.surface?.estimatedDeliveryDate || '3–5 Business Days'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between sm:justify-end sm:gap-2">
-                      <span className="text-[#86868b]">Shipping Fee:</span>
-                      <span className="font-bold text-[#1d1d1f] font-mono">
-                        {isFreeShipping ? (
-                          <span className="text-emerald-700 font-semibold">FREE (Order &gt; ₹999)</span>
-                        ) : speedQuotes.surface ? (
-                          formatCurrency(speedQuotes.surface.bundledDeliveryTotal)
-                        ) : isCalculatingFreight ? (
-                          '...'
-                        ) : postalCode.length === 6 && isValidIndianPin(postalCode) ? (
-                          formatCurrency(bundledShippingTotal)
-                        ) : (
-                          'Enter PIN to calculate'
-                        )}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Live Airway Bill (AWB) Preview - ONLY shown when required contact and destination are complete */}
-                {isFormValid && (
-                  <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/90 text-xs space-y-2 animate-in fade-in duration-300">
-                    <div className="flex items-center justify-between text-[10px] uppercase font-bold text-stone-500 tracking-wider">
-                      <span className="flex items-center gap-1.5">
-                        <Truck className="w-3.5 h-3.5 text-[#0071e3]" />
-                        Insured Airway Bill (AWB) Preview
-                      </span>
-                      <span className="text-emerald-800 font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                        Insured Glass Safe
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                      <div>
-                        <p className="text-[10px] text-stone-500 uppercase font-semibold">Consignee (Receiver)</p>
-                        <p className="font-bold text-stone-900 text-xs">
-                          {fullName}
-                        </p>
-                        <p className="text-stone-600 font-mono text-[11px]">
-                          +91 {phone.slice(0, 5)} {phone.slice(5)}
-                        </p>
-                        <p className="text-stone-500 text-[10px] truncate">{email}</p>
-                      </div>
-
-                      <div>
-                        <p className="text-[10px] text-stone-500 uppercase font-semibold">Destination Address</p>
-                        <p className="text-stone-700 leading-relaxed text-[11px]">
-                          {flatBuilding}, {areaStreet}
-                          {landmark ? `, Near ${landmark}` : ''}
-                          <br />
-                          {city}, {state} - <span className="font-mono font-bold">{postalCode}</span>
-                        </p>
-                      </div>
-                    </div>
-
-                    {delhiveryRate && (
-                      <div className="pt-2 border-t border-stone-200/60 flex items-center justify-between text-[10px] text-stone-600">
-                        <span>
-                          Logistics Zone: <strong className="text-stone-950 font-bold">{delhiveryRate.zoneName}</strong>
-                        </span>
-                        <span className="font-mono font-bold text-stone-900">
-                          {delhiveryRate.billableWeightGrams}g Consignment Weight
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
 

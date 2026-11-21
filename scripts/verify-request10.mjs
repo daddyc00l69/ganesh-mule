@@ -129,6 +129,14 @@ async function verifyAll() {
       console.log('✓ Redundant payment method card completely removed!');
     }
 
+    // Check that Section 3 "Insured Delivery" card is completely REMOVED
+    const insuredDeliveryCard = await page.$('text="Insured Standard Delivery"');
+    if (insuredDeliveryCard) {
+      errors.push('Found redundant "Insured Standard Delivery" card - should have been removed!');
+    } else {
+      console.log('✓ Redundant "Insured Standard Delivery" card completely removed!');
+    }
+
     // Check that "Delhivery One" is NOT present in customer-facing text
     const delhiveryOneTexts = await page.$$('text="Delhivery One"');
     if (delhiveryOneTexts.length > 0) {
