@@ -10,10 +10,6 @@ import {
   Star,
   ShieldCheck,
   Droplets,
-  CheckCircle2,
-  SlidersHorizontal,
-  Camera,
-  Mic,
 } from 'lucide-react';
 
 interface HoneyCategoryCardData {
@@ -28,9 +24,6 @@ interface HoneyCategoryCardData {
   ratingCount: number;
   startingPrice: number;
   compareAtPrice: number;
-  unitPrice: string;
-  discountPercent: number;
-  boughtPastMonth: string;
   availableSizes: string[];
   flavourNotes: string;
   categoryTag?: 'WELLNESS' | 'SWEET' | 'HERBAL';
@@ -50,9 +43,6 @@ const SIX_ACTIVE_CATEGORIES: HoneyCategoryCardData[] = [
     ratingCount: 783,
     startingPrice: 19900,
     compareAtPrice: 27500,
-    unitPrice: '₹79.60 / 100 g',
-    discountPercent: 28,
-    boughtPastMonth: '800+ bought in past month',
     availableSizes: ['250g', '500g', '1kg'],
     flavourNotes: 'Multifloral blossom with warm floral caramel finish',
     categoryTag: 'WELLNESS',
@@ -70,9 +60,6 @@ const SIX_ACTIVE_CATEGORIES: HoneyCategoryCardData[] = [
     ratingCount: 312,
     startingPrice: 19900,
     compareAtPrice: 27500,
-    unitPrice: '₹79.60 / 100 g',
-    discountPercent: 28,
-    boughtPastMonth: '400+ bought in past month',
     availableSizes: ['250g', '500g', '1kg'],
     flavourNotes: 'Warm nutty undertones with delicate amber sweetness',
     categoryTag: 'SWEET',
@@ -90,9 +77,6 @@ const SIX_ACTIVE_CATEGORIES: HoneyCategoryCardData[] = [
     ratingCount: 420,
     startingPrice: 19900,
     compareAtPrice: 27500,
-    unitPrice: '₹79.60 / 100 g',
-    discountPercent: 28,
-    boughtPastMonth: '550+ bought in past month',
     availableSizes: ['250g', '500g', '1kg'],
     flavourNotes: 'Herbal, spicy warmth with a clean soothing finish',
     categoryTag: 'HERBAL',
@@ -110,9 +94,6 @@ const SIX_ACTIVE_CATEGORIES: HoneyCategoryCardData[] = [
     ratingCount: 389,
     startingPrice: 19900,
     compareAtPrice: 27500,
-    unitPrice: '₹79.60 / 100 g',
-    discountPercent: 28,
-    boughtPastMonth: '600+ bought in past month',
     availableSizes: ['250g', '500g', '1kg'],
     flavourNotes: 'Rich botanical bouquet with golden nectar finish',
     categoryTag: 'SWEET',
@@ -130,9 +111,6 @@ const SIX_ACTIVE_CATEGORIES: HoneyCategoryCardData[] = [
     ratingCount: 295,
     startingPrice: 19900,
     compareAtPrice: 27500,
-    unitPrice: '₹79.60 / 100 g',
-    discountPercent: 28,
-    boughtPastMonth: '350+ bought in past month',
     availableSizes: ['250g', '500g', '1kg'],
     flavourNotes: 'Thick, butterscotch aroma with deep lingering sweetness',
     categoryTag: 'WELLNESS',
@@ -150,21 +128,11 @@ const SIX_ACTIVE_CATEGORIES: HoneyCategoryCardData[] = [
     ratingCount: 254,
     startingPrice: 19900,
     compareAtPrice: 27500,
-    unitPrice: '₹79.60 / 100 g',
-    discountPercent: 28,
-    boughtPastMonth: '300+ bought in past month',
     availableSizes: ['250g', '500g', '1kg'],
     flavourNotes: 'Mild floral notes with subtle woody sweetness',
     categoryTag: 'SWEET',
   },
 ];
-
-// Indian Vegetarian Symbol (FSSAI Green Mark)
-const IndianVegBadge: React.FC = () => (
-  <div className="w-3.5 h-3.5 rounded-[3px] border border-emerald-700 flex items-center justify-center shrink-0 p-[2px] bg-white">
-    <div className="w-1.5 h-1.5 rounded-full bg-emerald-700" />
-  </div>
-);
 
 export function ShopClient() {
   const [categories] = useState<HoneyCategoryCardData[]>(SIX_ACTIVE_CATEGORIES);
@@ -194,71 +162,64 @@ export function ShopClient() {
   }, [categories, searchQuery, activeFilter]);
 
   return (
-    <div className="bg-[#f5f5f7] min-h-screen text-[#1d1d1f] selection:bg-[#ffd814]/30">
+    <div className="bg-[#f5f5f7] min-h-screen text-[#1d1d1f]">
       
       {/* ────────────────────────────────────────────────────────────
-          1. AMAZON MOBILE HEADER & SEARCH BAR (Mobile View < 768px)
+          1. CLEAN APPLE MOBILE SEARCH & FILTER BAR (< 768px)
          ──────────────────────────────────────────────────────────── */}
-      <section className="md:hidden bg-[#febd69] p-2.5 pb-2 shadow-xs">
+      <section className="md:hidden bg-white/95 backdrop-blur-md px-4 pt-4 pb-3 border-b border-[#d2d2d7]/70 sticky top-0 z-20">
         <div className="relative flex items-center">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-600 pointer-events-none" />
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#86868b] pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search raw honey, ajwain, sidr 1kg..."
-            className="w-full h-11 pl-9 pr-16 text-sm rounded-lg border border-stone-300 bg-white text-stone-900 placeholder:text-stone-500 shadow-inner focus:outline-none focus:ring-2 focus:ring-[#0071e3]"
+            placeholder="Search raw harvests..."
+            className="w-full h-10 pl-9 pr-9 text-sm rounded-full bg-[#f5f5f7] border border-[#d2d2d7]/80 text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:bg-white focus:border-[#0071e3] transition-all"
           />
-          <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-2 text-stone-500">
-            {searchQuery ? (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="p-1 text-stone-600 hover:text-black cursor-pointer"
-                aria-label="Clear search"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            ) : (
-              <>
-                <Camera className="w-4 h-4 text-stone-500" />
-                <Mic className="w-4 h-4 text-stone-500" />
-              </>
-            )}
-          </div>
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#86868b] hover:text-[#1d1d1f] cursor-pointer"
+              aria-label="Clear search"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
-        {/* Quick Filter Horizontal Scrollbar */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pt-2 pb-1 no-scrollbar text-xs">
+        {/* Quick Filter Horizontal Chips */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pt-2.5 pb-0.5 no-scrollbar text-xs">
           <button
             type="button"
             onClick={() => setActiveFilter('ALL')}
-            className={`px-3 py-1 rounded-full font-medium whitespace-nowrap transition-colors cursor-pointer border ${
+            className={`px-3 py-1 rounded-full font-medium whitespace-nowrap transition-all cursor-pointer ${
               activeFilter === 'ALL'
-                ? 'bg-stone-900 text-white border-stone-900'
-                : 'bg-white text-stone-800 border-stone-300 shadow-2xs'
+                ? 'bg-[#1d1d1f] text-white shadow-xs'
+                : 'bg-white text-[#1d1d1f] border border-[#d2d2d7] hover:bg-[#f5f5f7]'
             }`}
           >
-            All 6 Harvests
+            All Harvests
           </button>
           <button
             type="button"
             onClick={() => setActiveFilter('WELLNESS')}
-            className={`px-3 py-1 rounded-full font-medium whitespace-nowrap transition-colors cursor-pointer border ${
+            className={`px-3 py-1 rounded-full font-medium whitespace-nowrap transition-all cursor-pointer ${
               activeFilter === 'WELLNESS'
-                ? 'bg-stone-900 text-white border-stone-900'
-                : 'bg-white text-stone-800 border-stone-300 shadow-2xs'
+                ? 'bg-[#1d1d1f] text-white shadow-xs'
+                : 'bg-white text-[#1d1d1f] border border-[#d2d2d7] hover:bg-[#f5f5f7]'
             }`}
           >
-            Wellness &amp; Immunity
+            Wellness
           </button>
           <button
             type="button"
             onClick={() => setActiveFilter('SWEET')}
-            className={`px-3 py-1 rounded-full font-medium whitespace-nowrap transition-colors cursor-pointer border ${
+            className={`px-3 py-1 rounded-full font-medium whitespace-nowrap transition-all cursor-pointer ${
               activeFilter === 'SWEET'
-                ? 'bg-stone-900 text-white border-stone-900'
-                : 'bg-white text-stone-800 border-stone-300 shadow-2xs'
+                ? 'bg-[#1d1d1f] text-white shadow-xs'
+                : 'bg-white text-[#1d1d1f] border border-[#d2d2d7] hover:bg-[#f5f5f7]'
             }`}
           >
             Sweet Blossom
@@ -266,23 +227,23 @@ export function ShopClient() {
           <button
             type="button"
             onClick={() => setActiveFilter('HERBAL')}
-            className={`px-3 py-1 rounded-full font-medium whitespace-nowrap transition-colors cursor-pointer border ${
+            className={`px-3 py-1 rounded-full font-medium whitespace-nowrap transition-all cursor-pointer ${
               activeFilter === 'HERBAL'
-                ? 'bg-stone-900 text-white border-stone-900'
-                : 'bg-white text-stone-800 border-stone-300 shadow-2xs'
+                ? 'bg-[#1d1d1f] text-white shadow-xs'
+                : 'bg-white text-[#1d1d1f] border border-[#d2d2d7] hover:bg-[#f5f5f7]'
             }`}
           >
-            Digestive Herbal
+            Herbal
           </button>
         </div>
       </section>
 
       {/* Results Header on Mobile */}
-      <div className="md:hidden bg-white px-3 py-2 border-b border-stone-200 flex items-center justify-between text-xs text-stone-600">
+      <div className="md:hidden px-4 py-2 flex items-center justify-between text-xs text-[#86868b]">
         <span>
-          Showing <strong>{filteredCategories.length}</strong> of 6 pure harvests
+          Showing <strong className="text-[#1d1d1f]">{filteredCategories.length}</strong> of 6 pure harvests
         </span>
-        <span className="flex items-center gap-1 text-[#0071e3] font-medium">
+        <span className="flex items-center gap-1 text-[#1b5e20] font-semibold">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
           <span>NMR Pure</span>
         </span>
@@ -353,21 +314,21 @@ export function ShopClient() {
       </section>
 
       {/* ────────────────────────────────────────────────────────────
-          3. AMAZON-STYLE MOBILE PRODUCT LIST (< 768px)
-             Horizontal Row Cards identical to Amazon App Search Results
+          3. APPLE-STYLE MOBILE PRODUCT LIST (< 768px)
+             Clean horizontal cards with small, classic Apple Blue Buy button
          ──────────────────────────────────────────────────────────── */}
-      <section className="md:hidden bg-white divide-y divide-stone-200">
+      <section className="md:hidden px-3.5 py-2 space-y-3">
         {filteredCategories.length === 0 ? (
-          <div className="text-center py-16 px-4 space-y-3 bg-white">
-            <p className="text-base font-bold text-stone-900">No harvests match your search</p>
-            <p className="text-xs text-stone-500">Try searching for wild forest, ajwain, sesame, or ber honey.</p>
+          <div className="text-center py-16 px-4 space-y-3 bg-white rounded-2xl border border-[#d2d2d7]/70">
+            <p className="text-base font-bold text-[#1d1d1f]">No harvests match your search</p>
+            <p className="text-xs text-[#86868b]">Try searching for wild forest, ajwain, sesame, or ber honey.</p>
             <button
               type="button"
               onClick={() => {
                 setSearchQuery('');
                 setActiveFilter('ALL');
               }}
-              className="mt-2 px-6 py-2 rounded-full bg-[#ffd814] text-stone-950 text-xs font-semibold border border-[#fcd200] shadow-xs cursor-pointer"
+              className="mt-2 px-5 py-2 rounded-full bg-[#0071e3] text-white text-xs font-semibold shadow-xs cursor-pointer"
             >
               View All 6 Harvests
             </button>
@@ -376,102 +337,67 @@ export function ShopClient() {
           filteredCategories.map((cat) => (
             <article
               key={cat.id}
-              className="p-3.5 sm:p-4 flex gap-3.5 items-start bg-white hover:bg-stone-50/60 transition-colors"
+              className="p-3.5 rounded-2xl bg-white border border-[#d2d2d7]/70 shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex gap-3.5 items-center"
             >
-              {/* Left Column: Product Jar Image */}
+              {/* Left: Product Jar Image Container */}
               <Link
                 href={`/product/${cat.slug}`}
-                className="w-32 sm:w-36 shrink-0 block"
+                className="w-28 sm:w-32 aspect-square shrink-0 rounded-xl bg-[#f5f5f7] border border-[#d2d2d7]/50 relative overflow-hidden flex items-center justify-center p-2 group block"
               >
-                <div className="relative aspect-[3/4] w-full bg-[#f8f8f8] rounded-xl overflow-hidden flex items-center justify-center p-2 border border-stone-200/80">
-                  <Image
-                    src={cat.imageUrl}
-                    alt={cat.name}
-                    fill
-                    sizes="140px"
-                    className="object-contain p-1"
-                  />
-                  <div className="absolute top-1.5 left-1.5">
-                    <IndianVegBadge />
-                  </div>
-                </div>
-                <p className="text-[10px] text-center text-stone-500 font-medium mt-1">
-                  Solid Flint Glass
-                </p>
+                <Image
+                  src={cat.imageUrl}
+                  alt={cat.name}
+                  fill
+                  sizes="120px"
+                  className="object-contain p-1 group-hover:scale-105 transition-transform duration-300"
+                />
               </Link>
 
-              {/* Right Column: Amazon-Style Details, Price & Single Buy Button */}
+              {/* Right: Apple Typography, Details & Small Classic Buy Button */}
               <div className="flex-1 min-w-0 space-y-1">
-                {/* Sponsored / Monofloral Tag */}
-                <div className="flex items-center justify-between text-[10px] text-stone-500">
-                  <span className="font-medium text-amber-900 truncate">
-                    {cat.floralOrigin}
-                  </span>
-                </div>
+                {/* Floral Origin */}
+                <p className="text-[11px] font-medium text-[#86868b] truncate">
+                  {cat.floralOrigin}
+                </p>
 
-                {/* Product Title */}
+                {/* Title */}
                 <Link href={`/product/${cat.slug}`} className="block">
-                  <h2 className="text-sm font-semibold text-stone-900 leading-snug line-clamp-2 hover:text-[#0071e3]">
-                    {cat.cleanTitle} - 100% Pure Raw Honey
+                  <h2 className="text-sm sm:text-base font-bold text-[#1d1d1f] leading-snug line-clamp-1 hover:text-[#0071e3] transition-colors">
+                    {cat.cleanTitle}
                   </h2>
                 </Link>
 
-                {/* Sizing & Packaging */}
-                <div className="flex items-center gap-1.5 text-[11px] text-stone-600">
-                  <span className="font-semibold text-stone-900">Options:</span>
-                  <span>250g · 500g · 1kg</span>
+                {/* Rating & Size Chips */}
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="inline-flex items-center gap-1 font-semibold text-[#1d1d1f]">
+                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
+                    <span>{cat.rating}</span>
+                    <span className="text-[#86868b] font-normal text-[11px]">({cat.ratingCount})</span>
+                  </span>
+                  <span className="text-[#d2d2d7]">·</span>
+                  <span className="text-[11px] text-[#86868b]">250g · 500g · 1kg</span>
                 </div>
 
-                {/* Star Rating & Reviews */}
-                <div className="flex items-center gap-1 text-xs pt-0.5">
-                  <span className="font-bold text-stone-900 text-xs">{cat.rating}</span>
-                  <div className="flex items-center text-amber-500">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-3 h-3 fill-amber-400 text-amber-500" />
-                    ))}
-                  </div>
-                  <span className="text-stone-500 text-[11px]">({cat.ratingCount})</span>
-                </div>
-
-                {/* Social Proof */}
-                <p className="text-[10px] text-stone-500">
-                  {cat.boughtPastMonth} · NMR Pure
-                </p>
-
-                {/* Pricing Block */}
-                <div className="pt-0.5">
-                  <div className="flex items-baseline flex-wrap gap-1.5">
-                    <span className="text-lg font-bold text-stone-950 font-mono tracking-tight">
-                      {formatCurrency(cat.startingPrice)}
-                    </span>
-                    <span className="text-[11px] text-stone-500 font-normal">
-                      ({cat.unitPrice})
-                    </span>
-                    <span className="text-xs text-stone-400 line-through">
-                      M.R.P.: {formatCurrency(cat.compareAtPrice)}
-                    </span>
-                    <span className="text-xs font-semibold text-emerald-800">
-                      ({cat.discountPercent}% off)
+                {/* Bottom Row: Pricing & Small Apple Blue Buy Button (like old) */}
+                <div className="pt-1.5 flex items-end justify-between gap-2">
+                  <div className="flex flex-col">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-[10px] text-[#86868b]">From</span>
+                      <span className="text-base font-bold text-[#1d1d1f] tracking-tight">
+                        {formatCurrency(cat.startingPrice)}
+                      </span>
+                      <span className="text-[11px] text-[#86868b] line-through">
+                        {formatCurrency(cat.compareAtPrice)}
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-semibold text-[#1b5e20]">
+                      Save up to 28% · Solid Glass
                     </span>
                   </div>
-                </div>
 
-                {/* Delivery Badge (Amazon Prime Style) */}
-                <div className="pt-0.5 space-y-0.5">
-                  <div className="flex items-center gap-1 text-xs">
-                    <span className="text-[#0071e3] font-black italic text-xs tracking-tight">✓express</span>
-                    <span className="text-stone-800 font-semibold text-[11px]">FREE delivery</span>
-                  </div>
-                  <p className="text-[10px] text-stone-500 leading-tight">
-                    100% Zero-Breakage Insured Solid Glass Transit
-                  </p>
-                </div>
-
-                {/* Single BUY Button (No Add to Cart on Card as ordered) */}
-                <div className="pt-1.5">
                   <Link
                     href={`/product/${cat.slug}`}
-                    className="w-full py-2 px-4 rounded-full bg-[#ffd814] hover:bg-[#f7ca00] active:bg-[#f2c200] text-[#0f1111] text-xs font-bold transition-all flex items-center justify-center shadow-xs border border-[#fcd200] active:scale-98 cursor-pointer text-center"
+                    className="px-5 py-1.5 sm:py-2 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4] text-white text-xs font-semibold transition-all flex items-center justify-center cursor-pointer shadow-xs active:scale-95 shrink-0"
                   >
                     <span>Buy</span>
                   </Link>
@@ -484,6 +410,7 @@ export function ShopClient() {
 
       {/* ────────────────────────────────────────────────────────────
           4. DESKTOP PRODUCT GRID (>= 768px)
+             Classic Apple Grid
          ──────────────────────────────────────────────────────────── */}
       <section className="hidden md:block max-w-6xl mx-auto px-6 py-12">
         {filteredCategories.length === 0 ? (
@@ -518,12 +445,10 @@ export function ShopClient() {
                         sizes="(max-width: 1024px) 50vw, 360px"
                         className="object-contain group-hover:scale-106 transition-transform duration-700 ease-out p-2"
                       />
-                      <div className="absolute top-2 left-2">
-                        <IndianVegBadge />
-                      </div>
                     </div>
                   </Link>
 
+                  {/* Category Details */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs text-[#86868b]">
                       <span className="truncate max-w-[180px]">{cat.floralOrigin}</span>
@@ -544,6 +469,7 @@ export function ShopClient() {
                       {cat.description}
                     </p>
 
+                    {/* Available Sizes Indicator */}
                     <div className="pt-2 flex items-center gap-2 text-xs text-[#86868b]">
                       <span>Available:</span>
                       <div className="flex items-center gap-1.5">
@@ -560,7 +486,7 @@ export function ShopClient() {
                   </div>
                 </div>
 
-                {/* Bottom Pricing & Buy Button */}
+                {/* Bottom Pricing & Small Classic Apple Blue Buy Button */}
                 <div className="pt-4 mt-5 border-t border-[#d2d2d7]/50 flex items-center justify-between gap-3">
                   <div className="flex flex-col">
                     <div className="flex items-baseline gap-1.5">
@@ -573,13 +499,13 @@ export function ShopClient() {
                       </span>
                     </div>
                     <span className="text-[11px] font-semibold text-[#1b5e20] block">
-                      Save {cat.discountPercent}% · Solid Glass
+                      Save up to 28% · Solid Glass
                     </span>
                   </div>
 
                   <Link
                     href={`/product/${cat.slug}`}
-                    className="px-6 py-2.5 rounded-full bg-[#ffd814] hover:bg-[#f7ca00] active:bg-[#f2c200] text-[#0f1111] text-xs font-bold transition-all flex items-center justify-center cursor-pointer shadow-xs border border-[#fcd200] shrink-0"
+                    className="px-5 py-2 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4] text-white text-xs sm:text-sm font-medium transition-all flex items-center justify-center cursor-pointer shadow-sm group-hover:shadow-md shrink-0"
                   >
                     <span>Buy</span>
                   </Link>
