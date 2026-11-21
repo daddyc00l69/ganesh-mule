@@ -53,14 +53,14 @@ const HARVEST_SPOTLIGHTS = [
     name: 'Ber (Sidr) Honey',
     origin: 'Wild Jujube Forests, Bikaner',
     note: 'Rich butterscotch and vanilla smoothness',
-    imageUrl: '/images/honey-brand/Kashmir Honey/500g/image_1_amazon_main.jpg',
+    imageUrl: '/images/honey-brand/Ber Honey/500g/image_1_amazon_main.jpg',
   },
   {
     slug: 'sheesham-honey',
     name: 'Sheesham Honey',
     origin: 'Dalbergia Sissoo Reserves',
     note: 'Delicate woody notes and mild floral amber',
-    imageUrl: '/images/honey-brand/Forest Honey/500g/image_1_amazon_main.jpg',
+    imageUrl: '/images/honey-brand/Sheesham Honey/500g/image_1_amazon_main.jpg',
   },
 ];
 
