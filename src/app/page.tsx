@@ -313,7 +313,7 @@ export default function HomePage() {
             <div className="inline-flex items-center gap-2 p-3 rounded-2xl bg-emerald-50 border border-emerald-300 text-xs text-emerald-900 shadow-sm mt-3 animate-fade-in">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>
-                <strong>Express Delivery Available</strong> to {pincodeResult.city}, {pincodeResult.state}! Dispatched within 24 hours.
+                <strong>Insured Direct Delivery Available</strong> to {pincodeResult.city}, {pincodeResult.state}! Dispatched within 24 hours.
               </span>
             </div>
           )}

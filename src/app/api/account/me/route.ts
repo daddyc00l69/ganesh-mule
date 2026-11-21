@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       authenticated: false,
       user: null,
-    }, { status: 401 });
+    });
   } catch (error: any) {
     return NextResponse.json({ authenticated: false, error: error.message }, { status: 500 });
   }
