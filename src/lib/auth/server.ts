@@ -100,7 +100,7 @@ export async function requireAuth(
   }
 
   // Developer panel is strictly restricted to DEVELOPER role
-  if (requiredRole === 'DEVELOPER' && user.role !== 'DEVELOPER') {
+  if (requiredRole === 'DEVELOPER') {
     return { error: 'Insufficient role privileges (Developer access required)', status: 403 };
   }
 
