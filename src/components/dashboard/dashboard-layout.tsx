@@ -93,11 +93,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     );
   }
 
+  const effectiveRole = authenticatedUser?.role === 'DEVELOPER' ? 'DEVELOPER' : role;
+
   return (
     <div className="min-h-screen flex bg-background text-foreground transition-colors duration-200">
       {/* Sidebar */}
       <Sidebar
-        role={role}
+        role={effectiveRole}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
@@ -105,7 +107,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       {/* Main Body */}
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar
-          role={role}
+          role={effectiveRole}
           title={title}
           userName={authenticatedUser?.name || defaultUserName}
           onToggleSidebar={() => setSidebarOpen((prev) => !prev)}

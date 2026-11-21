@@ -73,9 +73,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, isOpen, onClose }) => {
   const developerNavItems: NavItem[] = [
     { title: 'System & Health', href: '/developer', icon: LayoutDashboard },
     { title: 'Staff Accounts', href: '/developer/accounts', icon: Users },
+    { title: 'Admin Overview', href: '/admin', icon: Layers },
+    { title: 'Orders & Dispatch', href: '/admin/orders', icon: ShoppingBag, badge: pendingOrdersCount },
+    { title: 'Inventory Desk', href: '/admin/inventory', icon: Boxes },
+    { title: 'Products & Catalogue', href: '/admin/products', icon: Package },
+    { title: 'Categories', href: '/admin/categories', icon: Layers },
+    { title: 'Customer Database', href: '/admin/customers', icon: UserCheck },
+    { title: 'Discount Coupons', href: '/admin/coupons', icon: TicketPercent },
+    { title: 'Financial Reports', href: '/admin/reports', icon: BarChart3 },
     { title: 'Security & Audit', href: '/admin/audit-logs', icon: ShieldAlert },
-    { title: 'Admin Console', href: '/admin', icon: Layers },
-    { title: 'Operations Queue', href: '/manager/orders', icon: ShoppingBag, badge: pendingOrdersCount },
     { title: 'Store Settings', href: '/admin/settings', icon: Settings },
   ];
 
@@ -118,13 +124,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, isOpen, onClose }) => {
       {/* Sidebar Panel */}
       <aside
         className={cn(
-          'fixed top-0 bottom-0 left-0 z-40 w-64 glass-panel border-r border-border/40 flex flex-col transition-transform duration-300 ease-in-out lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 shrink-0',
+          'fixed top-0 bottom-0 left-0 z-40 w-64 glass-panel border-r border-border/40 flex flex-col transition-transform duration-300 ease-in-out lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 shrink-0 bg-background/95 lg:bg-transparent shadow-2xl lg:shadow-none',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         {/* Brand Header */}
         <div className="h-16 shrink-0 flex items-center justify-between px-5 border-b border-border/40">
-          <Link href={role === 'ADMIN' ? '/admin' : '/manager'} className="flex items-center gap-2.5">
+          <Link
+            href={role === 'DEVELOPER' ? '/developer' : role === 'ADMIN' ? '/admin' : '/manager'}
+            className="flex items-center gap-2.5"
+          >
             <div className="w-8 h-8 rounded-xl glass-primary flex items-center justify-center font-bold text-sm tracking-wider shadow-sm">
               <Sparkles className="w-4 h-4" />
             </div>
@@ -133,20 +142,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, isOpen, onClose }) => {
                 <span>{BRAND_SHORT}</span>
               </div>
               <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-mono">
-                {role === 'ADMIN' ? 'Admin Console' : 'Manager Desk'}
+                {role === 'DEVELOPER' ? 'Developer Panel' : role === 'ADMIN' ? 'Admin Console' : 'Manager Desk'}
               </p>
             </div>
           </Link>
           <div className="flex items-center gap-2">
             <GlassBadge
-              variant={role === 'ADMIN' ? 'destructive' : 'info'}
+              variant={role === 'DEVELOPER' ? 'default' : role === 'ADMIN' ? 'destructive' : 'info'}
               size="sm"
+              className={role === 'DEVELOPER' ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500/40 font-semibold' : ''}
             >
               {role}
             </GlassBadge>
             <button
               onClick={onClose}
-              className="lg:hidden p-1 rounded-md text-muted-foreground hover:text-foreground"
+              className="lg:hidden p-1 rounded-md text-muted-foreground hover:text-foreground cursor-pointer"
+              aria-label="Close sidebar"
             >
               <X className="w-4 h-4" />
             </button>
@@ -156,10 +167,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, isOpen, onClose }) => {
         {/* Navigation Items */}
         <nav className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 py-4 space-y-1 scrollbar-thin">
           {navItems.map((item) => {
-            const isActive =
-              item.href === (role === 'ADMIN' ? '/admin' : '/manager')
-                ? pathname === item.href
-                : pathname.startsWith(item.href);
+            const isExactHome =
+              item.href === '/developer' ||
+              item.href === '/admin' ||
+              item.href === '/manager';
+
+            const isActive = isExactHome
+              ? pathname === item.href
+              : pathname.startsWith(item.href);
 
             const Icon = item.icon;
 
