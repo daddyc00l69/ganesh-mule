@@ -136,6 +136,18 @@ function CheckoutContent() {
   const [availableTowns, setAvailableTowns] = useState<string[]>([]);
   const pincodeAbortRef = useRef<AbortController | null>(null);
 
+  // Field refs for intelligent smooth-scrolling & auto-focus on incomplete fields
+  const fullNameRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const flatBuildingRef = useRef<HTMLInputElement>(null);
+  const areaStreetRef = useRef<HTMLInputElement>(null);
+  const postalCodeRef = useRef<HTMLInputElement>(null);
+  const cityRef = useRef<HTMLInputElement>(null);
+
+  // Cart safe clear confirmation
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
+
   // Dual Delhivery Speed Quotes (Surface vs Air Express side-by-side)
   const [speedQuotes, setSpeedQuotes] = useState<{
     surface: SpeedQuote | null;
@@ -476,6 +488,87 @@ function CheckoutContent() {
 
   const isFormValid = isContactComplete && isDestinationComplete && items.length > 0;
 
+  // Jump and auto-focus destination PIN input
+  const scrollToPinInput = () => {
+    if (postalCodeRef.current) {
+      postalCodeRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      postalCodeRef.current.focus();
+    }
+  };
+
+  // Contextual helper determining the next missing field for 1-click user guidance
+  const getFirstMissingStep = () => {
+    if (items.length === 0) {
+      return {
+        label: 'Select raw honey jars to proceed',
+        action: () => router.push('/shop'),
+      };
+    }
+    if (!fullName.trim()) {
+      return {
+        label: 'Enter Customer Full Name',
+        action: () => {
+          fullNameRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          fullNameRef.current?.focus();
+        },
+      };
+    }
+    if (phone.length !== 10) {
+      return {
+        label: 'Enter 10-Digit Mobile Number',
+        action: () => {
+          phoneRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          phoneRef.current?.focus();
+        },
+      };
+    }
+    if (!email.trim() || !email.includes('@')) {
+      return {
+        label: 'Enter Email Address for GST Invoice',
+        action: () => {
+          emailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          emailRef.current?.focus();
+        },
+      };
+    }
+    if (!flatBuilding.trim()) {
+      return {
+        label: 'Enter Flat / House / Building Name',
+        action: () => {
+          flatBuildingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          flatBuildingRef.current?.focus();
+        },
+      };
+    }
+    if (!areaStreet.trim()) {
+      return {
+        label: 'Enter Area, Street or Road',
+        action: () => {
+          areaStreetRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          areaStreetRef.current?.focus();
+        },
+      };
+    }
+    if (postalCode.length !== 6 || !isValidIndianPin(postalCode)) {
+      return {
+        label: 'Enter 6-Digit Delivery PIN Code',
+        action: scrollToPinInput,
+      };
+    }
+    if (!city.trim()) {
+      return {
+        label: 'Enter Town or City',
+        action: () => {
+          cityRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          cityRef.current?.focus();
+        },
+      };
+    }
+    return null;
+  };
+
+  const missingStep = getFirstMissingStep();
+
   // Coupon handling
   const validateAndApplyCoupon = async (codeToTest?: string) => {
     const code = (codeToTest || couponInput).trim().toUpperCase();
@@ -659,31 +752,54 @@ function CheckoutContent() {
 
     if (!fullName.trim()) {
       setErrorMessage('Please enter the customer full name for shipping label generation.');
+      fullNameRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      fullNameRef.current?.focus();
       return;
     }
 
     if (phone.length < 10) {
       setErrorMessage('Please enter a valid 10-digit Indian mobile number for courier delivery updates.');
+      phoneRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      phoneRef.current?.focus();
       return;
     }
 
     if (!email.trim() || !email.includes('@')) {
       setErrorMessage('Please enter a valid email address to receive your official GST Tax Invoice.');
+      emailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      emailRef.current?.focus();
+      return;
+    }
+
+    if (!flatBuilding.trim()) {
+      setErrorMessage('Please enter your flat, house number, building, or apartment name.');
+      flatBuildingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      flatBuildingRef.current?.focus();
+      return;
+    }
+
+    if (!areaStreet.trim()) {
+      setErrorMessage('Please enter your area, street, road, or locality name.');
+      areaStreetRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      areaStreetRef.current?.focus();
       return;
     }
 
     if (!isValidIndianPin(postalCode)) {
-      setErrorMessage('Please enter a valid 6-digit Indian PIN Code to calculate courier delivery rates.');
+      setErrorMessage('Please enter a valid 6-digit Indian PIN Code to calculate courier delivery charges.');
+      scrollToPinInput();
       return;
     }
 
-    if (!flatBuilding.trim() || !areaStreet.trim()) {
-      setErrorMessage('Please provide your complete street address (Flat/Building & Area/Road).');
+    if (!city.trim()) {
+      setErrorMessage('Please enter your town or city.');
+      cityRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      cityRef.current?.focus();
       return;
     }
 
     if (!isContactComplete || !isDestinationComplete) {
-      setErrorMessage('Please fill your complete Contact Details and Delivery Destination to proceed.');
+      setErrorMessage('Please complete all contact and delivery destination details to proceed.');
       return;
     }
 
@@ -1085,40 +1201,72 @@ function CheckoutContent() {
                   <span className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider">
                     Selected Harvests ({items.length})
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => clearCart()}
-                    className="text-[10px] text-rose-600 hover:text-rose-800 flex items-center gap-1 font-semibold cursor-pointer"
-                  >
-                    <Trash2 className="w-3 h-3" /> Clear Bag
-                  </button>
+                  {showClearConfirm ? (
+                    <div className="flex items-center gap-1.5 animate-in fade-in">
+                      <span className="text-[10px] text-stone-500 font-medium">Empty bag?</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          clearCart();
+                          setShowClearConfirm(false);
+                        }}
+                        className="text-[10px] bg-rose-600 text-white px-2 py-0.5 rounded-full font-bold hover:bg-rose-700 cursor-pointer"
+                      >
+                        Yes, Clear
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowClearConfirm(false)}
+                        className="text-[10px] bg-stone-200 text-stone-700 px-2 py-0.5 rounded-full font-medium hover:bg-stone-300 cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowClearConfirm(true)}
+                      className="text-[10px] text-rose-600 hover:text-rose-800 flex items-center gap-1 font-semibold cursor-pointer transition-colors"
+                    >
+                      <Trash2 className="w-3 h-3" /> Clear Bag
+                    </button>
+                  )}
                 </div>
                 <div className="divide-y divide-stone-100">
                   {items.map((item) => (
                     <div key={item.productId} className="py-2.5 flex items-center justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-stone-900 line-clamp-1">{item.productName}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="flex items-center border border-stone-200 rounded-full bg-white shadow-2xs">
+                      <div className="flex-1 min-w-0 pr-1">
+                        <p className="font-semibold text-stone-900 line-clamp-1 text-xs">{item.productName}</p>
+                        <p className="text-[10px] text-stone-500 font-mono">
+                          {item.weight || (item.productName.includes('1kg') ? '1000g' : item.productName.includes('250g') ? '250g' : '500g')}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1.5 flex-nowrap">
+                          <div className="inline-flex items-center flex-nowrap shrink-0 border border-stone-200 rounded-full bg-white shadow-2xs select-none h-6 px-0.5">
                             <button
                               type="button"
                               onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                              className="px-2 py-0.5 text-[#1d1d1f] hover:text-[#0071e3] font-bold"
+                              className="w-5 h-5 flex items-center justify-center text-[#1d1d1f] hover:text-[#0071e3] hover:bg-stone-100 rounded-full transition-colors text-xs font-bold shrink-0 cursor-pointer"
+                              title="Decrease quantity"
+                              aria-label="Decrease quantity"
                             >
                               -
                             </button>
-                            <span className="px-2 text-[11px] font-bold text-[#1d1d1f]">
+                            <span className="min-w-[18px] text-center text-[11px] font-bold text-[#1d1d1f] font-mono shrink-0 select-none px-0.5">
                               {item.quantity}
                             </span>
                             <button
                               type="button"
                               onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                              className="px-2 py-0.5 text-[#1d1d1f] hover:text-[#0071e3] font-bold"
+                              className="w-5 h-5 flex items-center justify-center text-[#1d1d1f] hover:text-[#0071e3] hover:bg-stone-100 rounded-full transition-colors text-xs font-bold shrink-0 cursor-pointer"
+                              title="Increase quantity"
+                              aria-label="Increase quantity"
                             >
                               +
                             </button>
                           </div>
-                          <span className="text-[11px] text-stone-500 font-medium">× {formatCurrency(item.price)}</span>
+                          <span className="text-[11px] text-stone-500 font-medium whitespace-nowrap shrink-0">
+                            × {formatCurrency(item.price)}
+                          </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
@@ -1163,10 +1311,14 @@ function CheckoutContent() {
                       <span>Customer Full Name <span className="text-rose-500">*</span></span>
                     </label>
                     <input
+                      ref={fullNameRef}
                       type="text"
                       required
                       value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
+                      onChange={(e) => {
+                        setFullName(e.target.value);
+                        if (errorMessage) setErrorMessage(null);
+                      }}
                       placeholder="Customer Full Name"
                       className="w-full h-12 sm:h-11 px-3.5 text-base sm:text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-medium"
                     />
@@ -1186,11 +1338,15 @@ function CheckoutContent() {
                         <span>+91</span>
                       </span>
                       <input
+                        ref={phoneRef}
                         type="tel"
                         inputMode="tel"
                         required
                         value={phone}
-                        onChange={(e) => handlePhoneChange(e.target.value)}
+                        onChange={(e) => {
+                          handlePhoneChange(e.target.value);
+                          if (errorMessage) setErrorMessage(null);
+                        }}
                         placeholder="10-digit mobile number"
                         className="w-full h-12 sm:h-11 pl-20 pr-3.5 text-base sm:text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-mono font-medium"
                       />
@@ -1204,11 +1360,15 @@ function CheckoutContent() {
                       <span className="text-[10px] text-stone-500 font-medium">To receive official GST PDF tax invoice</span>
                     </label>
                     <input
+                      ref={emailRef}
                       type="email"
                       inputMode="email"
                       required
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (errorMessage) setErrorMessage(null);
+                      }}
                       placeholder="Email address for tax invoice"
                       className="w-full h-12 sm:h-11 px-3.5 text-base sm:text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-medium"
                     />
@@ -1252,10 +1412,14 @@ function CheckoutContent() {
                       <span>Flat, House No., Building, Apartment <span className="text-rose-500">*</span></span>
                     </label>
                     <input
+                      ref={flatBuildingRef}
                       type="text"
                       required
                       value={flatBuilding}
-                      onChange={(e) => setFlatBuilding(e.target.value)}
+                      onChange={(e) => {
+                        setFlatBuilding(e.target.value);
+                        if (errorMessage) setErrorMessage(null);
+                      }}
                       placeholder="Flat, House no., Building, Apartment"
                       className="w-full h-12 sm:h-11 px-3.5 text-base sm:text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-medium"
                     />
@@ -1267,10 +1431,14 @@ function CheckoutContent() {
                       <span>Area, Street, Sector, Road <span className="text-rose-500">*</span></span>
                     </label>
                     <input
+                      ref={areaStreetRef}
                       type="text"
                       required
                       value={areaStreet}
-                      onChange={(e) => setAreaStreet(e.target.value)}
+                      onChange={(e) => {
+                        setAreaStreet(e.target.value);
+                        if (errorMessage) setErrorMessage(null);
+                      }}
                       placeholder="Area, Street, Sector, Road"
                       className="w-full h-12 sm:h-11 px-3.5 text-base sm:text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-medium"
                     />
@@ -1305,13 +1473,17 @@ function CheckoutContent() {
                       </label>
                       <div className="relative">
                         <input
+                          ref={postalCodeRef}
                           type="text"
                           inputMode="numeric"
                           pattern="[0-9]*"
                           required
                           maxLength={6}
                           value={postalCode}
-                          onChange={(e) => handlePincodeChange(e.target.value)}
+                          onChange={(e) => {
+                            handlePincodeChange(e.target.value);
+                            if (errorMessage) setErrorMessage(null);
+                          }}
                           placeholder="6-digit PIN code"
                           className="w-full h-12 sm:h-11 px-3.5 pr-8 text-base sm:text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-mono font-bold"
                         />
@@ -1366,12 +1538,14 @@ function CheckoutContent() {
                         )}
                       </label>
                       <input
+                        ref={cityRef}
                         type="text"
                         required
                         value={city}
                         onChange={(e) => {
                           setCity(e.target.value);
                           setPinAutoDetected(`${e.target.value}${e.target.value && state ? ', ' : ''}${state}`);
+                          if (errorMessage) setErrorMessage(null);
                         }}
                         placeholder="Town or City"
                         className="w-full h-12 sm:h-11 px-3.5 text-base sm:text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-medium"
@@ -1490,15 +1664,38 @@ function CheckoutContent() {
                   <h3 className="text-xs font-bold text-stone-900 uppercase tracking-wider">
                     Order Summary ({items.length} {items.length === 1 ? 'jar' : 'jars'})
                   </h3>
-                  <button
-                    type="button"
-                    onClick={() => clearCart()}
-                    className="text-[11px] text-rose-600 hover:text-rose-800 flex items-center gap-1 font-semibold hover:underline cursor-pointer"
-                    title="Empty entire bag"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                    <span>Clear Bag</span>
-                  </button>
+                  {showClearConfirm ? (
+                    <div className="flex items-center gap-1.5 animate-in fade-in">
+                      <span className="text-[11px] text-stone-500 font-medium">Empty bag?</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          clearCart();
+                          setShowClearConfirm(false);
+                        }}
+                        className="text-[11px] bg-rose-600 text-white px-2 py-0.5 rounded-full font-bold hover:bg-rose-700 cursor-pointer"
+                      >
+                        Yes, Clear
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowClearConfirm(false)}
+                        className="text-[11px] bg-stone-200 text-stone-700 px-2 py-0.5 rounded-full font-medium hover:bg-stone-300 cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowClearConfirm(true)}
+                      className="text-[11px] text-rose-600 hover:text-rose-800 flex items-center gap-1 font-semibold hover:underline cursor-pointer transition-colors"
+                      title="Empty entire bag"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      <span>Clear Bag</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Items List */}
@@ -1510,29 +1707,33 @@ function CheckoutContent() {
                         <p className="text-[10px] text-stone-500 font-mono">
                           {item.weight || (item.productName.includes('1kg') ? '1kg Solid Glass Jar' : item.productName.includes('250g') ? '250g Solid Glass Jar' : '500g Solid Glass Jar')}
                         </p>
-                        <div className="flex items-center gap-2 mt-1.5">
-                          <div className="flex items-center border border-stone-200 rounded-full bg-stone-50 shadow-2xs">
+                        <div className="flex items-center gap-2 mt-1.5 flex-nowrap">
+                          <div className="inline-flex items-center flex-nowrap shrink-0 border border-stone-200 rounded-full bg-stone-50 shadow-2xs select-none h-6 px-0.5">
                             <button
                               type="button"
                               onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                              className="px-2 py-0.5 text-[#1d1d1f] hover:text-[#0071e3] font-bold"
+                              className="w-5 h-5 flex items-center justify-center text-[#1d1d1f] hover:text-[#0071e3] hover:bg-stone-200/60 rounded-full transition-colors text-xs font-bold shrink-0 cursor-pointer"
                               title="Decrease"
+                              aria-label="Decrease quantity"
                             >
                               -
                             </button>
-                            <span className="px-1.5 text-[11px] font-bold text-[#1d1d1f]">
+                            <span className="min-w-[18px] text-center text-[11px] font-bold text-[#1d1d1f] font-mono shrink-0 select-none px-0.5">
                               {item.quantity}
                             </span>
                             <button
                               type="button"
                               onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                              className="px-2 py-0.5 text-[#1d1d1f] hover:text-[#0071e3] font-bold"
+                              className="w-5 h-5 flex items-center justify-center text-[#1d1d1f] hover:text-[#0071e3] hover:bg-stone-200/60 rounded-full transition-colors text-xs font-bold shrink-0 cursor-pointer"
                               title="Increase"
+                              aria-label="Increase quantity"
                             >
                               +
                             </button>
                           </div>
-                          <span className="text-[11px] text-stone-500 font-medium">× {formatCurrency(item.price)}</span>
+                          <span className="text-[11px] text-stone-500 font-medium whitespace-nowrap shrink-0">
+                            × {formatCurrency(item.price)}
+                          </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
@@ -1760,9 +1961,15 @@ function CheckoutContent() {
                           <span className="text-[9px] text-stone-400 font-normal whitespace-nowrap block">(incl. 18% GST)</span>
                         </div>
                       ) : (
-                        <span className="inline-block text-[10px] px-2 py-0.5 rounded-full bg-stone-100 border border-stone-200 text-stone-600 font-semibold whitespace-nowrap">
-                          Enter PIN
-                        </span>
+                        <button
+                          type="button"
+                          onClick={scrollToPinInput}
+                          className="inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full bg-[#0071e3]/10 hover:bg-[#0071e3]/20 border border-[#0071e3]/30 text-[#0071e3] font-bold whitespace-nowrap cursor-pointer transition-all hover:scale-105 active:scale-95"
+                          title="Click to enter your 6-digit delivery PIN code"
+                        >
+                          <span>Enter PIN</span>
+                          <ArrowRight className="w-3 h-3" />
+                        </button>
                       )}
                     </div>
                   </div>
@@ -1806,7 +2013,13 @@ function CheckoutContent() {
                   <div className="flex justify-between items-baseline text-base font-bold text-[#1d1d1f] pt-3 border-t border-[#d2d2d7]">
                     <div>
                       <span className="font-bold text-base text-[#1d1d1f]">Total Amount</span>
-                      <p className="text-[10px] font-normal text-[#86868b]">All taxes &amp; delivery included</p>
+                      <p className="text-[10px] font-normal text-[#86868b]">
+                        {isFreeShipping
+                          ? 'All taxes & free delivery included'
+                          : postalCode.length === 6 && isValidIndianPin(postalCode)
+                          ? 'All taxes & express delivery included'
+                          : 'Includes 5% GST • Delivery calculated upon PIN entry'}
+                      </p>
                     </div>
                     <span className="text-2xl font-bold text-[#1d1d1f] font-mono">{formatCurrency(totalAmount)}</span>
                   </div>
@@ -1817,8 +2030,8 @@ function CheckoutContent() {
                   <button
                     type="button"
                     onClick={(e) => handleInitiatePayment(e, false)}
-                    disabled={!isFormValid || isProcessing}
-                    className="w-full py-4 px-6 rounded-full text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-sm hover:shadow transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4]"
+                    disabled={isProcessing}
+                    className="w-full py-4 px-6 rounded-full text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-sm hover:shadow transition-all cursor-pointer bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4] disabled:opacity-50 disabled:cursor-wait"
                   >
                     <Lock className="w-4 h-4 text-white/80" />
                     <span>
@@ -1828,10 +2041,20 @@ function CheckoutContent() {
                     </span>
                   </button>
 
-                  {!isFormValid && (
-                    <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl text-center font-medium">
-                      Fill Contact Details and Delivery Destination to enable payment
-                    </p>
+                  {missingStep ? (
+                    <button
+                      type="button"
+                      onClick={missingStep.action}
+                      className="w-full text-[11px] text-amber-800 bg-amber-50/90 hover:bg-amber-100 border border-amber-200/80 px-3 py-2 rounded-xl text-center font-semibold cursor-pointer transition-colors flex items-center justify-center gap-1.5 shadow-2xs"
+                    >
+                      <span>Next: {missingStep.label}</span>
+                      <ArrowRight className="w-3 h-3 shrink-0" />
+                    </button>
+                  ) : (
+                    <div className="text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl text-center font-semibold flex items-center justify-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>All shipping details verified • Ready for instant payment</span>
+                    </div>
                   )}
 
                   <div className="flex items-center justify-center gap-1.5 text-[11px] text-[#86868b] text-center">
@@ -1854,14 +2077,19 @@ function CheckoutContent() {
                       {formatCurrency(totalAmount)}
                     </span>
                   </div>
+                  <span className="text-[9px] text-[#86868b] block font-normal">
+                    {postalCode.length === 6 && isValidIndianPin(postalCode)
+                      ? 'Taxes & delivery incl.'
+                      : 'GST incl. • PIN for delivery'}
+                  </span>
                 </div>
 
                 <div className="flex flex-col items-end gap-1 flex-1">
                   <button
                     type="button"
                     onClick={(e) => handleInitiatePayment(e, false)}
-                    disabled={!isFormValid || isProcessing}
-                    className="w-full max-w-[260px] py-3.5 px-5 rounded-full text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4]"
+                    disabled={isProcessing}
+                    className="w-full max-w-[260px] py-3.5 px-5 rounded-full text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4] disabled:opacity-50 disabled:cursor-wait"
                   >
                     <Lock className="w-3.5 h-3.5 shrink-0 text-white/80" />
                     <span>
@@ -1870,9 +2098,19 @@ function CheckoutContent() {
                         : `Pay ${formatCurrency(totalAmount)}`}
                     </span>
                   </button>
-                  {!isFormValid && (
-                    <span className="text-[9px] text-amber-700 font-medium">
-                      Fill required details to pay
+                  {missingStep ? (
+                    <button
+                      type="button"
+                      onClick={missingStep.action}
+                      className="text-[10px] text-amber-800 font-semibold flex items-center gap-1 hover:underline cursor-pointer"
+                    >
+                      <span>Next: {missingStep.label}</span>
+                      <ArrowRight className="w-2.5 h-2.5 shrink-0" />
+                    </button>
+                  ) : (
+                    <span className="text-[9px] text-emerald-700 font-semibold flex items-center gap-1">
+                      <CheckCircle2 className="w-2.5 h-2.5 shrink-0 text-emerald-600" />
+                      <span>Details verified</span>
                     </span>
                   )}
                 </div>
