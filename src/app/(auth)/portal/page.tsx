@@ -20,6 +20,7 @@ import {
 import Link from 'next/link';
 import { SafeUser } from '@/types';
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
+import { BRAND_SHORT, BRAND_NAME } from '@/lib/constants/brand';
 
 function StaffPortalContent() {
   const router = useRouter();
@@ -186,13 +187,13 @@ function StaffPortalContent() {
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl glass-primary shadow-lg mb-1">
-            <ShieldCheck className="w-6 h-6 text-primary-foreground" />
+            <Sparkles className="w-6 h-6 text-primary-foreground" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            Staff Console
+            {BRAND_SHORT}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground font-medium">
-            Developer • Administrator • Store Operations
+            Staff &amp; Operations Portal
           </p>
         </div>
 
