@@ -443,13 +443,18 @@ function CheckoutContent() {
   // Dynamic calculations with statutory GST and manager-controlled fees
   const totalQuantity = items.reduce((acc, item) => acc + item.quantity, 0);
   const discountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+  const isPinComplete = postalCode.length === 6 && isValidIndianPin(postalCode);
+  const effectiveFeeSettings = isPinComplete
+    ? feeSettings
+    : { ...feeSettings, platformFeeEnabled: false };
+
   const feeBreakdown = calculateOrderFees(
     subtotal,
     discountAmount,
-    feeSettings,
+    effectiveFeeSettings,
     delhiveryRate
       ? delhiveryRate.subtotalPaise
-      : postalCode.length === 6 && isValidIndianPin(postalCode)
+      : isPinComplete
       ? undefined
       : 0,
     delhiveryRate ? delhiveryRate.totalPaise : undefined
