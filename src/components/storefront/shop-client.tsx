@@ -164,34 +164,34 @@ export function ShopClient() {
   return (
     <div className="bg-[#f5f5f7] min-h-screen text-[#1d1d1f] selection:bg-[#0071e3]/20 selection:text-[#0071e3]">
       
-      {/* Apple-Style Minimalist Editorial Header */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 pb-8 border-b border-[#d2d2d7]/60">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pb-4">
-          <div className="max-w-xl space-y-3">
+      {/* Apple-Style Minimalist Editorial Header (Mobile-First Optimized) */}
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 sm:pt-16 pb-6 border-b border-[#d2d2d7]/60">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2">
+          <div className="max-w-xl space-y-2.5">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-[#d2d2d7] text-[#1d1d1f] text-xs font-semibold shadow-2xs">
               <Droplets className="w-3.5 h-3.5 fill-amber-500 text-amber-600" />
               <span>The 6 Pure Harvests · 2026 Season</span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[#1d1d1f] leading-[1.08]">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[#1d1d1f] leading-[1.08]">
               Artisanal Honey,{' '}
               <span className="font-normal text-[#86868b]">Pure &amp; Unheated.</span>
             </h1>
 
-            <p className="text-sm sm:text-base text-[#6e6e73] leading-relaxed">
+            <p className="text-xs sm:text-base text-[#6e6e73] leading-relaxed">
               Explore our six single-origin monofloral harvests. Cold-extracted below 38°C, tested by 400MHz German NMR spectroscopy, and bottled exclusively in solid glass jars.
             </p>
           </div>
 
-          {/* Quick Search */}
+          {/* Quick Search — Prevents mobile iOS zoom with text-base */}
           <div className="relative w-full md:w-72 shrink-0">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#86868b]" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by variety or floral origin..."
-              className="w-full h-11 pl-10 pr-8 text-xs sm:text-sm rounded-full border border-[#d2d2d7] bg-white text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:border-[#0071e3] transition-colors shadow-2xs"
+              placeholder="Search by variety or origin..."
+              className="w-full h-12 sm:h-11 pl-10 pr-8 text-base sm:text-sm rounded-full border border-[#d2d2d7] bg-white text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:border-[#0071e3] transition-colors shadow-2xs"
             />
             {searchQuery && (
               <button
@@ -206,29 +206,29 @@ export function ShopClient() {
           </div>
         </div>
 
-        {/* 3 Honest Pricing Anchors Summary Strip */}
-        <div className="pt-6 border-t border-[#d2d2d7]/50 flex flex-wrap items-center justify-between gap-4 text-xs text-[#86868b]">
-          <div className="flex items-center gap-6 flex-wrap">
-            <span className="font-semibold text-[#1d1d1f]">Unified Pricing Across All 6 Varieties:</span>
-            <span className="inline-flex items-center gap-1.5 font-medium text-[#515154]">
-              <strong className="text-[#1d1d1f]">250g Sampler:</strong> ₹199 (MRP ₹275)
+        {/* 3 Honest Pricing Anchors — Single Clean Strip (Horizontal Scrollable on Mobile) */}
+        <div className="pt-4 sm:pt-6 border-t border-[#d2d2d7]/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[#86868b]">
+          <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto pb-1 sm:pb-0 no-scrollbar">
+            <span className="font-semibold text-[#1d1d1f] shrink-0 text-[11px] sm:text-xs">Unified Pricing:</span>
+            <span className="px-3 py-1 rounded-full bg-white border border-[#d2d2d7] font-medium text-[#1d1d1f] text-[11px] sm:text-xs shrink-0 shadow-2xs">
+              <strong>250g:</strong> ₹199
             </span>
-            <span className="inline-flex items-center gap-1.5 font-medium text-[#515154]">
-              <strong className="text-[#1d1d1f]">500g Standard:</strong> ₹399 (MRP ₹549)
+            <span className="px-3 py-1 rounded-full bg-white border border-[#0071e3]/40 font-medium text-[#0071e3] text-[11px] sm:text-xs shrink-0 shadow-2xs">
+              <strong>500g:</strong> ₹399
             </span>
-            <span className="inline-flex items-center gap-1.5 font-medium text-[#515154]">
-              <strong className="text-[#1d1d1f]">1kg Reserve:</strong> ₹749 (MRP ₹999)
+            <span className="px-3 py-1 rounded-full bg-white border border-[#d2d2d7] font-medium text-[#1d1d1f] text-[11px] sm:text-xs shrink-0 shadow-2xs">
+              <strong>1kg:</strong> ₹749
             </span>
           </div>
-          <div className="flex items-center gap-2 text-[#1b5e20] font-semibold">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+          <div className="flex items-center gap-1.5 text-[#1b5e20] font-semibold text-[11px] sm:text-xs shrink-0">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
             <span>100% German NMR Certified Pure</span>
           </div>
         </div>
       </section>
 
       {/* 6 Category Showcase Grid (Strictly 6 Cards, Never Individual Sizes as Cards) */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-16">
         {filteredCategories.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-3xl border border-[#d2d2d7]/70 p-8 space-y-3">
             <p className="text-lg font-bold text-[#1d1d1f]">No harvests match your search</p>

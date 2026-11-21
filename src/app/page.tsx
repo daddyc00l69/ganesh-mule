@@ -45,36 +45,48 @@ export default function HomePage() {
           <span>Free Express Air Delivery Across India on Orders Over ₹999 · 100% German NMR Tested Pure Honey</span>
         </div>
 
-        {/* Hero Section: Apple Minimalist Editorial */}
-        <section className="relative overflow-hidden pt-16 pb-20 sm:pt-24 sm:pb-32">
+        {/* Hero Section: Apple Minimalist Editorial (Mobile-First Optimized) */}
+        <section className="relative overflow-hidden pt-8 pb-14 sm:pt-24 sm:pb-32">
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-center">
 
               {/* Left Column: Vision & Primary Action */}
-              <div className="lg:col-span-7 space-y-6">
+              <div className="lg:col-span-7 space-y-5 sm:space-y-6">
                 <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white border border-[#d2d2d7] text-[#1d1d1f] text-xs font-medium shadow-2xs">
                   <Droplets className="w-3.5 h-3.5 fill-amber-500 text-amber-600" />
                   <span>2026 Western Ghats &amp; Single-Origin Harvest</span>
                 </div>
 
-                <div className="space-y-2">
-                  <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold text-[#1d1d1f] tracking-tight leading-[1.08]">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <h1 className="text-3xl sm:text-6xl lg:text-7xl font-bold text-[#1d1d1f] tracking-tight leading-[1.1]">
                     Pure Raw Honey.
                   </h1>
-                  <p className="text-3xl sm:text-5xl lg:text-6xl font-medium text-[#86868b] tracking-tight">
+                  <p className="text-2xl sm:text-5xl lg:text-6xl font-medium text-[#86868b] tracking-tight">
                     Bottled in solid glass.
                   </p>
                 </div>
 
-                <p className="text-base sm:text-lg text-[#6e6e73] leading-relaxed max-w-xl">
+                {/* Mobile-Only Visual Jar Preview (Instant high-conversion visual impact above the fold) */}
+                <div className="lg:hidden relative aspect-square max-w-[280px] mx-auto rounded-[28px] overflow-hidden bg-white border border-[#d2d2d7]/70 shadow-[0_16px_40px_rgba(0,0,0,0.06)] p-6 flex items-center justify-center my-3">
+                  <Image
+                    src="/images/honey-brand/Forest Honey/500g/image_1_amazon_main.jpg"
+                    alt="Ganesh Mule Pure Raw Forest Honey in Heavy Solid Glass Jar"
+                    width={320}
+                    height={320}
+                    priority
+                    className="w-full h-full object-contain p-2"
+                  />
+                </div>
+
+                <p className="text-sm sm:text-lg text-[#6e6e73] leading-relaxed max-w-xl">
                   Unheated, cold-extracted nectar gathered from wild cliff bees in deep Indian canopies. Verified by 400MHz German NMR spectroscopy to guarantee 0.0% inverted syrup and living bio-enzymes.
                 </p>
 
-                {/* Primary CTAs */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 pt-3">
+                {/* Primary CTAs — Full width touch targets on mobile */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
                   <Link
                     href="/shop"
-                    className="px-8 py-3.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-sm font-medium transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm hover:shadow active:scale-98"
+                    className="w-full sm:w-auto h-12 px-8 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4] text-white text-sm font-medium transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm hover:shadow active:scale-98"
                   >
                     <span>Shop All 6 Harvests</span>
                     <ArrowRight className="w-4 h-4" />
@@ -82,14 +94,14 @@ export default function HomePage() {
 
                   <a
                     href="#purity"
-                    className="px-8 py-3.5 rounded-full border border-[#d2d2d7] bg-white hover:bg-[#f5f5f7] text-[#1d1d1f] text-sm font-medium transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 shadow-2xs"
+                    className="w-full sm:w-auto h-12 px-8 rounded-full border border-[#d2d2d7] bg-white hover:bg-[#f5f5f7] active:bg-zinc-100 text-[#1d1d1f] text-sm font-medium transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 shadow-2xs"
                   >
                     <span>Why Solid Glass</span>
                   </a>
                 </div>
 
                 {/* Key Quality Metrics */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-8 border-t border-[#d2d2d7]/60">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 pt-6 sm:pt-8 border-t border-[#d2d2d7]/60">
                   <div>
                     <div className="flex items-center gap-1 text-sm font-bold text-[#1d1d1f]">
                       <Star className="w-4 h-4 fill-amber-400 text-amber-500" />
@@ -115,8 +127,8 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Right Column: Hero Visual Glass Jar Preview (Pure Photography - No Overlays) */}
-              <div className="lg:col-span-5 relative">
+              {/* Desktop-Only Hero Visual Column */}
+              <div className="hidden lg:block lg:col-span-5 relative">
                 <div className="relative aspect-square rounded-[32px] overflow-hidden bg-white border border-[#d2d2d7]/70 shadow-[0_24px_60px_rgba(0,0,0,0.06)] p-8 sm:p-12 flex items-center justify-center group">
                   <Image
                     src="/images/honey-brand/Forest Honey/500g/image_1_amazon_main.jpg"
@@ -268,6 +280,8 @@ export default function HomePage() {
           <form onSubmit={handlePincodeSubmit} className="max-w-md mx-auto flex gap-2 pt-2">
             <input
               type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               maxLength={6}
               value={pincode}
               onChange={(e) => {
@@ -284,12 +298,12 @@ export default function HomePage() {
                   setPincodeResult(null);
                 }
               }}
-              placeholder="Enter 6-digit Pincode (e.g. 400001, 110001)"
-              className="flex-1 px-4 py-3 text-xs sm:text-sm rounded-full border border-[#d2d2d7] bg-white text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:border-[#0071e3] shadow-2xs"
+              placeholder="Enter 6-digit Pincode (e.g. 400001)"
+              className="flex-1 px-4 py-3 h-12 text-base sm:text-sm rounded-full border border-[#d2d2d7] bg-white text-[#1d1d1f] placeholder:text-[#86868b] focus:outline-none focus:border-[#0071e3] shadow-2xs font-mono font-medium"
             />
             <button
               type="submit"
-              className="px-6 py-3 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs sm:text-sm font-medium transition-colors cursor-pointer shrink-0"
+              className="px-6 py-3 h-12 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-sm font-medium transition-colors cursor-pointer shrink-0"
             >
               Check
             </button>

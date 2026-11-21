@@ -1005,14 +1005,14 @@ function CheckoutContent() {
           {/* Heading and Quality Pillars */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-amber-800 bg-amber-100/70 border border-amber-200/80 px-2.5 py-0.5 rounded-full">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#1d1d1f] bg-white border border-[#d2d2d7] px-2.5 py-0.5 rounded-full shadow-2xs">
                 Western Ghats Direct Dispatch
               </span>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-stone-600 bg-stone-100 border border-stone-200 px-2.5 py-0.5 rounded-full">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#86868b] bg-[#f5f5f7] border border-[#d2d2d7] px-2.5 py-0.5 rounded-full">
                 Delhivery One Automated Courier
               </span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-serif font-bold text-stone-950 tracking-tight">
+            <h1 className="text-3xl sm:text-4xl font-bold text-[#1d1d1f] tracking-tight">
               Checkout &amp; Shipment Speed.
             </h1>
             <p className="text-xs sm:text-sm text-stone-600 max-w-2xl leading-relaxed">
@@ -1154,7 +1154,7 @@ function CheckoutContent() {
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="e.g. Vikramaditya Sharma"
-                      className="w-full h-11 px-3.5 text-xs rounded-xl border border-stone-200 bg-stone-50/60 text-stone-900 focus:outline-none focus:bg-white focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 transition-all font-medium"
+                      className="w-full h-12 sm:h-11 px-3.5 text-base sm:text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-medium"
                     />
                   </div>
 
@@ -1173,11 +1173,12 @@ function CheckoutContent() {
                       </span>
                       <input
                         type="tel"
+                        inputMode="tel"
                         required
                         value={phone}
                         onChange={(e) => handlePhoneChange(e.target.value)}
                         placeholder="98200 00000"
-                        className="w-full h-11 pl-20 pr-3.5 text-xs rounded-xl border border-stone-200 bg-stone-50/60 text-stone-900 focus:outline-none focus:bg-white focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 transition-all font-mono font-medium"
+                        className="w-full h-12 sm:h-11 pl-20 pr-3.5 text-base sm:text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-mono font-medium"
                       />
                     </div>
                   </div>
@@ -1190,11 +1191,12 @@ function CheckoutContent() {
                     </label>
                     <input
                       type="email"
+                      inputMode="email"
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="vikram@example.com"
-                      className="w-full h-11 px-3.5 text-xs rounded-xl border border-stone-200 bg-stone-50/60 text-stone-900 focus:outline-none focus:bg-white focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 transition-all font-medium"
+                      className="w-full h-12 sm:h-11 px-3.5 text-base sm:text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-medium"
                     />
                   </div>
                 </div>
@@ -1241,7 +1243,7 @@ function CheckoutContent() {
                       value={flatBuilding}
                       onChange={(e) => setFlatBuilding(e.target.value)}
                       placeholder="e.g. Flat 402, 4th Floor, Oberoi Splendor"
-                      className="w-full h-11 px-3.5 text-xs rounded-xl border border-stone-200 bg-stone-50/60 text-stone-900 focus:outline-none focus:bg-white focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 transition-all font-medium"
+                      className="w-full h-12 sm:h-11 px-3.5 text-base sm:text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-medium"
                     />
                   </div>
 
@@ -1256,7 +1258,7 @@ function CheckoutContent() {
                       value={areaStreet}
                       onChange={(e) => setAreaStreet(e.target.value)}
                       placeholder="e.g. JVLR Road, Andheri East"
-                      className="w-full h-11 px-3.5 text-xs rounded-xl border border-stone-200 bg-stone-50/60 text-stone-900 focus:outline-none focus:bg-white focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 transition-all font-medium"
+                      className="w-full h-12 sm:h-11 px-3.5 text-base sm:text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-medium"
                     />
                   </div>
 
@@ -1271,7 +1273,7 @@ function CheckoutContent() {
                       value={landmark}
                       onChange={(e) => setLandmark(e.target.value)}
                       placeholder="e.g. Near Seepz Main Gate / Opposite High Point Restaurant"
-                      className="w-full h-11 px-3.5 text-xs rounded-xl border border-stone-200 bg-stone-50/60 text-stone-900 focus:outline-none focus:bg-white focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 transition-all font-medium"
+                      className="w-full h-12 sm:h-11 px-3.5 text-base sm:text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-medium"
                     />
                   </div>
 
@@ -1290,16 +1292,18 @@ function CheckoutContent() {
                       <div className="relative">
                         <input
                           type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
                           required
                           maxLength={6}
                           value={postalCode}
                           onChange={(e) => handlePincodeChange(e.target.value)}
                           placeholder="e.g. 400093"
-                          className="w-full h-11 px-3.5 pr-8 text-xs rounded-xl border border-stone-200 bg-stone-50/60 text-stone-900 focus:outline-none focus:bg-white focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 transition-all font-mono font-bold"
+                          className="w-full h-12 sm:h-11 px-3.5 pr-8 text-base sm:text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-mono font-bold"
                         />
                         {pinLoading && (
                           <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                            <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-600" />
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#0071e3]" />
                           </div>
                         )}
                       </div>
@@ -2075,9 +2079,9 @@ function CheckoutContent() {
                     type="button"
                     onClick={(e) => handleInitiatePayment(e, false)}
                     disabled={isProcessing}
-                    className="w-full py-4 px-6 rounded-full text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-amber-600/20 transition-all cursor-pointer disabled:opacity-60 bg-amber-600 hover:bg-amber-700 active:bg-amber-800"
+                    className="w-full py-4 px-6 rounded-full text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-sm hover:shadow transition-all cursor-pointer disabled:opacity-60 bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4]"
                   >
-                    <Lock className="w-4 h-4 text-amber-200" />
+                    <Lock className="w-4 h-4 text-white/80" />
                     <span>
                       {isProcessing
                         ? processingStep || 'Processing...'
@@ -2085,7 +2089,7 @@ function CheckoutContent() {
                     </span>
                   </button>
 
-                  <div className="flex items-center justify-center gap-1.5 text-[11px] text-stone-500 text-center">
+                  <div className="flex items-center justify-center gap-1.5 text-[11px] text-[#86868b] text-center">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     <span>100% Prepaid • 256-Bit SSL Encrypted Razorpay</span>
                   </div>
@@ -2093,15 +2097,15 @@ function CheckoutContent() {
               </div>
             </div>
 
-            {/* Sticky Mobile Bottom Bar */}
-            <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-white/95 backdrop-blur-md border-t border-stone-200 shadow-xl z-30">
+            {/* Sticky Mobile Bottom Bar (Apple Pay Style) */}
+            <div className="lg:hidden fixed bottom-0 left-0 right-0 p-3.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-white/95 backdrop-blur-md border-t border-[#d2d2d7] shadow-xl z-30">
               <div className="max-w-md mx-auto flex items-center justify-between gap-3">
                 <div className="shrink-0">
-                  <span className="text-[10px] text-stone-500 uppercase tracking-wider block font-semibold">
+                  <span className="text-[10px] text-[#86868b] uppercase tracking-wider block font-semibold">
                     Grand Total
                   </span>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-lg font-bold text-stone-950 font-mono">
+                    <span className="text-lg font-bold text-[#1d1d1f] font-mono">
                       {formatCurrency(totalAmount)}
                     </span>
                   </div>
@@ -2112,9 +2116,9 @@ function CheckoutContent() {
                     type="button"
                     onClick={(e) => handleInitiatePayment(e, false)}
                     disabled={isProcessing}
-                    className="w-full max-w-[260px] py-3.5 px-5 rounded-full text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md shadow-amber-600/20 transition-all cursor-pointer disabled:opacity-60 bg-amber-600 hover:bg-amber-700 active:bg-amber-800"
+                    className="w-full max-w-[260px] py-3.5 px-5 rounded-full text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-60 bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4]"
                   >
-                    <Lock className="w-3.5 h-3.5 shrink-0 text-amber-200" />
+                    <Lock className="w-3.5 h-3.5 shrink-0 text-white/80" />
                     <span>
                       {isProcessing
                         ? processingStep || 'Processing...'

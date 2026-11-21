@@ -421,17 +421,6 @@ export default function ProductDetailPage() {
                   className="object-contain group-hover:scale-105 transition-transform duration-700 ease-out drop-shadow-md p-6"
                 />
 
-                {/* Floating Badges */}
-                <div className="absolute top-4 left-4 flex flex-col gap-2 z-10">
-                  <span className="bg-[#1d1d1f] text-white text-[11px] font-medium tracking-wider px-3 py-1 rounded-full shadow-2xs">
-                    {currentOption.weight} Solid Glass Jar
-                  </span>
-                  <span className="bg-emerald-50 text-emerald-800 text-[10px] font-medium px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1 shadow-2xs">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                    NMR Certified Pure
-                  </span>
-                </div>
-
                 <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-xs px-3 py-1 rounded-full text-[11px] text-[#86868b] border border-[#d2d2d7] shadow-2xs">
                   {selectedImage + 1} of {galleryImages.length}
                 </div>
@@ -994,12 +983,12 @@ export default function ProductDetailPage() {
           </div>
         </section>
 
-        {/* Floating Sticky Quick-Add Bar */}
+        {/* Floating Sticky Quick-Add Bar (Apple Store Mobile Optimized) */}
         {showStickyBar && (
-          <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-[#d2d2d7] shadow-xl z-40 py-3 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-all animate-in slide-in-from-bottom">
-            <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#f5f5f7] border border-[#d2d2d7] overflow-hidden shrink-0 hidden sm:flex items-center justify-center relative">
+          <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-[#d2d2d7] shadow-xl z-40 py-2.5 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-all animate-in slide-in-from-bottom">
+            <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-white border border-[#d2d2d7] overflow-hidden shrink-0 hidden sm:flex items-center justify-center relative">
                   <Image
                     src={galleryImages[0].url}
                     alt=""
@@ -1008,24 +997,25 @@ export default function ProductDetailPage() {
                     className="object-contain p-1"
                   />
                 </div>
-                <div>
-                  <h4 className="text-xs sm:text-sm font-semibold text-[#1d1d1f] truncate max-w-xs sm:max-w-sm">
+                <div className="min-w-0">
+                  <h4 className="text-xs sm:text-sm font-semibold text-[#1d1d1f] truncate">
                     {cleanName}
                   </h4>
-                  <div className="flex items-center gap-2 text-[11px] text-[#86868b]">
-                    <span className="font-semibold text-[#1d1d1f]">{currentOption.weight}</span>
-                    <span>•</span>
+                  <div className="flex items-center gap-1.5 text-xs text-[#86868b]">
+                    <span className="font-semibold text-[#1d1d1f] px-1.5 py-0.2 rounded bg-[#f5f5f7] text-[10px]">
+                      {currentOption.weight}
+                    </span>
                     <span className="font-bold text-[#1d1d1f]">{formatCurrency(currentOption.price)}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={handleAddToCart}
                   disabled={isOutOfStock}
-                  className={`py-2 px-5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 ${
+                  className={`py-2.5 px-3.5 sm:px-5 rounded-full text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-95 ${
                     isAdded
                       ? 'bg-emerald-700 text-white'
                       : isOutOfStock
@@ -1041,7 +1031,7 @@ export default function ProductDetailPage() {
                   ) : (
                     <>
                       <ShoppingBag className="w-3.5 h-3.5" />
-                      <span>Add to Cart ({currentOption.weight})</span>
+                      <span>Add to Bag</span>
                     </>
                   )}
                 </button>
@@ -1049,9 +1039,9 @@ export default function ProductDetailPage() {
                   type="button"
                   onClick={handleBuyNow}
                   disabled={isOutOfStock}
-                  className="py-2 px-5 rounded-full text-xs font-medium bg-[#1d1d1f] hover:bg-[#333336] text-white transition-all cursor-pointer shadow-sm active:scale-98"
+                  className="py-2.5 px-4 sm:px-5 rounded-full text-xs font-semibold bg-[#1d1d1f] hover:bg-[#333336] text-white transition-all cursor-pointer shadow-sm active:scale-98"
                 >
-                  Instant Buy ({currentOption.weight})
+                  Buy Now
                 </button>
               </div>
             </div>

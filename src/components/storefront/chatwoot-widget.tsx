@@ -10,8 +10,8 @@ export const ChatwootWidget: React.FC = () => {
   const baseUrl = process.env.NEXT_PUBLIC_CHATWOOT_BASE_URL || 'https://app.chatwoot.com';
   const websiteToken = process.env.NEXT_PUBLIC_CHATWOOT_WEBSITE_TOKEN;
 
-  // Do not display on checkout to avoid overlapping sticky mobile action bar
-  if (pathname === '/checkout') {
+  // Do not display on checkout or product detail pages to avoid overlapping sticky mobile action bars
+  if (pathname === '/checkout' || pathname?.startsWith('/product/')) {
     return null;
   }
 
