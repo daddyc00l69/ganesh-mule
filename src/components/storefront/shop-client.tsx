@@ -259,16 +259,6 @@ export function ShopClient() {
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 360px"
                         className="object-contain group-hover:scale-106 transition-transform duration-700 ease-out p-2"
                       />
-
-                      {/* Quality Badges */}
-                      <span className="absolute top-3.5 left-3.5 bg-white/95 text-[#1d1d1f] border border-black/5 text-[11px] font-medium px-2.5 py-0.5 rounded-full shadow-2xs backdrop-blur-xs">
-                        Single-Origin
-                      </span>
-
-                      <span className="absolute bottom-3.5 right-3.5 bg-[#1d1d1f] text-white text-[10px] font-semibold px-2.5 py-1 rounded-full shadow-2xs flex items-center gap-1">
-                        <ShieldCheck className="w-3 h-3 text-emerald-400" />
-                        <span>Solid Flint Glass</span>
-                      </span>
                     </div>
                   </Link>
 

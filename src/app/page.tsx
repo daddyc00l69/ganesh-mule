@@ -7,62 +7,16 @@ import { StoreProvider } from '@/components/storefront/store-provider';
 import { guessCityStateFromPin } from '@/lib/constants/india';
 import {
   Star,
-  ShieldCheck,
   Sparkles,
   ArrowRight,
   Droplets,
   Check,
   CheckCircle2,
   MapPin,
-  Flame,
   Microscope,
   Leaf,
+  ShieldCheck,
 } from 'lucide-react';
-
-const HARVEST_SPOTLIGHTS = [
-  {
-    slug: 'forest-honey',
-    name: 'Wild Forest Honey',
-    origin: 'Western Ghats Canopies',
-    note: 'Deep caramel with wild flora notes',
-    imageUrl: '/images/honey-brand/Forest Honey/500g/image_1_amazon_main.jpg',
-  },
-  {
-    slug: 'sesame-honey',
-    name: 'Sesame Blossom Honey',
-    origin: 'Organic Maharashtra Plains',
-    note: 'Warm nutty aroma and gentle sweetness',
-    imageUrl: '/images/honey-brand/Sesame Honey/500g/image_1_amazon_main.jpg',
-  },
-  {
-    slug: 'ajwain-honey',
-    name: 'Ajwain (Carom) Honey',
-    origin: 'Carom Seed Fields, Rajasthan',
-    note: 'Herbal warmth and digestive botanical notes',
-    imageUrl: '/images/honey-brand/Ajwain Honey/500g/image_1_amazon_main.jpg',
-  },
-  {
-    slug: 'multiflora-honey',
-    name: 'Multiflora Honey',
-    origin: 'Satpura Wild Meadows',
-    note: 'Complex bouquet of wild forest flora',
-    imageUrl: '/images/honey-brand/Multiflora Honey/500g/image_1_amazon_main.jpg',
-  },
-  {
-    slug: 'ber-honey',
-    name: 'Ber (Sidr) Honey',
-    origin: 'Wild Jujube Forests, Bikaner',
-    note: 'Rich butterscotch and vanilla smoothness',
-    imageUrl: '/images/honey-brand/Ber Honey/500g/image_1_amazon_main.jpg',
-  },
-  {
-    slug: 'sheesham-honey',
-    name: 'Sheesham Honey',
-    origin: 'Dalbergia Sissoo Reserves',
-    note: 'Delicate woody notes and mild floral amber',
-    imageUrl: '/images/honey-brand/Sheesham Honey/500g/image_1_amazon_main.jpg',
-  },
-];
 
 export default function HomePage() {
   // Pincode Quick Checker
@@ -84,7 +38,7 @@ export default function HomePage() {
   return (
     <StoreProvider>
       <div className="bg-[#f5f5f7] text-[#1d1d1f] selection:bg-[#0071e3]/20 selection:text-[#0071e3] min-h-screen">
-        
+
         {/* Top Announcement Bar */}
         <div className="bg-[#1d1d1f] text-white text-[11px] sm:text-xs py-2.5 px-4 text-center font-medium tracking-wide flex items-center justify-center gap-2">
           <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
@@ -95,7 +49,7 @@ export default function HomePage() {
         <section className="relative overflow-hidden pt-16 pb-20 sm:pt-24 sm:pb-32">
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-              
+
               {/* Left Column: Vision & Primary Action */}
               <div className="lg:col-span-7 space-y-6">
                 <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white border border-[#d2d2d7] text-[#1d1d1f] text-xs font-medium shadow-2xs">
@@ -161,7 +115,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Right Column: Hero Visual Glass Jar Preview */}
+              {/* Right Column: Hero Visual Glass Jar Preview (Pure Photography - No Overlays) */}
               <div className="lg:col-span-5 relative">
                 <div className="relative aspect-square rounded-[32px] overflow-hidden bg-white border border-[#d2d2d7]/70 shadow-[0_24px_60px_rgba(0,0,0,0.06)] p-8 sm:p-12 flex items-center justify-center group">
                   <Image
@@ -172,88 +126,9 @@ export default function HomePage() {
                     priority
                     className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700 ease-out p-4"
                   />
-
-                  {/* Floating Badges */}
-                  <span className="absolute top-4 left-4 bg-white/95 text-[#1d1d1f] border border-black/5 text-[11px] font-medium px-3 py-1 rounded-full shadow-2xs backdrop-blur-xs">
-                    Single-Origin · Western Ghats
-                  </span>
-
-                  <span className="absolute bottom-4 right-4 bg-[#1d1d1f] text-white text-[11px] font-semibold px-3 py-1 rounded-full shadow-2xs flex items-center gap-1">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Heavy Solid Flint Glass</span>
-                  </span>
                 </div>
               </div>
 
-            </div>
-          </div>
-        </section>
-
-        {/* The 6 Single-Origin Harvests — Clean Apple Editorial Showcase */}
-        <section className="py-20 sm:py-28 bg-white border-y border-[#d2d2d7]/60">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6">
-            <div className="text-center max-w-2xl mx-auto space-y-3 mb-16">
-              <span className="text-xs font-semibold uppercase tracking-wider text-[#86868b]">
-                The Pure Harvests
-              </span>
-              <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-[#1d1d1f]">
-                Six Monofloral Reserves.
-              </h2>
-              <p className="text-sm sm:text-base text-[#6e6e73] leading-relaxed">
-                Each harvest is gathered during peak natural flowering from wild Indian canopies. Never blended, never ultra-filtered, and preserved exclusively in solid glass.
-              </p>
-            </div>
-
-            {/* Clean Apple Editorial 3-Column Grid (No pricing/buttons clutter) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {HARVEST_SPOTLIGHTS.map((item) => (
-                <Link
-                  key={item.slug}
-                  href={`/product/${item.slug}`}
-                  className="group block rounded-[24px] bg-[#f5f5f7] hover:bg-white p-7 border border-transparent hover:border-[#d2d2d7] hover:shadow-[0_16px_36px_rgba(0,0,0,0.06)] transition-all duration-300 flex flex-col justify-between"
-                >
-                  <div>
-                    {/* Bottle Image Showcase (Pure White Stage) */}
-                    <div className="w-full aspect-square rounded-[20px] bg-white relative mb-6 overflow-hidden flex items-center justify-center p-6 shadow-2xs">
-                      <Image
-                        src={item.imageUrl}
-                        alt={item.name}
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 360px"
-                        className="object-contain group-hover:scale-106 transition-transform duration-700 ease-out p-2"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <span className="text-xs text-[#86868b] font-medium block">
-                        {item.origin}
-                      </span>
-                      <h3 className="text-xl font-bold tracking-tight text-[#1d1d1f] group-hover:text-[#0071e3] transition-colors">
-                        {item.name}
-                      </h3>
-                      <p className="text-xs text-[#6e6e73] leading-relaxed">
-                        {item.note}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="pt-5 mt-4 flex items-center text-xs font-medium text-[#0071e3] group-hover:translate-x-0.5 transition-transform">
-                    <span>Explore harvest</span>
-                    <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                  </div>
-                </Link>
-              ))}
-            </div>
-
-            {/* Direct Link to Full Shop Catalog */}
-            <div className="text-center pt-12">
-              <Link
-                href="/shop"
-                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-[#1d1d1f] hover:bg-[#2d2d2f] text-white text-xs sm:text-sm font-medium transition-all shadow-sm cursor-pointer"
-              >
-                <span>Browse Full Catalogue in Shop</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
             </div>
           </div>
         </section>
@@ -273,7 +148,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
+
             {/* NMR Testing */}
             <div className="p-8 rounded-[28px] bg-white border border-[#d2d2d7]/70 shadow-2xs space-y-4">
               <div className="w-10 h-10 rounded-2xl bg-[#f5f5f7] flex items-center justify-center text-[#1d1d1f]">
@@ -326,7 +201,7 @@ export default function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              
+
               {/* Ganesh Mule Solid Glass */}
               <div className="p-8 sm:p-10 rounded-[28px] bg-[#f5f5f7] border border-[#d2d2d7] shadow-sm space-y-5">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white text-[#1d1d1f] text-xs font-semibold border border-[#d2d2d7]">
