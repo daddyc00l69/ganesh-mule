@@ -317,7 +317,7 @@ export function ShopClient() {
           3. APPLE-STYLE MOBILE PRODUCT LIST (< 768px)
              Clean horizontal cards with generous image and classic Buy button
          ──────────────────────────────────────────────────────────── */}
-      <section className="md:hidden px-4 py-3 space-y-3.5">
+      <section className="md:hidden px-4 py-3.5 space-y-4">
         {filteredCategories.length === 0 ? (
           <div className="text-center py-16 px-4 space-y-3 bg-white rounded-2xl border border-[#d2d2d7]/70">
             <p className="text-base font-bold text-[#1d1d1f]">No harvests match your search</p>
@@ -337,18 +337,18 @@ export function ShopClient() {
           filteredCategories.map((cat) => (
             <article
               key={cat.id}
-              className="p-4 rounded-[22px] bg-white border border-[#d2d2d7]/70 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex gap-4 items-center"
+              className="p-4.5 sm:p-5 rounded-[24px] bg-white border border-[#d2d2d7]/70 shadow-[0_4px_16px_rgba(0,0,0,0.04)] flex gap-4 sm:gap-5 items-center"
             >
-              {/* Left: Product Jar Image Container (Slightly larger with comfortable breathing room) */}
+              {/* Left: Product Jar Image Container (Generous size with comfortable breathing room) */}
               <Link
                 href={`/product/${cat.slug}`}
-                className="w-32 sm:w-36 aspect-square shrink-0 rounded-2xl bg-[#f5f5f7] border border-[#d2d2d7]/50 relative overflow-hidden flex items-center justify-center p-2.5 group block"
+                className="w-36 sm:w-40 aspect-square shrink-0 rounded-2xl bg-[#f5f5f7] border border-[#d2d2d7]/50 relative overflow-hidden flex items-center justify-center p-3 group block"
               >
                 <Image
                   src={cat.imageUrl}
                   alt={cat.name}
                   fill
-                  sizes="150px"
+                  sizes="160px"
                   className="object-contain p-1 group-hover:scale-105 transition-transform duration-300"
                 />
               </Link>
@@ -379,30 +379,30 @@ export function ShopClient() {
                 </div>
 
                 {/* Flavour Note preview */}
-                <p className="text-xs text-[#6e6e73] line-clamp-1 leading-relaxed">
+                <p className="text-xs text-[#6e6e73] line-clamp-2 leading-relaxed">
                   {cat.flavourNotes}
                 </p>
 
                 {/* Bottom Row: Pricing & Small Apple Blue Buy Button (like old) */}
-                <div className="pt-1 flex items-end justify-between gap-2">
+                <div className="pt-1.5 flex items-end justify-between gap-2">
                   <div className="flex flex-col">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-[10px] text-[#86868b]">From</span>
-                      <span className="text-base sm:text-lg font-bold text-[#1d1d1f] tracking-tight">
+                      <span className="text-[11px] text-[#86868b]">From</span>
+                      <span className="text-lg sm:text-xl font-bold text-[#1d1d1f] tracking-tight">
                         {formatCurrency(cat.startingPrice)}
                       </span>
-                      <span className="text-[11px] text-[#86868b] line-through">
+                      <span className="text-xs text-[#86868b] line-through">
                         {formatCurrency(cat.compareAtPrice)}
                       </span>
                     </div>
-                    <span className="text-[10px] font-semibold text-[#1b5e20]">
+                    <span className="text-[11px] font-semibold text-[#1b5e20]">
                       Save up to 28% · Solid Glass
                     </span>
                   </div>
 
                   <Link
                     href={`/product/${cat.slug}`}
-                    className="px-5 py-2 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4] text-white text-xs font-semibold transition-all flex items-center justify-center cursor-pointer shadow-xs active:scale-95 shrink-0"
+                    className="px-6 py-2 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4] text-white text-xs sm:text-sm font-semibold transition-all flex items-center justify-center cursor-pointer shadow-xs active:scale-95 shrink-0"
                   >
                     <span>Buy</span>
                   </Link>
