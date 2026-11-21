@@ -315,9 +315,9 @@ export function ShopClient() {
 
       {/* ────────────────────────────────────────────────────────────
           3. APPLE-STYLE MOBILE PRODUCT LIST (< 768px)
-             Clean horizontal cards with small, classic Apple Blue Buy button
+             Clean horizontal cards with generous image and classic Buy button
          ──────────────────────────────────────────────────────────── */}
-      <section className="md:hidden px-3.5 py-2 space-y-3">
+      <section className="md:hidden px-4 py-3 space-y-3.5">
         {filteredCategories.length === 0 ? (
           <div className="text-center py-16 px-4 space-y-3 bg-white rounded-2xl border border-[#d2d2d7]/70">
             <p className="text-base font-bold text-[#1d1d1f]">No harvests match your search</p>
@@ -337,32 +337,32 @@ export function ShopClient() {
           filteredCategories.map((cat) => (
             <article
               key={cat.id}
-              className="p-3.5 rounded-2xl bg-white border border-[#d2d2d7]/70 shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex gap-3.5 items-center"
+              className="p-4 rounded-[22px] bg-white border border-[#d2d2d7]/70 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex gap-4 items-center"
             >
-              {/* Left: Product Jar Image Container */}
+              {/* Left: Product Jar Image Container (Slightly larger with comfortable breathing room) */}
               <Link
                 href={`/product/${cat.slug}`}
-                className="w-28 sm:w-32 aspect-square shrink-0 rounded-xl bg-[#f5f5f7] border border-[#d2d2d7]/50 relative overflow-hidden flex items-center justify-center p-2 group block"
+                className="w-32 sm:w-36 aspect-square shrink-0 rounded-2xl bg-[#f5f5f7] border border-[#d2d2d7]/50 relative overflow-hidden flex items-center justify-center p-2.5 group block"
               >
                 <Image
                   src={cat.imageUrl}
                   alt={cat.name}
                   fill
-                  sizes="120px"
+                  sizes="150px"
                   className="object-contain p-1 group-hover:scale-105 transition-transform duration-300"
                 />
               </Link>
 
               {/* Right: Apple Typography, Details & Small Classic Buy Button */}
-              <div className="flex-1 min-w-0 space-y-1">
+              <div className="flex-1 min-w-0 space-y-1.5">
                 {/* Floral Origin */}
-                <p className="text-[11px] font-medium text-[#86868b] truncate">
+                <p className="text-xs font-medium text-[#86868b] truncate">
                   {cat.floralOrigin}
                 </p>
 
                 {/* Title */}
                 <Link href={`/product/${cat.slug}`} className="block">
-                  <h2 className="text-sm sm:text-base font-bold text-[#1d1d1f] leading-snug line-clamp-1 hover:text-[#0071e3] transition-colors">
+                  <h2 className="text-base sm:text-lg font-bold text-[#1d1d1f] leading-snug line-clamp-1 hover:text-[#0071e3] transition-colors">
                     {cat.cleanTitle}
                   </h2>
                 </Link>
@@ -378,12 +378,17 @@ export function ShopClient() {
                   <span className="text-[11px] text-[#86868b]">250g · 500g · 1kg</span>
                 </div>
 
+                {/* Flavour Note preview */}
+                <p className="text-xs text-[#6e6e73] line-clamp-1 leading-relaxed">
+                  {cat.flavourNotes}
+                </p>
+
                 {/* Bottom Row: Pricing & Small Apple Blue Buy Button (like old) */}
-                <div className="pt-1.5 flex items-end justify-between gap-2">
+                <div className="pt-1 flex items-end justify-between gap-2">
                   <div className="flex flex-col">
                     <div className="flex items-baseline gap-1">
                       <span className="text-[10px] text-[#86868b]">From</span>
-                      <span className="text-base font-bold text-[#1d1d1f] tracking-tight">
+                      <span className="text-base sm:text-lg font-bold text-[#1d1d1f] tracking-tight">
                         {formatCurrency(cat.startingPrice)}
                       </span>
                       <span className="text-[11px] text-[#86868b] line-through">
@@ -397,7 +402,7 @@ export function ShopClient() {
 
                   <Link
                     href={`/product/${cat.slug}`}
-                    className="px-5 py-1.5 sm:py-2 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4] text-white text-xs font-semibold transition-all flex items-center justify-center cursor-pointer shadow-xs active:scale-95 shrink-0"
+                    className="px-5 py-2 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4] text-white text-xs font-semibold transition-all flex items-center justify-center cursor-pointer shadow-xs active:scale-95 shrink-0"
                   >
                     <span>Buy</span>
                   </Link>
