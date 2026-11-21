@@ -891,8 +891,16 @@ export default function ProductDetailPage() {
                   </p>
                 </div>
 
-                {/* Compact Selectable Size Cards */}
-                <div className="grid grid-cols-1 gap-2 pt-0.5">
+                {/* Dynamic Amazon-style Responsive Compact Size Tiles (Adapts seamlessly to mobile font size) */}
+                <div
+                  className={`grid gap-2 pt-0.5 ${
+                    sizeOptions.length === 3
+                      ? 'grid-cols-3'
+                      : sizeOptions.length === 2
+                      ? 'grid-cols-2'
+                      : 'grid-cols-1'
+                  }`}
+                >
                   {sizeOptions.map((opt) => {
                     const isSelected = selectedWeight === opt.weight;
                     const isOptOutOfStock = opt.stockQuantity <= 0;
@@ -906,78 +914,81 @@ export default function ProductDetailPage() {
                           setSelectedWeight(opt.weight);
                           setSelectedImage(0);
                         }}
-                        className={`p-2.5 sm:p-3 text-left rounded-xl border transition-all cursor-pointer relative flex items-center justify-between gap-2.5 sm:gap-3 ${
+                        className={`p-2 sm:p-2.5 rounded-xl border text-center transition-all cursor-pointer relative flex flex-col justify-between items-center group select-none min-h-[92px] ${
                           isSelected
-                            ? 'border-[#0071e3] ring-1.5 ring-[#0071e3]/20 bg-white shadow-xs'
+                            ? 'border-[#0071e3] ring-2 ring-[#0071e3]/20 bg-blue-50/25 shadow-xs'
                             : isOptOutOfStock
                             ? 'border-[#d2d2d7] bg-[#f5f5f7] text-[#86868b] cursor-not-allowed opacity-60'
-                            : 'border-[#d2d2d7] bg-white hover:border-[#86868b] text-[#1d1d1f] hover:shadow-2xs'
+                            : 'border-[#d2d2d7] bg-white hover:border-[#86868b] text-[#1d1d1f] hover:shadow-2xs active:scale-[0.98]'
                         }`}
                       >
+                        {/* Top Mini Badge */}
                         {opt.badge && (
                           <span
-                            className={`absolute -top-2 left-3 text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full shadow-2xs ${
+                            className={`text-[8px] sm:text-[9px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded-full mb-1 leading-none shadow-2xs whitespace-nowrap max-w-full truncate ${
                               opt.weight === '500g'
                                 ? 'bg-[#0071e3] text-white'
                                 : 'bg-[#1d1d1f] text-white'
                             }`}
                           >
-                            {opt.badge}
+                            {opt.weight === '500g'
+                              ? 'Popular'
+                              : opt.weight === '1kg'
+                              ? 'Best Value'
+                              : 'Reserve'}
                           </span>
                         )}
 
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          {/* Radio Checkmark Circle */}
-                          <div
-                            className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
-                              isSelected
-                                ? 'border-[#0071e3] bg-[#0071e3] text-white'
-                                : 'border-[#d2d2d7] bg-white'
-                            }`}
-                          >
-                            {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                        {/* Weight & Jar Type */}
+                        <div className="w-full space-y-0.5">
+                          <div className="flex items-center justify-center gap-1">
+                            {isSelected && <Check className="w-3 h-3 text-[#0071e3] stroke-[3] shrink-0" />}
+                            <span className="text-sm sm:text-base font-bold text-[#1d1d1f] leading-tight">
+                              {opt.weight}
+                            </span>
                           </div>
-
-                          <div className="min-w-0 space-y-0.5">
-                            <div className="flex items-baseline gap-1.5 flex-wrap">
-                              <span className="text-sm sm:text-base font-bold text-[#1d1d1f]">
-                                {opt.weight}
-                              </span>
-                              <span className="text-[11px] sm:text-xs font-semibold text-[#515154] truncate">
-                                {opt.label}
-                              </span>
-                            </div>
-                            <p className="text-[10px] sm:text-[11px] text-[#86868b] leading-tight line-clamp-1 max-w-[190px] sm:max-w-xs">
-                              {opt.description}
-                            </p>
-                          </div>
+                          <p className="text-[10px] sm:text-[11px] font-medium text-[#515154] truncate w-full">
+                            {opt.label.replace('Solid Glass ', '')}
+                          </p>
                         </div>
 
-                        <div className="text-right shrink-0">
-                          <div className="flex items-baseline justify-end gap-1.5">
-                            <span className="text-sm sm:text-base font-bold text-[#1d1d1f]">
+                        {/* Pricing & Savings */}
+                        <div className="w-full pt-1.5 mt-1 border-t border-[#d2d2d7]/50 space-y-0.5">
+                          <div className="flex items-baseline justify-center gap-1 flex-wrap">
+                            <span className="text-xs sm:text-sm font-bold text-[#1d1d1f] tracking-tight">
                               {formatCurrency(opt.price)}
                             </span>
-                            <span className="text-[10px] sm:text-[11px] text-[#86868b] line-through">
+                            <span className="text-[9px] sm:text-[10px] text-[#86868b] line-through">
                               {formatCurrency(opt.compareAtPrice)}
                             </span>
                           </div>
-                          <div className="flex items-center justify-end gap-1 text-[10px]">
-                            <span className="font-semibold text-[#1b5e20]">
-                              {opt.discountPercent}% OFF
-                            </span>
-                            <span className="text-[#86868b]">·</span>
-                            <span className="text-[#86868b]">
-                              {opt.savingsText}
-                            </span>
+                          <div className="text-[9px] sm:text-[10px] font-semibold text-[#1b5e20] leading-none">
+                            {opt.discountPercent}% OFF · {opt.savingsText}
                           </div>
-                          <div className="text-[9px] text-[#86868b]">
-                            {opt.pricePerKg}
+                          <div className="text-[8px] sm:text-[9px] text-[#86868b] leading-tight pt-0.5">
+                            {opt.pricePerKg.replace(' (Lowest Rate)', '')}
                           </div>
                         </div>
                       </button>
                     );
                   })}
+                </div>
+
+                {/* Dynamic Context Card: Details of the selected size */}
+                <div className="p-2.5 sm:p-3 rounded-xl bg-amber-50/50 border border-amber-200/60 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs">
+                  <div className="space-y-0.5 min-w-0">
+                    <div className="flex items-center gap-1.5 text-[#1d1d1f] font-semibold text-xs flex-wrap">
+                      <Check className="w-3.5 h-3.5 text-[#0071e3] stroke-[3] shrink-0" />
+                      <span>{currentOption.weight} ({currentOption.label})</span>
+                      <span className="text-[#1b5e20] font-bold text-[11px]">{currentOption.savingsText}</span>
+                    </div>
+                    <p className="text-[11px] text-[#6e6e73] leading-relaxed">
+                      {currentOption.description}
+                    </p>
+                  </div>
+                  <div className="text-[10px] font-mono text-[#86868b] shrink-0 self-start sm:self-center bg-white px-2 py-0.5 rounded border border-amber-200/60">
+                    SKU: {currentOption.sku}
+                  </div>
                 </div>
               </div>
 

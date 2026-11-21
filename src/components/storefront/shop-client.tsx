@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { formatCurrency } from '@/lib/utils';
+import { useCart } from '@/lib/cart/cart-context';
 import {
   Search,
   X,
@@ -11,6 +12,8 @@ import {
   ShieldCheck,
   Droplets,
   Package,
+  Check,
+  ShoppingBag,
 } from 'lucide-react';
 
 export interface HoneyShopItem {
@@ -138,6 +141,8 @@ export function getProductVariants(p: HoneyShopItem): VariantOption[] {
 
 // Interactive Dynamic Mobile Card (auto-scales with mobile font size like Amazon)
 function MobileShopCard({ product }: { product: HoneyShopItem }) {
+  const { addToCart } = useCart();
+  const [justAdded, setJustAdded] = useState(false);
   const variants = useMemo(() => getProductVariants(product), [product]);
   // Default to 500g if available (most popular), else first variant
   const defaultVariant = variants.find((v) => v.weight === '500g') || variants[0];
@@ -148,6 +153,39 @@ function MobileShopCard({ product }: { product: HoneyShopItem }) {
 
   // Destination URL with selected size query parameter
   const productUrl = `/product/${product.slug}?size=${encodeURIComponent(selectedVariant.weight)}`;
+
+  const handleBuy = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (product.isOutOfStock) return;
+
+    const weightGrams =
+      selectedVariant.weight === '250g'
+        ? 250
+        : selectedVariant.weight === '500g'
+        ? 500
+        : selectedVariant.weight === '1kg'
+        ? 1000
+        : selectedVariant.weight.includes('1.5kg')
+        ? 1500
+        : 1000;
+
+    const cartProduct = {
+      id: `${product.id}-${selectedVariant.weight}`,
+      name: `${product.cleanTitle} (${selectedVariant.weight})`,
+      slug: product.slug,
+      sku: `GM-${product.slug.substring(0, 3).toUpperCase()}-${selectedVariant.weight.toUpperCase().replace(/[^A-Z0-9]/g, '')}`,
+      price: selectedVariant.price,
+      compareAtPrice: selectedVariant.compareAtPrice,
+      stockQuantity: 50,
+      images: [{ url: selectedVariant.imageUrl || product.imageUrl, alt: product.name }],
+      weightGrams,
+    };
+
+    addToCart(cartProduct as any, 1, true);
+    setJustAdded(true);
+    setTimeout(() => setJustAdded(false), 2000);
+  };
 
   return (
     <article className="p-3 sm:p-3.5 rounded-2xl bg-white border border-[#d2d2d7]/70 shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex gap-3 sm:gap-3.5 items-stretch overflow-hidden transition-all">
@@ -262,16 +300,29 @@ function MobileShopCard({ product }: { product: HoneyShopItem }) {
           </div>
 
           {product.isOutOfStock ? (
-            <span className="px-3 py-1.5 rounded-full bg-stone-100 text-stone-500 text-[11px] font-semibold border border-stone-200 shrink-0 select-none">
+            <span className="px-3.5 py-1.5 rounded-full bg-stone-100 text-stone-500 text-[11px] font-semibold border border-stone-200 shrink-0 select-none">
               Sold Out
             </span>
           ) : (
-            <Link
-              href={productUrl}
-              className="px-4 py-1.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4] text-white text-xs font-semibold transition-all flex items-center justify-center cursor-pointer shadow-xs active:scale-95 shrink-0"
+            <button
+              type="button"
+              onClick={handleBuy}
+              className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all flex items-center justify-center gap-1 cursor-pointer shadow-xs active:scale-95 shrink-0 ${
+                justAdded
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4] text-white'
+              }`}
+              title={`Buy ${product.cleanTitle} (${selectedVariant.weight})`}
             >
-              <span>Buy</span>
-            </Link>
+              {justAdded ? (
+                <>
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                  <span>Added</span>
+                </>
+              ) : (
+                <span>Buy</span>
+              )}
+            </button>
           )}
         </div>
       </div>
@@ -691,7 +742,7 @@ export function ShopClient() {
           3. BULLETPROOF APPLE-STYLE MOBILE CARDS (< 768px)
              Zero-overflow layout with perfectly fitting classic Buy button
          ──────────────────────────────────────────────────────────── */}
-      <section className="md:hidden px-3.5 py-2.5 space-y-3">
+      <section className="md:hidden px-3.5 py-2.5 space-y-3 pb-28 sm:pb-36">
         {filteredProducts.length === 0 ? (
           <div className="text-center py-16 px-4 space-y-3 bg-white rounded-2xl border border-[#d2d2d7]/70">
             <p className="text-base font-bold text-[#1d1d1f]">No products match your search</p>
