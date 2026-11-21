@@ -46,15 +46,15 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         const user: SafeUser = data.user;
         // Verify role access (DEVELOPER > ADMIN > MANAGER)
         if (role === 'DEVELOPER' && user.role !== 'DEVELOPER') {
-          window.location.href = '/portal?error=unauthorized_dev';
+          router.replace('/portal?error=unauthorized_dev');
           return;
         }
         if (role === 'ADMIN' && user.role !== 'ADMIN' && user.role !== 'DEVELOPER') {
-          window.location.href = '/portal?error=unauthorized_admin';
+          router.replace('/portal?error=unauthorized_admin');
           return;
         }
         if (role === 'MANAGER' && user.role !== 'MANAGER' && user.role !== 'ADMIN' && user.role !== 'DEVELOPER') {
-          window.location.href = '/portal?error=unauthorized_manager';
+          router.replace('/portal?error=unauthorized_manager');
           return;
         }
 
@@ -65,7 +65,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       } catch (err) {
         if (isMounted) {
           const redirectPath = encodeURIComponent(pathname || (role === 'ADMIN' ? '/admin' : '/manager'));
-          window.location.href = `/portal?redirect=${redirectPath}`;
+          router.replace(`/portal?redirect=${redirectPath}`);
         }
       }
     }

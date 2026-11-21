@@ -61,10 +61,6 @@ export default function ManagerOrdersPage() {
     setIsRefreshing(true);
     try {
       const res = await fetch(`/api/orders${forceSync === true ? '?sync=true' : ''}`);
-      if (res.status === 401) {
-        window.location.href = '/portal?redirect=/manager/orders';
-        return;
-      }
       if (res.ok) {
         const data = await res.json();
         if (data.orders && Array.isArray(data.orders)) {

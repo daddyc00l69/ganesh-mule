@@ -29,16 +29,42 @@ function StaffPortalContent() {
   const urlError = searchParams.get('error');
   const urlMessage = searchParams.get('message');
 
+  const getInitialErrorMessage = () => {
+    if (urlMessage) return urlMessage;
+    if (!urlError) return null;
+    switch (urlError) {
+      case 'unauthorized_dev':
+      case 'unauthorized_developer':
+        return 'Access denied: Developer privileges required for that section.';
+      case 'unauthorized_admin':
+        return 'Access denied: Administrator privileges required for that section.';
+      case 'unauthorized_manager':
+        return 'Access denied: Staff / Manager privileges required for that section.';
+      case 'auth_failed':
+        return 'Authentication failed. Please verify your staff credentials.';
+      default:
+        return 'Staff access credentials required to continue.';
+    }
+  };
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(
-    urlMessage || (urlError === 'unauthorized' ? 'Administrator or Developer privileges required.' : null)
-  );
+  const [errorMessage, setErrorMessage] = useState<string | null>(getInitialErrorMessage());
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [activeSession, setActiveSession] = useState<SafeUser | null>(null);
   const [isCheckingSession, setIsCheckingSession] = useState<boolean>(true);
+
+  // Helper: check if a user role is permitted to visit a target dashboard path
+  const canAccessTarget = (userRole: string, targetPath: string): boolean => {
+    if (!targetPath) return false;
+    if (userRole === 'DEVELOPER') return true;
+    if (targetPath.startsWith('/developer')) return false;
+    if (targetPath.startsWith('/admin')) return userRole === 'ADMIN';
+    if (targetPath.startsWith('/manager')) return userRole === 'MANAGER' || userRole === 'ADMIN';
+    return true;
+  };
 
   // Check existing session
   useEffect(() => {
@@ -53,9 +79,14 @@ function StaffPortalContent() {
         if (!isMounted) return;
         if (data.authenticated && data.user) {
           setActiveSession(data.user);
-          // If already authenticated and there is an explicit target, auto-redirect
-          if (redirectTarget) {
-            window.location.href = redirectTarget;
+          // CRITICAL: NEVER auto-redirect if an error parameter is present on the URL!
+          // Doing so causes an infinite reload loop when an unauthorized user gets bounced back to /portal.
+          if (!urlError && redirectTarget && canAccessTarget(data.user.role, redirectTarget)) {
+            router.replace(redirectTarget);
+          } else if (redirectTarget && !canAccessTarget(data.user.role, redirectTarget)) {
+            setErrorMessage(
+              `Your active account (${data.user.email}) has ${data.user.role} access and cannot open ${redirectTarget}. Enter your assigned console below or sign in with another account.`
+            );
           }
         }
       })
@@ -67,7 +98,7 @@ function StaffPortalContent() {
     return () => {
       isMounted = false;
     };
-  }, [redirectTarget]);
+  }, [redirectTarget, urlError, router]);
 
   const handleLogout = async () => {
     try {
@@ -104,16 +135,20 @@ function StaffPortalContent() {
       const role = data.user?.role || 'STAFF';
       setSuccessMessage(`Verified as ${role}. Launching console...`);
 
-      // Determine smart dashboard landing page
-      let target = redirectTarget;
-      if (!target) {
-        if (role === 'DEVELOPER') target = '/developer';
-        else if (role === 'ADMIN') target = '/admin';
-        else target = '/manager';
+      // Determine smart dashboard landing page ensuring user role actually has access
+      let target: string;
+      if (redirectTarget && canAccessTarget(role, redirectTarget)) {
+        target = redirectTarget;
+      } else if (role === 'DEVELOPER') {
+        target = '/developer';
+      } else if (role === 'ADMIN') {
+        target = '/admin';
+      } else {
+        target = '/manager';
       }
 
       setTimeout(() => {
-        window.location.href = target;
+        router.replace(target);
       }, 250);
     } catch (err: any) {
       setErrorMessage(err.message || 'Invalid email or password');
@@ -122,7 +157,9 @@ function StaffPortalContent() {
   };
 
   const getDashboardDestination = (role?: string) => {
-    if (redirectTarget) return redirectTarget;
+    if (redirectTarget && role && canAccessTarget(role, redirectTarget)) {
+      return redirectTarget;
+    }
     if (role === 'DEVELOPER') return '/developer';
     if (role === 'ADMIN') return '/admin';
     return '/manager';

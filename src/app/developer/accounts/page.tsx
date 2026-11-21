@@ -106,10 +106,6 @@ export default function DeveloperAccountsPage() {
     try {
       setLoading(true);
       const res = await fetch('/api/developer/accounts');
-      if (res.status === 401 || res.status === 403) {
-        window.location.href = '/portal?error=unauthorized_developer';
-        return;
-      }
       if (res.ok) {
         const json = await res.json();
         if (json.staff) setStaff(json.staff);

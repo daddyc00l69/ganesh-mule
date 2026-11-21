@@ -45,10 +45,6 @@ export default function DeveloperDashboardPage() {
     setIsRefreshing(true);
     try {
       const res = await fetch('/api/developer/health');
-      if (res.status === 401 || res.status === 403) {
-        window.location.href = '/portal?error=unauthorized_developer';
-        return;
-      }
       if (res.ok) {
         const json = await res.json();
         setData(json);

@@ -40,10 +40,6 @@ export default function AdminCustomersPage() {
     setIsLoading(true);
     try {
       const res = await fetch('/api/admin/customers');
-      if (res.status === 401) {
-        window.location.href = '/portal?redirect=/admin/customers';
-        return;
-      }
       if (res.ok) {
         const data = await res.json();
         if (data.customers && Array.isArray(data.customers)) {
