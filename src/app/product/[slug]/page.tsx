@@ -225,6 +225,23 @@ export default function ProductDetailPage() {
     : '500g';
   const [selectedWeight, setSelectedWeight] = useState<string>(initialWeight);
 
+  // Sync with ?size= query parameter if present
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const sizeParam = searchParams.get('size');
+      if (sizeParam && ['250g', '500g', '1kg', '6x250g', '4x250g', '6 × 250g (1.5kg)', '4 × 250g (1kg)'].includes(sizeParam)) {
+        if (sizeParam === '6 × 250g (1.5kg)') {
+          setSelectedWeight('6x250g');
+        } else if (sizeParam === '4 × 250g (1kg)') {
+          setSelectedWeight('4x250g');
+        } else {
+          setSelectedWeight(sizeParam);
+        }
+      }
+    }
+  }, []);
+
   // Fetch size options directly from Database via /api/products
   useEffect(() => {
     let isMounted = true;
@@ -857,25 +874,25 @@ export default function ProductDetailPage() {
 
               {/* CRITICAL FEATURE: "Choose your preferred size" (Apple-Style Configuration) */}
               <div className="space-y-3 pt-3 border-t border-[#d2d2d7]/60">
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   <div className="flex items-baseline justify-between">
-                    <span className="text-xs font-bold uppercase tracking-wider text-[#86868b]">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#86868b]">
                       Configuration
                     </span>
                     <span className="text-xs font-medium text-[#6e6e73]">
                       Selected: <strong className="text-[#1d1d1f] font-bold">{currentOption.weight}</strong> ({currentOption.label})
                     </span>
                   </div>
-                  <h3 className="text-xl font-bold tracking-tight text-[#1d1d1f]">
+                  <h3 className="text-base sm:text-lg font-bold tracking-tight text-[#1d1d1f]">
                     Choose your preferred size
                   </h3>
-                  <p className="text-xs text-[#86868b]">
+                  <p className="text-[11px] text-[#86868b]">
                     Sourced directly from live apiary inventory. All options bottled in thick solid glass.
                   </p>
                 </div>
 
-                {/* 3 Selectable Size Cards */}
-                <div className="grid grid-cols-1 gap-3 pt-1">
+                {/* Compact Selectable Size Cards */}
+                <div className="grid grid-cols-1 gap-2 pt-0.5">
                   {sizeOptions.map((opt) => {
                     const isSelected = selectedWeight === opt.weight;
                     const isOptOutOfStock = opt.stockQuantity <= 0;
@@ -889,9 +906,9 @@ export default function ProductDetailPage() {
                           setSelectedWeight(opt.weight);
                           setSelectedImage(0);
                         }}
-                        className={`p-4 sm:p-5 text-left rounded-2xl border transition-all cursor-pointer relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                        className={`p-2.5 sm:p-3 text-left rounded-xl border transition-all cursor-pointer relative flex items-center justify-between gap-2.5 sm:gap-3 ${
                           isSelected
-                            ? 'border-[#0071e3] ring-2 ring-[#0071e3]/20 bg-white shadow-md'
+                            ? 'border-[#0071e3] ring-1.5 ring-[#0071e3]/20 bg-white shadow-xs'
                             : isOptOutOfStock
                             ? 'border-[#d2d2d7] bg-[#f5f5f7] text-[#86868b] cursor-not-allowed opacity-60'
                             : 'border-[#d2d2d7] bg-white hover:border-[#86868b] text-[#1d1d1f] hover:shadow-2xs'
@@ -899,7 +916,7 @@ export default function ProductDetailPage() {
                       >
                         {opt.badge && (
                           <span
-                            className={`absolute -top-2.5 left-4 text-[10px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full shadow-2xs ${
+                            className={`absolute -top-2 left-3 text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full shadow-2xs ${
                               opt.weight === '500g'
                                 ? 'bg-[#0071e3] text-white'
                                 : 'bg-[#1d1d1f] text-white'
@@ -909,47 +926,52 @@ export default function ProductDetailPage() {
                           </span>
                         )}
 
-                        <div className="flex items-start gap-3.5">
+                        <div className="flex items-center gap-2.5 min-w-0">
                           {/* Radio Checkmark Circle */}
                           <div
-                            className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                            className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
                               isSelected
                                 ? 'border-[#0071e3] bg-[#0071e3] text-white'
                                 : 'border-[#d2d2d7] bg-white'
                             }`}
                           >
-                            {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                            {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
                           </div>
 
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xl font-bold text-[#1d1d1f]">
+                          <div className="min-w-0 space-y-0.5">
+                            <div className="flex items-baseline gap-1.5 flex-wrap">
+                              <span className="text-sm sm:text-base font-bold text-[#1d1d1f]">
                                 {opt.weight}
                               </span>
-                              <span className="text-xs font-semibold text-[#515154]">
+                              <span className="text-[11px] sm:text-xs font-semibold text-[#515154] truncate">
                                 {opt.label}
                               </span>
                             </div>
-                            <p className="text-xs text-[#86868b] max-w-sm leading-relaxed">
+                            <p className="text-[10px] sm:text-[11px] text-[#86868b] leading-tight line-clamp-1 max-w-[190px] sm:max-w-xs">
                               {opt.description}
                             </p>
-                            <div className="text-[11px] font-mono text-[#86868b] pt-0.5">
-                              SKU: {opt.sku}
-                            </div>
                           </div>
                         </div>
 
-                        <div className="flex sm:flex-col items-baseline sm:items-end justify-between sm:justify-center border-t sm:border-t-0 pt-2 sm:pt-0 border-zinc-100 shrink-0 pl-8 sm:pl-0">
-                          <div className="text-xl font-bold text-[#1d1d1f]">
-                            {formatCurrency(opt.price)}
+                        <div className="text-right shrink-0">
+                          <div className="flex items-baseline justify-end gap-1.5">
+                            <span className="text-sm sm:text-base font-bold text-[#1d1d1f]">
+                              {formatCurrency(opt.price)}
+                            </span>
+                            <span className="text-[10px] sm:text-[11px] text-[#86868b] line-through">
+                              {formatCurrency(opt.compareAtPrice)}
+                            </span>
                           </div>
-                          <div className="text-xs text-[#86868b] line-through">
-                            MRP: {formatCurrency(opt.compareAtPrice)}
+                          <div className="flex items-center justify-end gap-1 text-[10px]">
+                            <span className="font-semibold text-[#1b5e20]">
+                              {opt.discountPercent}% OFF
+                            </span>
+                            <span className="text-[#86868b]">·</span>
+                            <span className="text-[#86868b]">
+                              {opt.savingsText}
+                            </span>
                           </div>
-                          <div className="text-[11px] font-semibold text-[#1b5e20]">
-                            {opt.discountPercent}% OFF · {opt.savingsText}
-                          </div>
-                          <div className="text-[10px] text-[#86868b]">
+                          <div className="text-[9px] text-[#86868b]">
                             {opt.pricePerKg}
                           </div>
                         </div>

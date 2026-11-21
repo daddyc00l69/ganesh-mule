@@ -32,6 +32,253 @@ export interface HoneyShopItem {
   isOutOfStock?: boolean;
 }
 
+export interface VariantOption {
+  weight: string;
+  price: number;
+  compareAtPrice: number;
+  discountPercent: number;
+  imageUrl?: string;
+}
+
+export function getProductVariants(p: HoneyShopItem): VariantOption[] {
+  if (p.slug === '6-flavour-honey-gift-box') {
+    return [
+      {
+        weight: '6 × 250g (1.5kg)',
+        price: 119900,
+        compareAtPrice: 165000,
+        discountPercent: 27,
+        imageUrl: '/images/products/6-flavour-honey-gift-box.jpg',
+      },
+    ];
+  }
+  if (p.slug === '4-flavour-honey-gift-box') {
+    return [
+      {
+        weight: '4 × 250g (1kg)',
+        price: 79900,
+        compareAtPrice: 110000,
+        discountPercent: 27,
+        imageUrl: '/images/products/4-flavour-honey-gift-box.jpg',
+      },
+    ];
+  }
+  if (p.slug === 'raw-honey-comb') {
+    return [
+      {
+        weight: '500g',
+        price: 49900,
+        compareAtPrice: 65000,
+        discountPercent: 23,
+        imageUrl: '/images/products/raw-honey-comb.jpg',
+      },
+      {
+        weight: '1kg',
+        price: 89900,
+        compareAtPrice: 119900,
+        discountPercent: 25,
+        imageUrl: '/images/products/raw-honey-comb.jpg',
+      },
+    ];
+  }
+  if (p.slug === 'honey-with-comb') {
+    return [
+      {
+        weight: '500g',
+        price: 44900,
+        compareAtPrice: 59900,
+        discountPercent: 25,
+        imageUrl: '/images/products/honey-with-comb.jpg',
+      },
+      {
+        weight: '1kg',
+        price: 84900,
+        compareAtPrice: 109900,
+        discountPercent: 23,
+        imageUrl: '/images/products/honey-with-comb.jpg',
+      },
+    ];
+  }
+
+  // Standard Monofloral Honeys
+  const brandFolderMap: Record<string, string> = {
+    'multiflora-honey': 'Multiflora Honey',
+    'forest-honey': 'Forest Honey',
+    'sesame-honey': 'Sesame Honey',
+    'ajwain-honey': 'Ajwain Honey',
+    'saunf-honey': 'Saunf Honey',
+    'ber-honey': 'Ber Honey',
+  };
+  const folder = brandFolderMap[p.slug] || 'Forest Honey';
+
+  return [
+    {
+      weight: '250g',
+      price: 19900,
+      compareAtPrice: 27500,
+      discountPercent: 28,
+      imageUrl: `/images/honey-brand/${folder}/250g/image_1_amazon_main.jpg`,
+    },
+    {
+      weight: '500g',
+      price: 39900,
+      compareAtPrice: 54900,
+      discountPercent: 27,
+      imageUrl: `/images/honey-brand/${folder}/500g/image_1_amazon_main.jpg`,
+    },
+    {
+      weight: '1kg',
+      price: 74900,
+      compareAtPrice: 99900,
+      discountPercent: 25,
+      imageUrl: `/images/honey-brand/${folder}/1kg/image_1_amazon_main.jpg`,
+    },
+  ];
+}
+
+// Interactive Dynamic Mobile Card (auto-scales with mobile font size like Amazon)
+function MobileShopCard({ product }: { product: HoneyShopItem }) {
+  const variants = useMemo(() => getProductVariants(product), [product]);
+  // Default to 500g if available (most popular), else first variant
+  const defaultVariant = variants.find((v) => v.weight === '500g') || variants[0];
+  const [selectedVariant, setSelectedVariant] = useState<VariantOption>(defaultVariant);
+
+  const displayImage = selectedVariant.imageUrl || product.imageUrl;
+  const isMultiSize = variants.length > 1;
+
+  // Destination URL with selected size query parameter
+  const productUrl = `/product/${product.slug}?size=${encodeURIComponent(selectedVariant.weight)}`;
+
+  return (
+    <article className="p-3 sm:p-3.5 rounded-2xl bg-white border border-[#d2d2d7]/70 shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex gap-3 sm:gap-3.5 items-stretch overflow-hidden transition-all">
+      {/* Left: Product Image Container (Dynamic jar photo updating on size switch) */}
+      <Link
+        href={productUrl}
+        className="w-24 sm:w-28 shrink-0 rounded-xl bg-[#f5f5f7] border border-[#d2d2d7]/50 relative overflow-hidden flex items-center justify-center p-1.5 group self-start aspect-square"
+      >
+        <Image
+          src={displayImage}
+          alt={`${product.name} ${selectedVariant.weight}`}
+          fill
+          sizes="112px"
+          className="object-contain p-1 group-hover:scale-105 transition-all duration-300"
+        />
+        {product.isOutOfStock && (
+          <div className="absolute inset-0 bg-white/75 backdrop-blur-[1px] flex items-center justify-center">
+            <span className="px-2 py-0.5 rounded-full bg-stone-900/85 text-white text-[9px] font-bold tracking-wider uppercase shadow-xs">
+              Sold Out
+            </span>
+          </div>
+        )}
+      </Link>
+
+      {/* Right Column: Dynamic Content that scales naturally with mobile font size */}
+      <div className="flex-1 min-w-0 flex flex-col justify-between gap-1.5">
+        <div className="space-y-1">
+          {/* Origin / Type */}
+          <p className="text-[11px] font-medium text-[#86868b] truncate leading-tight">
+            {product.floralOrigin}
+          </p>
+
+          {/* Title */}
+          <Link href={productUrl} className="block">
+            <h2 className="text-sm sm:text-base font-bold text-[#1d1d1f] leading-snug line-clamp-2 hover:text-[#0071e3] transition-colors">
+              {product.cleanTitle}
+            </h2>
+          </Link>
+
+          {/* Rating */}
+          <div className="flex items-center gap-1.5 text-xs">
+            <span className="inline-flex items-center gap-0.5 font-semibold text-[#1d1d1f]">
+              <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
+              <span>{product.rating}</span>
+              <span className="text-[#86868b] font-normal text-[10px]">({product.ratingCount})</span>
+            </span>
+            <span className="text-[#d2d2d7]">·</span>
+            <span className="text-[11px] text-[#86868b] truncate font-medium">
+              {product.categoryTag === 'GIFT'
+                ? 'Gift Hamper'
+                : product.categoryTag === 'COMB'
+                ? 'Raw Comb'
+                : 'Solid Glass'}
+            </span>
+          </div>
+
+          {/* Dynamic Interactive Size Selector Chips */}
+          {isMultiSize && (
+            <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+              <span className="text-[10px] text-[#86868b] font-medium">Size:</span>
+              {variants.map((v) => {
+                const isSelected = selectedVariant.weight === v.weight;
+                return (
+                  <button
+                    key={v.weight}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setSelectedVariant(v);
+                    }}
+                    className={`px-2 py-0.5 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-[#1d1d1f] text-white shadow-2xs'
+                        : 'bg-[#f5f5f7] text-[#515154] hover:bg-[#e8e8ed] border border-[#d2d2d7]/60'
+                    }`}
+                  >
+                    {v.weight}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Flavour / Aroma Snippet */}
+          <p className="text-[11px] text-[#6e6e73] line-clamp-1 leading-tight">
+            {product.flavourNotes}
+          </p>
+        </div>
+
+        {/* Bottom Row: Dynamic Pricing & Compact Buy Button */}
+        <div className="pt-1.5 flex items-end justify-between gap-2 border-t border-[#f5f5f7]">
+          <div className="flex flex-col min-w-0">
+            <div className="flex items-baseline gap-1.5 flex-wrap">
+              <span className="text-base sm:text-lg font-bold text-[#1d1d1f] tracking-tight">
+                {formatCurrency(selectedVariant.price)}
+              </span>
+              {selectedVariant.compareAtPrice > selectedVariant.price && (
+                <span className="text-[11px] text-[#86868b] line-through">
+                  {formatCurrency(selectedVariant.compareAtPrice)}
+                </span>
+              )}
+            </div>
+            <span
+              className={`text-[10px] font-semibold truncate ${
+                product.isOutOfStock ? 'text-amber-800' : 'text-[#1b5e20]'
+              }`}
+            >
+              {product.isOutOfStock
+                ? 'Out of Stock'
+                : `Save ${selectedVariant.discountPercent}% · Solid Glass`}
+            </span>
+          </div>
+
+          {product.isOutOfStock ? (
+            <span className="px-3 py-1.5 rounded-full bg-stone-100 text-stone-500 text-[11px] font-semibold border border-stone-200 shrink-0 select-none">
+              Sold Out
+            </span>
+          ) : (
+            <Link
+              href={productUrl}
+              className="px-4 py-1.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4] text-white text-xs font-semibold transition-all flex items-center justify-center cursor-pointer shadow-xs active:scale-95 shrink-0"
+            >
+              <span>Buy</span>
+            </Link>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+}
+
 // Exactly the 10 products requested in the requested order
 export const SHOP_PRODUCTS: HoneyShopItem[] = [
   {
@@ -462,97 +709,7 @@ export function ShopClient() {
           </div>
         ) : (
           filteredProducts.map((p) => (
-            <article
-              key={p.id}
-              className="p-3 sm:p-3.5 rounded-2xl bg-white border border-[#d2d2d7]/70 shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex gap-3 sm:gap-3.5 items-center overflow-hidden"
-            >
-              {/* Left: Product Image Container (Properly proportioned to guarantee zero overflow) */}
-              <Link
-                href={`/product/${p.slug}`}
-                className="w-28 sm:w-32 aspect-square shrink-0 rounded-xl bg-[#f5f5f7] border border-[#d2d2d7]/50 relative overflow-hidden flex items-center justify-center p-2 group block"
-              >
-                <Image
-                  src={p.imageUrl}
-                  alt={p.name}
-                  fill
-                  sizes="130px"
-                  className="object-contain p-1 group-hover:scale-105 transition-transform duration-300"
-                />
-                {p.isOutOfStock && (
-                  <div className="absolute inset-0 bg-white/75 backdrop-blur-[1px] flex items-center justify-center">
-                    <span className="px-2 py-0.5 rounded-full bg-stone-900/85 text-white text-[9px] font-bold tracking-wider uppercase shadow-xs">
-                      Sold Out
-                    </span>
-                  </div>
-                )}
-              </Link>
-
-              {/* Right Column: Details & Small Buy Button */}
-              <div className="flex-1 min-w-0 space-y-1">
-                {/* Origin / Type */}
-                <p className="text-[11px] font-medium text-[#86868b] truncate">
-                  {p.floralOrigin}
-                </p>
-
-                {/* Title */}
-                <Link href={`/product/${p.slug}`} className="block">
-                  <h2 className="text-sm sm:text-base font-bold text-[#1d1d1f] leading-snug line-clamp-1 hover:text-[#0071e3] transition-colors">
-                    {p.cleanTitle}
-                  </h2>
-                </Link>
-
-                {/* Rating & Size Chips */}
-                <div className="flex items-center gap-1.5 text-xs">
-                  <span className="inline-flex items-center gap-0.5 font-semibold text-[#1d1d1f]">
-                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
-                    <span>{p.rating}</span>
-                    <span className="text-[#86868b] font-normal text-[10px]">({p.ratingCount})</span>
-                  </span>
-                  <span className="text-[#d2d2d7]">·</span>
-                  <span className="text-[11px] text-[#86868b] truncate">
-                    {p.availableSizes.join(' · ')}
-                  </span>
-                </div>
-
-                {/* Flavour / Aroma Snippet */}
-                <p className="text-[11px] text-[#6e6e73] line-clamp-1 leading-tight">
-                  {p.flavourNotes}
-                </p>
-
-                {/* Bottom Row: Pricing & Bulletproof Small Buy Button */}
-                <div className="pt-1.5 flex items-center justify-between gap-2 border-t border-[#f5f5f7]">
-                  <div className="flex flex-col min-w-0">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-[10px] text-[#86868b]">From</span>
-                      <span className="text-sm sm:text-base font-bold text-[#1d1d1f] tracking-tight">
-                        {formatCurrency(p.startingPrice)}
-                      </span>
-                      {p.compareAtPrice > p.startingPrice && (
-                        <span className="text-[10px] text-[#86868b] line-through">
-                          {formatCurrency(p.compareAtPrice)}
-                        </span>
-                      )}
-                    </div>
-                    <span className={`text-[10px] font-semibold truncate ${p.isOutOfStock ? 'text-amber-800' : 'text-[#1b5e20]'}`}>
-                      {p.isOutOfStock ? 'Out of Stock' : `Save ${p.discountPercent}% · Solid Glass`}
-                    </span>
-                  </div>
-
-                  {p.isOutOfStock ? (
-                    <span className="px-3 py-1.5 rounded-full bg-stone-100 text-stone-500 text-[11px] font-semibold border border-stone-200 shrink-0 select-none">
-                      Out of Stock
-                    </span>
-                  ) : (
-                    <Link
-                      href={`/product/${p.slug}`}
-                      className="px-4 py-1.5 rounded-full bg-[#0071e3] hover:bg-[#0077ed] active:bg-[#0062c4] text-white text-xs font-semibold transition-all flex items-center justify-center cursor-pointer shadow-xs active:scale-95 shrink-0"
-                    >
-                      <span>Buy</span>
-                    </Link>
-                  )}
-                </div>
-              </div>
-            </article>
+            <MobileShopCard key={p.id} product={p} />
           ))
         )}
       </section>
