@@ -35,14 +35,80 @@ import {
 
 // Resolves category metadata from either category slug (/product/forest-honey) or variant slug (/product/forest-honey-500g)
 function resolveCategoryFromSlug(slug: string) {
-  const clean = slug ? slug.replace(/-(250g|500g|1kg|300g|750g|1050g)$/, '') : 'forest-honey';
+  const clean = slug ? slug.replace(/-(250g|500g|1kg|300g|750g|1050g)$/, '') : 'multiflora-honey';
 
+  if (clean === 'multiflora-honey') {
+    return {
+      categoryId: 'cat-multiflora',
+      baseSlug: 'multiflora-honey',
+      varietyName: 'Wild Multiflora Raw Honey',
+      folderName: 'Multiflora Honey',
+      productType: 'HONEY',
+      floralOrigin: 'Biodiverse Alpine Foothills',
+      flavourNotes: 'Rich botanical bouquet with golden nectar finish',
+      description:
+        'Harmonious multifloral nectar gathered by bees foraging across dozens of seasonal medicinal herbs and seasonal forest blossoms. Smooth, well-rounded flavour ideal for daily nutrition.',
+    };
+  }
+  if (clean === 'raw-honey-comb') {
+    return {
+      categoryId: 'cat-raw-honey-comb',
+      baseSlug: 'raw-honey-comb',
+      varietyName: 'Raw Honey Comb',
+      folderName: 'products',
+      productType: 'COMB',
+      floralOrigin: 'Direct Apiary Fresh Comb Extraction',
+      flavourNotes: 'Intact beeswax cells packed with pure living nectar & raw bee pollen',
+      description:
+        '100% natural raw honeycomb cut directly from live apiary frames. Sealed within pristine hexagonal wax cells, packed with living biological enzymes, propolis, and unheated nectar. Chew the sweet wax directly or spread over warm toast.',
+    };
+  }
+  if (clean === 'honey-with-comb') {
+    return {
+      categoryId: 'cat-honey-with-comb',
+      baseSlug: 'honey-with-comb',
+      varietyName: 'Honey with Comb',
+      folderName: 'products',
+      productType: 'COMB',
+      floralOrigin: 'Western Ghats Apiary Reserve',
+      flavourNotes: 'Velvety wildflower liquid honey with a chewy raw comb core',
+      description:
+        'Pure cold-extracted raw honey bottled with an intact fresh natural raw honeycomb slab submerged inside heavy solid glass. Savor the delicate liquid nectar and chewable honey-rich beeswax comb together in every spoonful.',
+    };
+  }
+  if (clean === '6-flavour-honey-gift-box' || clean === '6-flavour-gift-box') {
+    return {
+      categoryId: 'cat-6-flavour-gift-box',
+      baseSlug: '6-flavour-honey-gift-box',
+      varietyName: '6 Flavour Honey Gift Box',
+      folderName: 'products',
+      productType: 'GIFT_BOX',
+      floralOrigin: 'Curated Heritage Monofloral Collection',
+      flavourNotes: '6 Distinct Single-Origin Monofloral Profiles (250g each)',
+      description:
+        'Luxury rigid presentation gift hamper containing six 250g solid glass jars: Wild Forest, Sesame Blossom, Ajwain (Carom), Wild Multiflora, Saunf (Fennel) & Sheesham Honey. The ultimate gourmet tasting experience and health gift.',
+    };
+  }
+  if (clean === '4-flavour-honey-gift-box' || clean === '4-flavour-gift-box') {
+    return {
+      categoryId: 'cat-4-flavour-gift-box',
+      baseSlug: '4-flavour-honey-gift-box',
+      varietyName: '4 Flavour Honey Gift Box',
+      folderName: 'products',
+      productType: 'GIFT_BOX',
+      floralOrigin: 'Signature Artisanal Honey Assortment',
+      flavourNotes: '4 Premium Single-Origin Monofloral Profiles (250g each)',
+      description:
+        'Elegant artisanal gift hamper featuring four 250g solid glass jars: Wild Forest, Sesame Blossom, Ajwain (Carom), and Wild Multiflora Honey. Handcrafted with eco-luxury protective inserts and gold foil accents.',
+    };
+  }
   if (clean === 'forest-honey' || clean === 'wild-forest-raw-honey' || clean === 'wild-forest-raw') {
     return {
       categoryId: 'cat-forest',
       baseSlug: 'forest-honey',
       varietyName: 'Wild Forest Raw Honey',
       folderName: 'Forest Honey',
+      productType: 'HONEY',
       floralOrigin: 'Western Ghats Deciduous Canopies, Maharashtra',
       flavourNotes: 'Multifloral blossom with warm floral caramel finish',
       description:
@@ -55,6 +121,7 @@ function resolveCategoryFromSlug(slug: string) {
       baseSlug: 'sesame-honey',
       varietyName: 'Pure Sesame Blossom Honey',
       folderName: 'Sesame Honey',
+      productType: 'HONEY',
       floralOrigin: 'Organic Sesame Plains, Maharashtra',
       flavourNotes: 'Warm nutty undertones with delicate amber sweetness',
       description:
@@ -67,22 +134,24 @@ function resolveCategoryFromSlug(slug: string) {
       baseSlug: 'ajwain-honey',
       varietyName: 'Organic Ajwain (Carom) Honey',
       folderName: 'Ajwain Honey',
+      productType: 'HONEY',
       floralOrigin: 'Carom Flowering Fields, Rajasthan',
       flavourNotes: 'Herbal, pungent & warm digestive carom notes',
       description:
         'Distinctive raw monofloral honey harvested from white carom flowers. Celebrated in Ayurveda for respiratory comfort, gut health, and soothing digestion.',
     };
   }
-  if (clean === 'multiflora-honey') {
+  if (clean === 'saunf-honey' || clean === 'fennel-honey') {
     return {
-      categoryId: 'cat-multiflora',
-      baseSlug: 'multiflora-honey',
-      varietyName: 'Wild Multiflora Raw Honey',
-      folderName: 'Multiflora Honey',
-      floralOrigin: 'Biodiverse Alpine Foothills',
-      flavourNotes: 'Rich botanical bouquet with golden nectar finish',
+      categoryId: 'cat-saunf',
+      baseSlug: 'saunf-honey',
+      varietyName: 'Pure Saunf (Fennel) Honey',
+      folderName: 'Saunf Honey',
+      productType: 'HONEY',
+      floralOrigin: 'Aromatic Fennel Meadows, Rajasthan',
+      flavourNotes: 'Sweet herbal licorice-anise finish with digestive cooling aroma',
       description:
-        'Harmonious multifloral nectar gathered by bees foraging across dozens of seasonal medicinal herbs and seasonal forest blossoms.',
+        'Single-origin raw honey gathered during peak winter fennel flowering. Naturally sweet licorice-anise finish with cooling digestion properties and soothing floral aroma.',
     };
   }
   if (clean === 'ber-honey') {
@@ -91,10 +160,11 @@ function resolveCategoryFromSlug(slug: string) {
       baseSlug: 'ber-honey',
       varietyName: 'Raw Ber (Sidr / Jujube) Honey',
       folderName: 'Ber Honey',
+      productType: 'HONEY',
       floralOrigin: 'Arid Jujube Woodlands, Rajasthan',
       flavourNotes: 'Thick butterscotch aroma with deep lingering sweetness',
       description:
-        'Revered ancient Sidr honey harvested from thorny desert jujube trees. Uniquely dense in bio-active polyphenols and amber antioxidants.',
+        'Revered ancient Sidr honey harvested from thorny desert jujube trees. Uniquely dense in bio-active polyphenols and amber antioxidants. (Currently Out of Stock)',
     };
   }
   if (clean === 'sheesham-honey') {
@@ -103,6 +173,7 @@ function resolveCategoryFromSlug(slug: string) {
       baseSlug: 'sheesham-honey',
       varietyName: 'Raw Sheesham (Rosewood) Honey',
       folderName: 'Sheesham Honey',
+      productType: 'HONEY',
       floralOrigin: 'Rosewood River Valleys, North India',
       flavourNotes: 'Mild floral notes with subtle woody sweetness',
       description:
@@ -111,14 +182,15 @@ function resolveCategoryFromSlug(slug: string) {
   }
 
   return {
-    categoryId: 'cat-forest',
-    baseSlug: 'forest-honey',
-    varietyName: 'Wild Forest Raw Honey',
-    folderName: 'Forest Honey',
-    floralOrigin: 'Western Ghats Deciduous Canopies, Maharashtra',
-    flavourNotes: 'Multifloral blossom with warm floral caramel finish',
+    categoryId: 'cat-multiflora',
+    baseSlug: 'multiflora-honey',
+    varietyName: 'Wild Multiflora Raw Honey',
+    folderName: 'Multiflora Honey',
+    productType: 'HONEY',
+    floralOrigin: 'Biodiverse Alpine Foothills',
+    flavourNotes: 'Rich botanical bouquet with golden nectar finish',
     description:
-      'Pure cold-extracted raw honey gathered from wild Apis dorsata cliff bees in deep deciduous forest canopies. Bottled exclusively in thick, food-grade solid glass to safeguard delicate aromatic polyphenols and active living enzymes.',
+      'Harmonious multifloral nectar gathered by bees foraging across dozens of seasonal medicinal herbs and seasonal forest blossoms.',
   };
 }
 
@@ -138,12 +210,20 @@ export default function ProductDetailPage() {
   const [isLoadingVariants, setIsLoadingVariants] = useState(true);
 
   // Initial selected weight determination from URL
-  const initialWeight = rawSlug.includes('250g')
+  const initialWeight = rawSlug.includes('gift-box')
+    ? rawSlug.includes('6-flavour')
+      ? '6x250g'
+      : '4x250g'
+    : rawSlug.includes('comb')
+    ? rawSlug.includes('1kg')
+      ? '1kg'
+      : '500g'
+    : rawSlug.includes('250g')
     ? '250g'
     : rawSlug.includes('1kg')
     ? '1kg'
     : '500g';
-  const [selectedWeight, setSelectedWeight] = useState<'250g' | '500g' | '1kg'>(initialWeight);
+  const [selectedWeight, setSelectedWeight] = useState<string>(initialWeight);
 
   // Fetch size options directly from Database via /api/products
   useEffect(() => {
@@ -183,8 +263,190 @@ export default function ProductDetailPage() {
     };
   }, [categoryMeta.categoryId]);
 
-  // Build the 3 Selectable Size Configurations from the Database
+  // Build the Selectable Size Configurations based on Product Type & Database
   const sizeOptions = useMemo(() => {
+    // 1. 6 Flavour Gift Box (Dedicated Page)
+    if (categoryMeta.baseSlug === '6-flavour-honey-gift-box') {
+      return [
+        {
+          weight: '6x250g',
+          label: 'Luxury Presentation Set (6 × 250g)',
+          badge: 'Complete Collection · Gourmet Gift',
+          description:
+            'Six 250g solid glass jars (1.5kg Total): Wild Forest, Sesame, Ajwain, Multiflora, Saunf & Sheesham in luxury rigid gift box.',
+          weightGrams: 1500,
+          price: 119900,
+          compareAtPrice: 165000,
+          stockQuantity: 40,
+          lowStockThreshold: 5,
+          sku: 'GM-GIFT-6X250G',
+          productRecord: undefined,
+          pricePerKg: '₹799 / kg',
+          discountPercent: 27,
+          savingsText: 'Save ₹451',
+        },
+      ];
+    }
+
+    // 2. 4 Flavour Gift Box (Dedicated Page)
+    if (categoryMeta.baseSlug === '4-flavour-honey-gift-box') {
+      return [
+        {
+          weight: '4x250g',
+          label: 'Artisanal Sampler Set (4 × 250g)',
+          badge: 'Signature Gifting Box',
+          description:
+            'Four 250g solid glass jars (1kg Total): Wild Forest, Sesame Blossom, Ajwain Carom & Wild Multiflora Honey in luxury box.',
+          weightGrams: 1000,
+          price: 79900,
+          compareAtPrice: 110000,
+          stockQuantity: 50,
+          lowStockThreshold: 5,
+          sku: 'GM-GIFT-4X250G',
+          productRecord: undefined,
+          pricePerKg: '₹799 / kg',
+          discountPercent: 27,
+          savingsText: 'Save ₹301',
+        },
+      ];
+    }
+
+    // 3. Raw Honey Comb (Dedicated Page with 500g and 1kg)
+    if (categoryMeta.baseSlug === 'raw-honey-comb') {
+      return [
+        {
+          weight: '500g',
+          label: 'Fresh Raw Honeycomb Slab (500g)',
+          badge: '100% Pure Raw Comb',
+          description:
+            'Whole unprocessed raw honeycomb slab packed with raw wildflower nectar, live pollen & chewy organic beeswax cells.',
+          weightGrams: 500,
+          price: 49900,
+          compareAtPrice: 65000,
+          stockQuantity: 30,
+          lowStockThreshold: 5,
+          sku: 'GM-COMB-500G',
+          productRecord: undefined,
+          pricePerKg: '₹998 / kg',
+          discountPercent: 23,
+          savingsText: 'Save ₹151',
+        },
+        {
+          weight: '1kg',
+          label: 'Grand Reserve Honeycomb Slab (1kg)',
+          badge: 'Best Value Comb Slab',
+          description:
+            'Large full-frame natural raw honeycomb slab for gourmet dining, family wellness & natural chewable honeycomb wax.',
+          weightGrams: 1000,
+          price: 89900,
+          compareAtPrice: 119900,
+          stockQuantity: 20,
+          lowStockThreshold: 5,
+          sku: 'GM-COMB-1KG',
+          productRecord: undefined,
+          pricePerKg: '₹899 / kg (Lowest Rate)',
+          discountPercent: 25,
+          savingsText: 'Save ₹300',
+        },
+      ];
+    }
+
+    // 4. Honey with Comb (Dedicated Page with 500g and 1kg)
+    if (categoryMeta.baseSlug === 'honey-with-comb') {
+      return [
+        {
+          weight: '500g',
+          label: 'Raw Honey with Intact Comb Chunk (500g)',
+          badge: 'Liquid + Fresh Comb',
+          description:
+            'Cold-extracted raw unheated forest honey paired with an authentic fresh raw honeycomb chunk submerged in thick solid glass.',
+          weightGrams: 500,
+          price: 44900,
+          compareAtPrice: 59900,
+          stockQuantity: 35,
+          lowStockThreshold: 5,
+          sku: 'GM-HWC-500G',
+          productRecord: undefined,
+          pricePerKg: '₹898 / kg',
+          discountPercent: 25,
+          savingsText: 'Save ₹150',
+        },
+        {
+          weight: '1kg',
+          label: 'Grand Reserve with Raw Comb Chunk (1kg)',
+          badge: 'Master Reserve Jar',
+          description:
+            'Heavy solid glass reserve jar filled with cold-extracted liquid honey and generous whole raw honeycomb slices.',
+          weightGrams: 1000,
+          price: 84900,
+          compareAtPrice: 109900,
+          stockQuantity: 25,
+          lowStockThreshold: 5,
+          sku: 'GM-HWC-1KG',
+          productRecord: undefined,
+          pricePerKg: '₹849 / kg (Lowest Rate)',
+          discountPercent: 23,
+          savingsText: 'Save ₹250',
+        },
+      ];
+    }
+
+    // 5. Ber Honey (Out of Stock, price same)
+    if (categoryMeta.baseSlug === 'ber-honey') {
+      return [
+        {
+          weight: '250g',
+          label: 'Glass Sampler',
+          badge: null,
+          description: 'Revered ancient Sidr honey. (Currently Out of Stock)',
+          weightGrams: 250,
+          price: 19900,
+          compareAtPrice: 27500,
+          stockQuantity: 0, // Out of Stock
+          lowStockThreshold: 10,
+          sku: 'GM-BER-250G',
+          productRecord: undefined,
+          pricePerKg: '₹796 / kg',
+          discountPercent: 28,
+          savingsText: 'Save ₹76',
+        },
+        {
+          weight: '500g',
+          label: 'Solid Glass Standard Jar',
+          badge: 'Out of Stock · Sold Out',
+          description:
+            'Revered ancient Sidr honey. Season 2026 harvest completely sold out.',
+          weightGrams: 500,
+          price: 39900,
+          compareAtPrice: 54900,
+          stockQuantity: 0, // Out of Stock
+          lowStockThreshold: 15,
+          sku: 'GM-BER-500G',
+          productRecord: undefined,
+          pricePerKg: '₹798 / kg',
+          discountPercent: 27,
+          savingsText: 'Save ₹150',
+        },
+        {
+          weight: '1kg',
+          label: 'Grand Reserve Jar',
+          badge: null,
+          description: 'Grand Sidr Reserve. (Currently Out of Stock)',
+          weightGrams: 1000,
+          price: 74900,
+          compareAtPrice: 99900,
+          stockQuantity: 0, // Out of Stock
+          lowStockThreshold: 10,
+          sku: 'GM-BER-1KG',
+          productRecord: undefined,
+          pricePerKg: '₹749 / kg (Lowest Rate)',
+          discountPercent: 25,
+          savingsText: 'Save ₹250',
+        },
+      ];
+    }
+
+    // 6. Standard Monofloral Honeys (Multiflora, Forest, Sesame, Ajwain, Saunf, Sheesham)
     const findVariant = (targetWeight: number, defaultSlugSuffix: string) => {
       return (
         dbVariants.find((p) => p.weightGrams === targetWeight) ||
@@ -202,7 +464,7 @@ export default function ProductDetailPage() {
 
     return [
       {
-        weight: '250g' as const,
+        weight: '250g',
         label: 'Glass Sampler',
         badge: null,
         description: 'Ideal for first-time taste trials, tea sweeteners, or gourmet gifting.',
@@ -218,7 +480,7 @@ export default function ProductDetailPage() {
         savingsText: 'Save ₹76',
       },
       {
-        weight: '500g' as const,
+        weight: '500g',
         label: 'Solid Glass Standard Jar',
         badge: 'Most Popular · Daily Routine',
         description:
@@ -235,7 +497,7 @@ export default function ProductDetailPage() {
         savingsText: 'Save ₹150',
       },
       {
-        weight: '1kg' as const,
+        weight: '1kg',
         label: 'Grand Reserve Jar',
         badge: 'Best Value · Lowest Rate',
         description:
@@ -256,7 +518,7 @@ export default function ProductDetailPage() {
 
   // Current active variant based on customer selection
   const currentOption =
-    sizeOptions.find((opt) => opt.weight === selectedWeight) || sizeOptions[1];
+    sizeOptions.find((opt) => opt.weight === selectedWeight) || sizeOptions[0];
 
   // Cart status for single Checkout action
   const isItemInCart = items.some(
@@ -264,10 +526,65 @@ export default function ProductDetailPage() {
   );
   const hasItemsInCart = items.length > 0;
 
-  // Dynamic Image Gallery switching based on selected size
+  // Dynamic Image Gallery switching based on product category & selected size
   const galleryImages = useMemo(() => {
+    // 1. Dedicated image for Raw Honey Comb
+    if (categoryMeta.baseSlug === 'raw-honey-comb') {
+      return [
+        {
+          id: 'img-1',
+          url: '/images/products/raw-honey-comb.jpg',
+          altText: 'Raw Honey Comb Fresh Cut Slab in Protective Container',
+        },
+        {
+          id: 'img-2',
+          url: '/images/products/artisan-honeycomb-slab.jpg',
+          altText: 'Artisan Raw Honeycomb Slab Close-up Texture',
+        },
+      ];
+    }
+
+    // 2. Dedicated image for Honey with Comb
+    if (categoryMeta.baseSlug === 'honey-with-comb') {
+      return [
+        {
+          id: 'img-1',
+          url: '/images/products/honey-with-comb.jpg',
+          altText: 'Honey with Comb in Heavy Solid Glass Jar',
+        },
+        {
+          id: 'img-2',
+          url: '/images/products/artisan-honeycomb-slab.jpg',
+          altText: 'Fresh Submerged Honeycomb Texture',
+        },
+      ];
+    }
+
+    // 3. Dedicated image for 6 Flavour Gift Box
+    if (categoryMeta.baseSlug === '6-flavour-honey-gift-box') {
+      return [
+        {
+          id: 'img-1',
+          url: '/images/products/6-flavour-honey-gift-box.jpg',
+          altText: '6 Flavour Honey Gift Box Six 250g Solid Glass Jars',
+        },
+      ];
+    }
+
+    // 4. Dedicated image for 4 Flavour Gift Box
+    if (categoryMeta.baseSlug === '4-flavour-honey-gift-box') {
+      return [
+        {
+          id: 'img-1',
+          url: '/images/products/4-flavour-honey-gift-box.jpg',
+          altText: '4 Flavour Honey Gift Box Four 250g Solid Glass Jars',
+        },
+      ];
+    }
+
+    // 5. Standard Honey Brand Jars
     const folder = categoryMeta.folderName;
-    const size = selectedWeight;
+    const size = selectedWeight === '250g' || selectedWeight === '1kg' ? selectedWeight : '500g';
     return [
       {
         id: 'img-1',
@@ -290,7 +607,7 @@ export default function ProductDetailPage() {
         altText: `Ganesh Mule Solid Glass Tri-Pack Size Comparison`,
       },
     ];
-  }, [categoryMeta.folderName, selectedWeight, cleanName]);
+  }, [categoryMeta, selectedWeight, cleanName]);
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -683,12 +1000,12 @@ export default function ProductDetailPage() {
                       onClick={handleAddToCart}
                       className={`flex-1 py-3.5 px-6 rounded-full font-medium text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-98 ${
                         isOutOfStock
-                          ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
+                          ? 'bg-stone-100 text-stone-500 border border-stone-200 cursor-not-allowed select-none'
                           : 'bg-[#0071e3] hover:bg-[#0077ed] text-white'
                       }`}
                     >
                       <ShoppingBag className="w-4 h-4" />
-                      <span>Add to Bag ({currentOption.weight})</span>
+                      <span>{isOutOfStock ? `Out of Stock (${currentOption.weight})` : `Add to Bag (${currentOption.weight})`}</span>
                     </button>
                   )}
                 </div>
@@ -1033,10 +1350,14 @@ export default function ProductDetailPage() {
                     type="button"
                     onClick={handleAddToCart}
                     disabled={isOutOfStock}
-                    className="py-2.5 px-6 sm:px-8 rounded-full text-xs sm:text-sm font-semibold bg-[#0071e3] hover:bg-[#0077ed] text-white transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
+                    className={`py-2.5 px-6 sm:px-8 rounded-full text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 shadow-sm ${
+                      isOutOfStock
+                        ? 'bg-stone-100 text-stone-500 border border-stone-200 cursor-not-allowed select-none'
+                        : 'bg-[#0071e3] hover:bg-[#0077ed] text-white cursor-pointer active:scale-95'
+                    }`}
                   >
                     <ShoppingBag className="w-3.5 h-3.5" />
-                    <span>Add to Bag</span>
+                    <span>{isOutOfStock ? 'Out of Stock' : 'Add to Bag'}</span>
                   </button>
                 )}
               </div>

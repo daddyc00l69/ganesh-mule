@@ -16,11 +16,36 @@ export const StorefrontFooter: React.FC = () => {
           </div>
 
           <div>
-            <h4 className="font-semibold text-[#1d1d1f] mb-3">6 Pure Harvests</h4>
+            <h4 className="font-semibold text-[#1d1d1f] mb-3">Shop Collections</h4>
             <ul className="space-y-2">
               <li>
                 <Link href="/shop" className="hover:text-[#1d1d1f] hover:underline transition-colors">
-                  All 6 Harvests
+                  All 10 Products
+                </Link>
+              </li>
+              <li>
+                <Link href="/product/multiflora-honey" className="hover:text-[#1d1d1f] hover:underline transition-colors">
+                  Multiflora Honey
+                </Link>
+              </li>
+              <li>
+                <Link href="/product/raw-honey-comb" className="hover:text-[#1d1d1f] hover:underline transition-colors">
+                  Raw Honey Comb
+                </Link>
+              </li>
+              <li>
+                <Link href="/product/honey-with-comb" className="hover:text-[#1d1d1f] hover:underline transition-colors">
+                  Honey with Comb
+                </Link>
+              </li>
+              <li>
+                <Link href="/product/6-flavour-honey-gift-box" className="hover:text-[#1d1d1f] hover:underline transition-colors">
+                  6 Flavour Gift Box
+                </Link>
+              </li>
+              <li>
+                <Link href="/product/4-flavour-honey-gift-box" className="hover:text-[#1d1d1f] hover:underline transition-colors">
+                  4 Flavour Gift Box
                 </Link>
               </li>
               <li>
@@ -29,28 +54,8 @@ export const StorefrontFooter: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/product/sesame-honey" className="hover:text-[#1d1d1f] hover:underline transition-colors">
-                  Sesame Blossom Honey
-                </Link>
-              </li>
-              <li>
-                <Link href="/product/ajwain-honey" className="hover:text-[#1d1d1f] hover:underline transition-colors">
-                  Ajwain (Carom) Honey
-                </Link>
-              </li>
-              <li>
-                <Link href="/product/multiflora-honey" className="hover:text-[#1d1d1f] hover:underline transition-colors">
-                  Wild Multiflora Honey
-                </Link>
-              </li>
-              <li>
-                <Link href="/product/ber-honey" className="hover:text-[#1d1d1f] hover:underline transition-colors">
-                  Raw Ber (Sidr) Honey
-                </Link>
-              </li>
-              <li>
-                <Link href="/product/sheesham-honey" className="hover:text-[#1d1d1f] hover:underline transition-colors">
-                  Sheesham (Rosewood) Honey
+                <Link href="/product/saunf-honey" className="hover:text-[#1d1d1f] hover:underline transition-colors">
+                  Saunf (Fennel) Honey
                 </Link>
               </li>
             </ul>

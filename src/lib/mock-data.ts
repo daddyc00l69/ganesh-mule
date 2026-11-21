@@ -56,6 +56,46 @@ export const MOCK_CATEGORIES: CategoryItem[] = [
     "description": "Rare single-origin raw honey harvested from blooming North Indian Rosewood canopies. Low glycemic index with a soothing smooth finish.",
     "productCount": 3,
     "isVisible": true
+  },
+  {
+    "id": "cat-saunf",
+    "slug": "saunf-honey",
+    "name": "Pure Saunf (Fennel) Honey",
+    "description": "Single-origin raw honey gathered during peak winter fennel flowering in Rajasthan. Naturally sweet licorice-anise finish with cooling digestion properties.",
+    "productCount": 3,
+    "isVisible": true
+  },
+  {
+    "id": "cat-raw-honey-comb",
+    "slug": "raw-honey-comb",
+    "name": "Raw Honey Comb",
+    "description": "100% natural raw honeycomb cut directly from live apiary frames. Sealed within hexagonal wax cells full of living enzymes and pure nectar.",
+    "productCount": 2,
+    "isVisible": true
+  },
+  {
+    "id": "cat-honey-with-comb",
+    "slug": "honey-with-comb",
+    "name": "Honey with Comb",
+    "description": "Pure cold-extracted raw honey bottled with an intact fresh natural raw honeycomb slab submerged inside solid glass.",
+    "productCount": 2,
+    "isVisible": true
+  },
+  {
+    "id": "cat-6-flavour-gift-box",
+    "slug": "6-flavour-honey-gift-box",
+    "name": "6 Flavour Honey Gift Box",
+    "description": "Luxury rigid presentation gift hamper containing six 250g solid glass jars: Wild Forest, Sesame, Ajwain, Multiflora, Saunf & Sheesham Honey.",
+    "productCount": 1,
+    "isVisible": true
+  },
+  {
+    "id": "cat-4-flavour-gift-box",
+    "slug": "4-flavour-honey-gift-box",
+    "name": "4 Flavour Honey Gift Box",
+    "description": "Artisanal gift hamper featuring four 250g solid glass jars: Wild Forest, Sesame Blossom, Ajwain Carom & Wild Multiflora Honey.",
+    "productCount": 1,
+    "isVisible": true
   }
 ];
 
@@ -1529,7 +1569,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
     "description": "Revered Sidr honey harvested from thorny desert jujube trees. Uniquely rich in bioactive polyphenols and amber antioxidants.",
     "isVisible": true
   },
-  "stockQuantity": 80,
+  "stockQuantity": 0,
   "reservedQuantity": 0,
   "lowStockThreshold": 10,
   "isPublished": true,
@@ -1650,7 +1690,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
     "description": "Revered Sidr honey harvested from thorny desert jujube trees. Uniquely rich in bioactive polyphenols and amber antioxidants.",
     "isVisible": true
   },
-  "stockQuantity": 120,
+  "stockQuantity": 0,
   "reservedQuantity": 0,
   "lowStockThreshold": 10,
   "isPublished": true,
@@ -1771,7 +1811,7 @@ export const MOCK_PRODUCTS: ProductItem[] = [
     "description": "Revered Sidr honey harvested from thorny desert jujube trees. Uniquely rich in bioactive polyphenols and amber antioxidants.",
     "isVisible": true
   },
-  "stockQuantity": 65,
+  "stockQuantity": 0,
   "reservedQuantity": 0,
   "lowStockThreshold": 10,
   "isPublished": true,
