@@ -16,8 +16,7 @@
   }
 
   body {
-    background-color: #f5f5f7;
-    color: #1d1d1f;
+    @apply bg-background text-foreground;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "SF Pro", "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
     letter-spacing: -0.011em;
     min-height: 100vh;

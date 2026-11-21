@@ -33,7 +33,7 @@ export interface NavItem {
 }
 
 interface SidebarProps {
-  role: 'ADMIN' | 'MANAGER';
+  role: 'DEVELOPER' | 'ADMIN' | 'MANAGER';
   isOpen: boolean;
   onClose: () => void;
 }
@@ -70,6 +70,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, isOpen, onClose }) => {
     { title: 'Settings', href: '/admin/settings', icon: Settings },
   ];
 
+  const developerNavItems: NavItem[] = [
+    { title: 'System & Health', href: '/developer', icon: LayoutDashboard },
+    { title: 'Staff Accounts', href: '/developer/accounts', icon: Users },
+    { title: 'Security & Audit', href: '/admin/audit-logs', icon: ShieldAlert },
+    { title: 'Admin Console', href: '/admin', icon: Layers },
+    { title: 'Operations Queue', href: '/manager/orders', icon: ShoppingBag, badge: pendingOrdersCount },
+    { title: 'Store Settings', href: '/admin/settings', icon: Settings },
+  ];
+
   const managerNavItems: NavItem[] = [
     { title: 'Overview', href: '/manager', icon: LayoutDashboard },
     { title: 'Order Queue', href: '/manager/orders', icon: ShoppingBag, badge: pendingOrdersCount },
@@ -80,7 +89,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, isOpen, onClose }) => {
     { title: 'Operations Reports', href: '/manager/reports', icon: BarChart3 },
   ];
 
-  const navItems = role === 'ADMIN' ? adminNavItems : managerNavItems;
+  const navItems =
+    role === 'DEVELOPER'
+      ? developerNavItems
+      : role === 'ADMIN'
+      ? adminNavItems
+      : managerNavItems;
 
   const handleLogout = async () => {
     try {

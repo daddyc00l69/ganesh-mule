@@ -103,10 +103,13 @@ export interface FeeCalculationResult {
   productGstRate: number; // 5%
   totalTax: number;
 
-  // Bundled Shipping & Delivery (Courier Shipping + Developer Platform Fee + Payment Gateway Fee)
+  // Bundled Shipping & Delivery (Courier Shipping + Solid Glass Packaging)
   bundledShippingBase: number;
   bundledShippingGst: number;
   bundledShippingTotal: number;
+
+  // Merchant Settlement Accounting (Internal gateway business expense, NOT added to customer order)
+  netMerchantSettlement: number;
 
   // Grand total payable
   grandTotal: number;
@@ -114,8 +117,12 @@ export interface FeeCalculationResult {
 
 /**
  * Computes exact fee, shipping, and statutory GST splits
- * Note: Each component (Item, PG, Shipping, Platform) has its own GST
- * PG charges are computed on total amount (Items + Shipping + Platform)
+ * Complies strictly with Indian GST:
+ * - Product prices are tax-inclusive (GST extracted, never added on top)
+ * - Courier Shipping (SAC 9965) has 18% GST
+ * - Packaging / Platform fee (SAC 9971) has 18% GST
+ * - Payment gateway processing is a business expense (not charged to customer as tax)
+ * - Zero tax-on-tax
  */
 export function calculateOrderFees(
   subtotalPaise: number,
@@ -154,7 +161,7 @@ export function calculateOrderFees(
     }
   }
 
-  // 2. Platform Base Fee Calculation (18% GST)
+  // 2. Packaging / Platform Base Fee Calculation (18% GST)
   let platformBase = 0;
   let platformGst = 0;
   const platformGstRate = settings.platformGstRate || 18;
@@ -167,35 +174,30 @@ export function calculateOrderFees(
   }
   const platformTotal = platformBase + platformGst;
 
-  // 3. Payment Gateway (PG) Fee Calculation
-  // Explicit rule: PG charges on total order amount (Items + Shipping + Platform)
-  // Also PG charges have their own 18% GST
-  const prePgTotal = discountedSubtotal + shippingTotal + platformTotal;
-  let pgBase = 0;
-  let pgGst = 0;
-  const pgGstRate = settings.paymentGatewayGstRate || 18;
-  const pgPercent = settings.paymentGatewayPercent || 2.0;
-
-  const isPgFeeActive =
-    discountedSubtotal > 0 &&
-    (settings.feeMode === 'PERCENT_2' || settings.feeMode === 'BOTH' || settings.paymentGatewayFeeEnabled);
-
-  if (isPgFeeActive && pgPercent > 0) {
-    pgBase = Math.round((prePgTotal * pgPercent) / 100);
-    pgGst = Math.round((pgBase * pgGstRate) / 100);
-  }
-  const pgTotal = pgBase + pgGst;
-
-  // 4. Product GST (5% for pure natural honey)
+  // 3. Product GST (5% for pure natural honey HSN 0409 - extracted from inclusive price, never added on top)
   const productGstRate = 5;
   const productTaxable = Math.round((discountedSubtotal * 100) / (100 + productGstRate));
   const productGst = discountedSubtotal - productTaxable;
 
-  const totalTax = productGst + shippingGst + platformGst + pgGst;
-  const bundledShippingBase = shippingBase + platformBase + pgBase;
-  const bundledShippingGst = shippingGst + platformGst + pgGst;
-  const bundledShippingTotal = shippingTotal + platformTotal + pgTotal;
+  // 4. Bundled Delivery (Courier Freight + Solid Glass Protective Packaging)
+  const bundledShippingBase = shippingBase + platformBase;
+  const bundledShippingGst = shippingGst + platformGst;
+  const bundledShippingTotal = shippingTotal + platformTotal;
+
+  // 5. Total customer-side tax (strictly Product GST + Courier GST + Packaging GST; no tax-on-tax)
+  const totalTax = productGst + shippingGst + platformGst;
+
+  // 6. Grand total customer payable amount
   const grandTotal = discountedSubtotal + bundledShippingTotal;
+
+  // 7. Payment Gateway (PG) Processing Expense - Strictly a business settlement expense
+  // Recorded for merchant accounting / P&L reports, NOT added onto the customer bill as tax
+  const pgGstRate = settings.paymentGatewayGstRate || 18;
+  const pgPercent = settings.paymentGatewayPercent || 2.0;
+  const pgBase = Math.round((grandTotal * pgPercent) / 100);
+  const pgGst = Math.round((pgBase * pgGstRate) / 100);
+  const pgTotal = pgBase + pgGst;
+  const netMerchantSettlement = Math.max(0, grandTotal - pgTotal);
 
   return {
     subtotal: subtotalPaise,
@@ -215,7 +217,7 @@ export function calculateOrderFees(
     pgGstRate,
     pgTotal,
     paymentGatewayPercent: pgPercent,
-    prePgTotal,
+    prePgTotal: grandTotal,
     bundledShippingBase,
     bundledShippingGst,
     bundledShippingTotal,
@@ -223,6 +225,7 @@ export function calculateOrderFees(
     productGst,
     productGstRate,
     totalTax,
+    netMerchantSettlement,
     grandTotal,
   };
 }

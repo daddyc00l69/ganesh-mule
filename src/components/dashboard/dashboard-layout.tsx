@@ -8,7 +8,7 @@ import { ShieldCheck, Loader2 } from 'lucide-react';
 import { SafeUser } from '@/types';
 
 export interface DashboardLayoutProps {
-  role: 'ADMIN' | 'MANAGER';
+  role: 'DEVELOPER' | 'ADMIN' | 'MANAGER';
   title?: string;
   userName?: string;
   children: React.ReactNode;
@@ -44,9 +44,17 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         }
 
         const user: SafeUser = data.user;
-        // Verify role access (ADMIN can access all, MANAGER can access MANAGER)
-        if (role === 'ADMIN' && user.role !== 'ADMIN') {
-          window.location.href = '/portal?error=unauthorized';
+        // Verify role access (DEVELOPER > ADMIN > MANAGER)
+        if (role === 'DEVELOPER' && user.role !== 'DEVELOPER') {
+          window.location.href = '/portal?error=unauthorized_dev';
+          return;
+        }
+        if (role === 'ADMIN' && user.role !== 'ADMIN' && user.role !== 'DEVELOPER') {
+          window.location.href = '/portal?error=unauthorized_admin';
+          return;
+        }
+        if (role === 'MANAGER' && user.role !== 'MANAGER' && user.role !== 'ADMIN' && user.role !== 'DEVELOPER') {
+          window.location.href = '/portal?error=unauthorized_manager';
           return;
         }
 
@@ -86,7 +94,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   }
 
   return (
-    <div className="dark min-h-screen flex bg-background text-foreground">
+    <div className="min-h-screen flex bg-background text-foreground transition-colors duration-200">
       {/* Sidebar */}
       <Sidebar
         role={role}

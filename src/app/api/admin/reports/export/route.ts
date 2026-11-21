@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   if ('response' in auth) return auth.response;
 
   const { searchParams } = new URL(req.url);
-  const type = searchParams.get('type') || 'orders'; // 'orders' | 'customers' | 'products' | 'revenue' | 'managers'
+  const type = searchParams.get('type') || 'orders'; // 'orders' | 'customers' | 'products' | 'revenue' | 'gst'
 
   const dbOnline = await isDatabaseOnline();
   const bom = '\uFEFF'; // Excel UTF-8 BOM
@@ -229,11 +229,31 @@ export async function GET(req: NextRequest) {
   }
 
   if (type === 'revenue') {
-    const ordersList = reloadOrdersFromDisk();
+    let ordersList: any[] = [];
+    if (dbOnline) {
+      try {
+        const dbOrders = await prisma.order.findMany({
+          select: {
+            createdAt: true,
+            totalAmount: true,
+            taxAmount: true,
+            shippingCost: true,
+            discountAmount: true,
+            paymentStatus: true,
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+        if (dbOrders.length > 0) ordersList = dbOrders;
+      } catch {}
+    }
+    if (ordersList.length === 0) {
+      ordersList = reloadOrdersFromDisk();
+    }
+
     const dayMap = new Map<string, { revenue: number; orders: number; taxes: number; shipping: number; discounts: number }>();
 
     ordersList.forEach((o) => {
-      const dateKey = o.createdAt ? o.createdAt.slice(0, 10) : new Date().toISOString().slice(0, 10);
+      const dateKey = o.createdAt ? new Date(o.createdAt).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
       const existing = dayMap.get(dateKey) || { revenue: 0, orders: 0, taxes: 0, shipping: 0, discounts: 0 };
       existing.revenue += o.totalAmount || 0;
       existing.orders += 1;
@@ -273,6 +293,84 @@ export async function GET(req: NextRequest) {
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
         'Content-Disposition': `attachment; filename="ganesh_honey_revenue_${Date.now()}.csv"`,
+      },
+    });
+  }
+
+  if (type === 'gst') {
+    let ordersList: any[] = [];
+    if (dbOnline) {
+      try {
+        const dbOrders = await prisma.order.findMany({
+          where: { paymentStatus: 'PAID' },
+          include: { items: true },
+          orderBy: { createdAt: 'desc' },
+        });
+        if (dbOrders.length > 0) ordersList = dbOrders;
+      } catch {}
+    }
+    if (ordersList.length === 0) {
+      ordersList = reloadOrdersFromDisk().filter((o) => o.paymentStatus === 'PAID');
+    }
+
+    const headers = [
+      'Order Number',
+      'Date (UTC)',
+      'Customer Name',
+      'Place of Supply (State)',
+      'HSN Code',
+      'Description',
+      'Gross Value (INR)',
+      'Taxable Value (INR)',
+      'CGST (2.5%) (INR)',
+      'SGST (2.5%) (INR)',
+      'IGST (5.0%) (INR)',
+      'Total GST (INR)',
+    ];
+
+    const rows = ordersList.map((o) => {
+      const addr = typeof o.shippingAddress === 'object' ? o.shippingAddress : {};
+      const state = (addr.state || 'Maharashtra').trim();
+      const isMaharashtra = state.toLowerCase().includes('maharashtra');
+      
+      // Zero Tax-on-Tax: 5% GST extracted from inclusive honey pricing (HSN 0409 00 00)
+      const grossPaise = o.subtotal - (o.discountAmount || 0);
+      const taxablePaise = Math.round(grossPaise / 1.05);
+      const gstTotalPaise = grossPaise - taxablePaise;
+
+      let cgst = '0.00';
+      let sgst = '0.00';
+      let igst = '0.00';
+
+      if (isMaharashtra) {
+        const half = Math.round(gstTotalPaise / 2);
+        cgst = (half / 100).toFixed(2);
+        sgst = ((gstTotalPaise - half) / 100).toFixed(2);
+      } else {
+        igst = (gstTotalPaise / 100).toFixed(2);
+      }
+
+      return [
+        escapeCsvField(o.orderNumber),
+        escapeCsvField(o.createdAt ? new Date(o.createdAt).toISOString() : ''),
+        escapeCsvField(o.customerName),
+        escapeCsvField(state),
+        escapeCsvField('0409 00 00'),
+        escapeCsvField('Natural Raw Forest Honey (Inclusive of 5% GST)'),
+        escapeCsvField((grossPaise / 100).toFixed(2)),
+        escapeCsvField((taxablePaise / 100).toFixed(2)),
+        escapeCsvField(cgst),
+        escapeCsvField(sgst),
+        escapeCsvField(igst),
+        escapeCsvField((gstTotalPaise / 100).toFixed(2)),
+      ].join(',');
+    });
+
+    const csvData = bom + [headers.join(','), ...rows].join('\r\n');
+    return new NextResponse(csvData, {
+      headers: {
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': `attachment; filename="ganesh_honey_gst_report_${Date.now()}.csv"`,
       },
     });
   }

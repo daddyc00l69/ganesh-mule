@@ -1,14 +1,13 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { Menu, Sun, Moon, Bell, Shield, User, LogOut } from 'lucide-react';
-import { GlassButton } from '@/components/ui/glass-button';
-import { GlassBadge } from '@/components/ui/glass-badge';
+import React from 'react';
+import { Menu, Sun, Moon, LogOut } from 'lucide-react';
+import { useTheme } from '@/components/theme-provider';
 
 export interface TopbarProps {
   onToggleSidebar: () => void;
   title?: string;
-  role: 'ADMIN' | 'MANAGER';
+  role: 'DEVELOPER' | 'ADMIN' | 'MANAGER';
   userName?: string;
 }
 
@@ -18,23 +17,7 @@ export const Topbar: React.FC<TopbarProps> = ({
   role,
   userName = 'Staff User',
 }) => {
-  const [isDark, setIsDark] = useState<boolean>(true);
-
-  useEffect(() => {
-    // Check saved theme or system preference
-    const saved = localStorage.getItem('solid-glass:theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const activeDark = saved ? saved === 'dark' : prefersDark;
-    setIsDark(activeDark);
-    document.documentElement.classList.toggle('dark', activeDark);
-  }, []);
-
-  const toggleTheme = () => {
-    const nextTheme = !isDark;
-    setIsDark(nextTheme);
-    localStorage.setItem('solid-glass:theme', nextTheme ? 'dark' : 'light');
-    document.documentElement.classList.toggle('dark', nextTheme);
-  };
+  const { theme, resolvedTheme, setTheme, toggleTheme } = useTheme();
 
   const handleLogout = async () => {
     try {
@@ -63,14 +46,18 @@ export const Topbar: React.FC<TopbarProps> = ({
       </div>
 
       <div className="flex items-center gap-2.5">
-        {/* Theme Toggle */}
+        {/* Theme Toggle (Light / Dark Mode) */}
         <button
           type="button"
           onClick={toggleTheme}
-          title={isDark ? 'Switch to daylight glass' : 'Switch to dark glass'}
+          title={resolvedTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           className="p-2 rounded-control glass-control text-foreground hover:bg-white/10 transition-colors cursor-pointer"
         >
-          {isDark ? <Sun className="w-4 h-4 text-amber-300" /> : <Moon className="w-4 h-4 text-slate-700" />}
+          {resolvedTheme === 'dark' ? (
+            <Sun className="w-4 h-4 text-amber-300" />
+          ) : (
+            <Moon className="w-4 h-4 text-slate-700" />
+          )}
         </button>
 
         {/* User Card */}

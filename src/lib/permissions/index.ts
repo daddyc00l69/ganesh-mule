@@ -116,11 +116,11 @@ export const ALL_PERMISSIONS: PermissionDefinition[] = [
  * Admins inherently possess all permissions.
  */
 export function hasPermission(
-  role: 'ADMIN' | 'MANAGER' | 'CUSTOMER',
+  role: 'DEVELOPER' | 'ADMIN' | 'MANAGER' | 'CUSTOMER',
   userPermissions: string[] = [],
   requiredPermission: PermissionKey
 ): boolean {
-  if (role === 'ADMIN') {
+  if (role === 'DEVELOPER' || role === 'ADMIN') {
     return true;
   }
   if (role === 'CUSTOMER') {
@@ -133,11 +133,11 @@ export function hasPermission(
  * Checks if a user has all of the specified permissions.
  */
 export function hasAllPermissions(
-  role: 'ADMIN' | 'MANAGER' | 'CUSTOMER',
+  role: 'DEVELOPER' | 'ADMIN' | 'MANAGER' | 'CUSTOMER',
   userPermissions: string[] = [],
   requiredPermissions: PermissionKey[]
 ): boolean {
-  if (role === 'ADMIN') return true;
+  if (role === 'DEVELOPER' || role === 'ADMIN') return true;
   if (role === 'CUSTOMER') return false;
   return requiredPermissions.every((perm) => userPermissions.includes(perm));
 }
@@ -146,11 +146,11 @@ export function hasAllPermissions(
  * Checks if a user has at least one of the specified permissions.
  */
 export function hasAnyPermission(
-  role: 'ADMIN' | 'MANAGER' | 'CUSTOMER',
+  role: 'DEVELOPER' | 'ADMIN' | 'MANAGER' | 'CUSTOMER',
   userPermissions: string[] = [],
   candidatePermissions: PermissionKey[]
 ): boolean {
-  if (role === 'ADMIN') return true;
+  if (role === 'DEVELOPER' || role === 'ADMIN') return true;
   if (role === 'CUSTOMER') return false;
   return candidatePermissions.some((perm) => userPermissions.includes(perm));
 }

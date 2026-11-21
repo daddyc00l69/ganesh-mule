@@ -247,9 +247,13 @@ export async function POST(req: NextRequest) {
             subtotal,
             shippingCost,
             taxAmount,
+            discountAmount,
             totalAmount,
             orderStatus: 'PENDING',
             paymentStatus: 'CREATED',
+            couponCode: appliedCouponCode || null,
+            assignedManagerName: appliedManagerName || null,
+            financialSnapshot: feeBreakdown as any,
             items: {
               create: verifiedLineItems.map((item) => ({
                 productId: item.productId,
@@ -274,6 +278,15 @@ export async function POST(req: NextRequest) {
           },
         });
         internalOrderId = order.id;
+
+        if (appliedCouponCode) {
+          try {
+            await prisma.discountCoupon.updateMany({
+              where: { code: appliedCouponCode },
+              data: { usedCount: { increment: 1 } },
+            });
+          } catch {}
+        }
       } catch {
         // In-memory fallback if DB is offline
       }

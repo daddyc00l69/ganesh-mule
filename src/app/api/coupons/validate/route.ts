@@ -34,12 +34,11 @@ export async function POST(req: NextRequest) {
     const dbOnline = await isDatabaseOnline();
     if (dbOnline) {
       try {
-        coupon = await (prisma as any).discountCoupon?.findUnique({
+        coupon = await prisma.discountCoupon.findUnique({
           where: { code: normalizedCode },
-          include: { assignedManagers: true },
         });
       } catch {
-        // DB offline, fall back to in-memory MOCK_COUPONS
+        // DB offline or table lookup fallback
       }
     }
 

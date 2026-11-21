@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth } from '@/lib/auth/server';
+import { prisma, isDatabaseOnline } from '@/lib/db';
 import { MOCK_MANAGERS } from '@/lib/mock-data';
 import { getLiveCouponById, updateLiveCoupon, deleteLiveCoupon } from '@/lib/coupons/store';
 import { DiscountCoupon } from '@/types';
@@ -35,11 +36,6 @@ export async function PATCH(
       return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Invalid data' }, { status: 400 });
     }
 
-    const existing = getLiveCouponById(id);
-    if (!existing) {
-      return NextResponse.json({ error: 'Coupon not found' }, { status: 404 });
-    }
-
     const updates: Partial<DiscountCoupon> = {};
     if (parsed.data.description !== undefined) updates.description = parsed.data.description;
     if (parsed.data.discountType !== undefined) updates.discountType = parsed.data.discountType;
@@ -57,7 +53,31 @@ export async function PATCH(
         .filter(Boolean) as string[];
     }
 
+    const dbOnline = await isDatabaseOnline();
+    if (dbOnline) {
+      try {
+        await prisma.discountCoupon.updateMany({
+          where: { id },
+          data: {
+            ...(updates.description !== undefined ? { description: updates.description } : {}),
+            ...(updates.discountType !== undefined ? { discountType: updates.discountType } : {}),
+            ...(updates.value !== undefined ? { value: updates.value } : {}),
+            ...(updates.minOrderAmount !== undefined ? { minOrderAmount: updates.minOrderAmount } : {}),
+            ...(updates.maxDiscountAmount !== undefined ? { maxDiscountAmount: updates.maxDiscountAmount } : {}),
+            ...(updates.expiresAt !== undefined ? { expiresAt: updates.expiresAt ? new Date(updates.expiresAt) : null } : {}),
+            ...(updates.usageLimit !== undefined ? { usageLimit: updates.usageLimit } : {}),
+            ...(updates.isActive !== undefined ? { isActive: updates.isActive } : {}),
+            ...(updates.assignedManagerIds !== undefined ? { assignedManagerIds: updates.assignedManagerIds } : {}),
+            ...(updates.assignedManagerNames !== undefined ? { assignedManagerNames: updates.assignedManagerNames } : {}),
+          },
+        });
+      } catch {}
+    }
+
     const coupon = updateLiveCoupon(id, updates);
+    if (!coupon) {
+      return NextResponse.json({ error: 'Coupon not found' }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true, coupon });
   } catch (err: any) {
@@ -75,6 +95,15 @@ export async function DELETE(
   }
 
   const { id } = await params;
+
+  const dbOnline = await isDatabaseOnline();
+  if (dbOnline) {
+    try {
+      await prisma.discountCoupon.deleteMany({
+        where: { id },
+      });
+    } catch {}
+  }
 
   deleteLiveCoupon(id);
 

@@ -8,6 +8,7 @@ generator client {
 }
 
 enum Role {
+  DEVELOPER
   ADMIN
   MANAGER
   CUSTOMER
@@ -214,9 +215,13 @@ model Order {
   orderStatus     OrderStatus    @default(PENDING)
   paymentStatus   PaymentStatus  @default(CREATED)
   
-  trackingNumber  String?
-  carrier         String?
-  notes           String?
+  trackingNumber      String?
+  carrier             String?
+  assignedManagerId   String?
+  assignedManagerName String?
+  couponCode          String?
+  financialSnapshot   Json?
+  notes               String?
 
   items           OrderItem[]
   payments        Payment[]
@@ -352,4 +357,25 @@ model StoreSettings {
   freeShippingAbove Int      @default(99900) // 999.00 INR
   chatwootEnabled   Boolean  @default(true)
   updatedAt         DateTime @updatedAt
+}
+
+model DiscountCoupon {
+  id                 String    @id @default(cuid())
+  code               String    @unique
+  description        String
+  discountType       String    @default("PERCENTAGE") // PERCENTAGE | FIXED_AMOUNT
+  value              Int       // e.g. 15 for 15% or 10000 for ₹100
+  minOrderAmount     Int       @default(0) // in minor units (paise)
+  maxDiscountAmount  Int?      // in minor units (paise)
+  expiresAt          DateTime?
+  usageLimit         Int?
+  usedCount          Int       @default(0)
+  isPublic           Boolean   @default(false)
+  isActive           Boolean   @default(true)
+  assignedManagerIds String[]  @default([])
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([code])
+  @@index([isActive])
 }

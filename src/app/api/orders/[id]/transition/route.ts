@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { MOCK_ORDERS, MOCK_AUDIT_LOGS } from '@/lib/mock-data';
 import { getLiveOrderById, updateLiveOrderStatus } from '@/lib/orders/store';
+import { prisma, isDatabaseOnline } from '@/lib/db';
 import { sendEmail } from '@/lib/email/resend';
 import {
   getOrderConfirmedEmailHtml,
@@ -9,7 +10,7 @@ import {
 } from '@/lib/email/templates';
 import { OrderStatus } from '@/types';
 import { createDelhiveryShipment } from '@/lib/shipping/delhivery';
-import { requireAuthInProduction } from '@/lib/auth/server';
+import { requireAuthInProduction, getCurrentUser } from '@/lib/auth/server';
 import { PERMISSIONS } from '@/lib/permissions';
 
 export async function POST(
@@ -20,6 +21,7 @@ export async function POST(
     const auth = await requireAuthInProduction('MANAGER', PERMISSIONS.ORDERS_UPDATE);
     if ('response' in auth) return auth.response;
 
+    const user = await getCurrentUser();
     const { id } = await params;
     const body = await req.json();
     const { status, carrier, trackingNumber, notes } = body as {
@@ -64,7 +66,6 @@ export async function POST(
 
     // Business Invariant 3: Strict No Refund Policy on consumable raw honey
     if (status === 'CANCELLED' && order.paymentStatus === 'PAID') {
-      // Cancellation after payment is only permitted for transit breakage replacements
       console.log(`[Order Replacement Flag] Order ${order.orderNumber} cancelled for replacement`);
     }
 
@@ -81,12 +82,49 @@ export async function POST(
       notes,
     });
 
+    const dbOnline = await isDatabaseOnline();
+    if (dbOnline) {
+      try {
+        await prisma.order.updateMany({
+          where: {
+            OR: [{ id: order.id }, { orderNumber: order.orderNumber }],
+          },
+          data: {
+            orderStatus: status as any,
+            carrier: order.carrier || null,
+            trackingNumber: order.trackingNumber || null,
+            notes: notes || undefined,
+          },
+        });
+
+        await prisma.auditLog.create({
+          data: {
+            actorId: user && !user.id.startsWith('usr-') ? user.id : null,
+            action: 'ORDER_STATUS_TRANSITION',
+            entityType: 'Order',
+            entityId: order.orderNumber,
+            metadata: {
+              from: previousStatus,
+              to: status,
+              carrier: order.carrier,
+              trackingNumber: order.trackingNumber,
+              notes,
+              actorEmail: user?.email || 'operations@ganeshmule.com',
+            },
+            ipAddress: req.headers.get('x-forwarded-for') || '127.0.0.1',
+          },
+        });
+      } catch (dbErr) {
+        console.warn('[DB Transition Warning]', dbErr);
+      }
+    }
+
     // Log the event to Audit Trail
     MOCK_AUDIT_LOGS.unshift({
       id: `audit-${Date.now()}`,
-      actorId: 'usr-mgr-1',
-      actorName: 'Operations Desk',
-      actorEmail: 'operations@ganeshmule.com',
+      actorId: user?.id || 'usr-mgr-1',
+      actorName: user?.name || 'Operations Desk',
+      actorEmail: user?.email || 'operations@ganeshmule.com',
       action: 'ORDER_STATUS_TRANSITION',
       entityType: 'Order',
       entityId: order.orderNumber,

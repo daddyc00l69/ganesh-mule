@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAuth, getCurrentUser } from '@/lib/auth/server';
+import { prisma, isDatabaseOnline } from '@/lib/db';
 import { MOCK_MANAGERS } from '@/lib/mock-data';
 import { DiscountCoupon } from '@/types';
 import {
@@ -35,9 +36,30 @@ const ToggleCouponSchema = z.object({
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
+  const dbOnline = await isDatabaseOnline();
 
   // 1. Public Offers Endpoint (for shoppers refreshing offers on checkout)
   if (searchParams.get('publicOnly') === 'true') {
+    if (dbOnline) {
+      try {
+        const dbCoupons = await prisma.discountCoupon.findMany({
+          where: { isActive: true, isPublic: true },
+          orderBy: { createdAt: 'desc' },
+        });
+        if (dbCoupons.length > 0) {
+          const publicCoupons = dbCoupons.map((c) => ({
+            code: c.code,
+            description: c.description,
+            discountType: c.discountType,
+            value: c.value,
+            minOrderAmount: c.minOrderAmount,
+            maxDiscountAmount: c.maxDiscountAmount,
+          }));
+          return NextResponse.json({ success: true, coupons: publicCoupons });
+        }
+      } catch {}
+    }
+
     const publicCoupons = getLiveCoupons()
       .filter((c) => c.isActive && c.isPublic)
       .map((c) => ({
@@ -63,25 +85,79 @@ export async function GET(req: NextRequest) {
   const userId = user?.id || 'usr-admin-1';
 
   try {
-    let coupons = getLiveCoupons();
+    let coupons: DiscountCoupon[] = [];
+
+    if (dbOnline) {
+      try {
+        const dbCoupons = await prisma.discountCoupon.findMany({
+          orderBy: { createdAt: 'desc' },
+        });
+        if (dbCoupons.length > 0) {
+          coupons = dbCoupons.map((c) => ({
+            id: c.id,
+            code: c.code,
+            description: c.description,
+            discountType: c.discountType as any,
+            value: c.value,
+            minOrderAmount: c.minOrderAmount,
+            maxDiscountAmount: c.maxDiscountAmount,
+            expiresAt: c.expiresAt ? c.expiresAt.toISOString() : null,
+            usageLimit: c.usageLimit,
+            usageCount: c.usedCount,
+            isActive: c.isActive,
+            isPublic: c.isPublic,
+            assignedManagerIds: c.assignedManagerIds,
+            assignedManagerNames: c.assignedManagerIds
+              .map((mId) => MOCK_MANAGERS.find((m) => m.userId === mId)?.name)
+              .filter(Boolean) as string[],
+            createdAt: c.createdAt.toISOString(),
+            updatedAt: c.updatedAt.toISOString(),
+          }));
+        }
+      } catch {}
+    }
+
+    if (coupons.length === 0) {
+      coupons = getLiveCoupons();
+    }
 
     // Filter by role: Managers only see coupons assigned to them
     if (role === 'MANAGER') {
       coupons = coupons.filter(
         (c) =>
           c.assignedManagerIds?.includes(userId) ||
-          c.assignedManagerIds?.includes('usr-mgr-1') // Fallback dev manager match
+          c.assignedManagerIds?.includes('usr-mgr-1')
       );
+    }
+
+    // Retrieve staff managers from DB if online
+    let managersList: any[] = MOCK_MANAGERS.map((m) => ({
+      id: m.userId,
+      name: m.name,
+      email: m.email,
+      department: m.department,
+    }));
+
+    if (dbOnline) {
+      try {
+        const dbManagers = await prisma.user.findMany({
+          where: { role: 'MANAGER' },
+          select: { id: true, name: true, email: true },
+        });
+        if (dbManagers.length > 0) {
+          managersList = dbManagers.map((m) => ({
+            id: m.id,
+            name: m.name,
+            email: m.email,
+            department: 'Operations',
+          }));
+        }
+      } catch {}
     }
 
     return NextResponse.json({
       coupons,
-      managers: MOCK_MANAGERS.map((m) => ({
-        id: m.userId,
-        name: m.name,
-        email: m.email,
-        department: m.department,
-      })),
+      managers: managersList,
       role,
     });
   } catch (err: any) {
@@ -90,7 +166,6 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  // Only Admin or Manager with coupons.create can create discount coupons
   const auth = await requireAuth('ADMIN');
   if ('error' in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
@@ -119,8 +194,18 @@ export async function POST(req: NextRequest) {
     } = parsed.data;
 
     const normalizedCode = code.trim().toUpperCase();
+    const dbOnline = await isDatabaseOnline();
 
     // Check code uniqueness
+    if (dbOnline) {
+      const existingDb = await prisma.discountCoupon.findUnique({
+        where: { code: normalizedCode },
+      });
+      if (existingDb) {
+        return NextResponse.json({ error: `Coupon code "${normalizedCode}" already exists.` }, { status: 409 });
+      }
+    }
+
     const exists = Boolean(getLiveCouponByCode(normalizedCode));
     if (exists) {
       return NextResponse.json({ error: `Coupon code "${normalizedCode}" already exists.` }, { status: 409 });
@@ -131,25 +216,88 @@ export async function POST(req: NextRequest) {
       .map((mId) => MOCK_MANAGERS.find((m) => m.userId === mId)?.name)
       .filter(Boolean) as string[];
 
-    const newCoupon: DiscountCoupon = {
-      id: `coup-${Date.now()}`,
-      code: normalizedCode,
-      description,
-      discountType,
-      value,
-      minOrderAmount,
-      maxDiscountAmount: maxDiscountAmount || null,
-      expiresAt: expiresAt || null,
-      usageLimit: usageLimit || null,
-      usageCount: 0,
-      isActive: true,
-      isPublic: !!isPublic,
-      assignedManagerIds,
-      assignedManagerNames,
-      createdById: actor.id,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    let newCoupon: DiscountCoupon;
+
+    if (dbOnline) {
+      try {
+        const created = await prisma.discountCoupon.create({
+          data: {
+            code: normalizedCode,
+            description,
+            discountType,
+            value,
+            minOrderAmount,
+            maxDiscountAmount: maxDiscountAmount || null,
+            expiresAt: expiresAt ? new Date(expiresAt) : null,
+            usageLimit: usageLimit || null,
+            usedCount: 0,
+            isActive: true,
+            isPublic: !!isPublic,
+            assignedManagerIds,
+          },
+        });
+        newCoupon = {
+          id: created.id,
+          code: created.code,
+          description: created.description,
+          discountType: created.discountType as any,
+          value: created.value,
+          minOrderAmount: created.minOrderAmount,
+          maxDiscountAmount: created.maxDiscountAmount,
+          expiresAt: created.expiresAt ? created.expiresAt.toISOString() : null,
+          usageLimit: created.usageLimit,
+          usageCount: created.usedCount,
+          isActive: created.isActive,
+          isPublic: created.isPublic,
+          assignedManagerIds: created.assignedManagerIds,
+          assignedManagerNames,
+          createdById: actor.id,
+          createdAt: created.createdAt.toISOString(),
+          updatedAt: created.updatedAt.toISOString(),
+        };
+      } catch (err: any) {
+        // Fallback to in-memory store if DB error occurs
+        newCoupon = {
+          id: `coup-${Date.now()}`,
+          code: normalizedCode,
+          description,
+          discountType,
+          value,
+          minOrderAmount,
+          maxDiscountAmount: maxDiscountAmount || null,
+          expiresAt: expiresAt || null,
+          usageLimit: usageLimit || null,
+          usageCount: 0,
+          isActive: true,
+          isPublic: !!isPublic,
+          assignedManagerIds,
+          assignedManagerNames,
+          createdById: actor.id,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+      }
+    } else {
+      newCoupon = {
+        id: `coup-${Date.now()}`,
+        code: normalizedCode,
+        description,
+        discountType,
+        value,
+        minOrderAmount,
+        maxDiscountAmount: maxDiscountAmount || null,
+        expiresAt: expiresAt || null,
+        usageLimit: usageLimit || null,
+        usageCount: 0,
+        isActive: true,
+        isPublic: !!isPublic,
+        assignedManagerIds,
+        assignedManagerNames,
+        createdById: actor.id,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    }
 
     addLiveCoupon(newCoupon);
 
@@ -173,6 +321,20 @@ export async function PATCH(req: NextRequest) {
     }
 
     const { id, isPublic, isActive } = parsed.data;
+    const dbOnline = await isDatabaseOnline();
+
+    if (dbOnline) {
+      try {
+        await prisma.discountCoupon.updateMany({
+          where: { id },
+          data: {
+            ...(isPublic !== undefined ? { isPublic } : {}),
+            ...(isActive !== undefined ? { isActive } : {}),
+          },
+        });
+      } catch {}
+    }
+
     const updates: Partial<DiscountCoupon> = {};
     if (isPublic !== undefined) updates.isPublic = isPublic;
     if (isActive !== undefined) updates.isActive = isActive;

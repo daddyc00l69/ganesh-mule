@@ -86,7 +86,7 @@ export async function getCurrentUser(): Promise<SafeUser | null> {
  * Validates that current user has required role and permission.
  */
 export async function requireAuth(
-  requiredRole?: 'ADMIN' | 'MANAGER' | 'CUSTOMER',
+  requiredRole?: 'DEVELOPER' | 'ADMIN' | 'MANAGER' | 'CUSTOMER',
   requiredPermission?: PermissionKey
 ): Promise<{ user: SafeUser } | { error: string; status: number }> {
   const user = await getCurrentUser();
@@ -94,8 +94,24 @@ export async function requireAuth(
     return { error: 'Authentication required', status: 401 };
   }
 
-  if (requiredRole && user.role !== requiredRole && user.role !== 'ADMIN') {
-    return { error: 'Insufficient role privileges', status: 403 };
+  // Developer has full super-user privileges across all panels
+  if (user.role === 'DEVELOPER') {
+    return { user };
+  }
+
+  // Developer panel is strictly restricted to DEVELOPER role
+  if (requiredRole === 'DEVELOPER' && user.role !== 'DEVELOPER') {
+    return { error: 'Insufficient role privileges (Developer access required)', status: 403 };
+  }
+
+  // Admin access allows DEVELOPER or ADMIN
+  if (requiredRole === 'ADMIN' && user.role !== 'ADMIN') {
+    return { error: 'Insufficient role privileges (Administrator access required)', status: 403 };
+  }
+
+  // Manager access allows DEVELOPER, ADMIN, or MANAGER
+  if (requiredRole === 'MANAGER' && user.role !== 'MANAGER' && user.role !== 'ADMIN') {
+    return { error: 'Insufficient role privileges (Staff access required)', status: 403 };
   }
 
   if (
