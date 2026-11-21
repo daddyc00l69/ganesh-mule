@@ -70,6 +70,12 @@ export function getBaseUrl(req?: NextRequest): string {
  * Derives the exact Google OAuth callback URL.
  */
 export function getGoogleCallbackUrl(req?: NextRequest): string {
+  if (process.env.GOOGLE_CALLBACK_URL?.trim()) {
+    return process.env.GOOGLE_CALLBACK_URL.trim();
+  }
+  if (process.env.GOOGLE_REDIRECT_URI?.trim()) {
+    return process.env.GOOGLE_REDIRECT_URI.trim();
+  }
   const base = getBaseUrl(req);
   return `${base}/api/auth/google/callback`;
 }
