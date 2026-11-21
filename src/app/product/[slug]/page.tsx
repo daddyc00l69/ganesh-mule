@@ -375,7 +375,7 @@ export default function ProductDetailPage() {
       <div className="bg-[#f5f5f7] min-h-screen pb-24 text-[#1d1d1f] selection:bg-[#0071e3]/20 selection:text-[#0071e3]">
         
         {/* Apple-Style Minimalist Breadcrumb Bar */}
-        <div className="border-b border-[#d2d2d7]/80 bg-white/80 backdrop-blur-md sticky top-11 sm:top-12 z-30">
+        <div className="border-b border-[#d2d2d7]/80 bg-white/80">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between text-xs">
             <Link
               href="/shop"
@@ -781,7 +781,7 @@ export default function ProductDetailPage() {
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                     <div>
                       <span className="font-semibold">Express Delivery Available to {pinCity}, {pinState}</span>
-                      <p className="text-[10px] text-emerald-700">Dispatched within 24h via Delhivery Air · Free shipping on orders over ₹999</p>
+                      <p className="text-[10px] text-emerald-700">Dispatched within 24h via Delhivery Insured Delivery · Free shipping on orders over ₹999</p>
                     </div>
                   </div>
                 )}
@@ -795,8 +795,8 @@ export default function ProductDetailPage() {
         <section className="bg-white border-t border-[#d2d2d7]/70 py-16">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
             
-            {/* Segmented Nav Tabs */}
-            <div className="flex items-center justify-center gap-2 border-b border-[#d2d2d7]/60 pb-4 flex-wrap">
+            {/* Segmented Nav Tabs (Apple Clean Scrollable Strip) */}
+            <div className="flex items-center justify-start sm:justify-center gap-2 border-b border-[#d2d2d7]/60 pb-3 overflow-x-auto no-scrollbar">
               {[
                 { id: 'STORY', label: 'The Harvest & Origin' },
                 { id: 'SPECS', label: 'Technical Specifications' },
@@ -807,7 +807,7 @@ export default function ProductDetailPage() {
                   key={t.id}
                   type="button"
                   onClick={() => setActiveTab(t.id as any)}
-                  className={`px-4 py-2 text-xs font-medium rounded-full transition-all cursor-pointer ${
+                  className={`px-4 py-2 text-xs font-medium rounded-full transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                     activeTab === t.id
                       ? 'bg-[#1d1d1f] text-white shadow-2xs'
                       : 'bg-[#f5f5f7] border border-[#d2d2d7] text-[#1d1d1f] hover:border-[#86868b]'

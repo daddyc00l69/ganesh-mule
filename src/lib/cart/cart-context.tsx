@@ -5,7 +5,7 @@ import { CartItem, ProductItem } from '@/types';
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (product: ProductItem, quantity?: number) => void;
+  addToCart: (product: ProductItem, quantity?: number, openCart?: boolean) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -67,7 +67,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [items, isLoaded]);
 
-  const addToCart = useCallback((product: ProductItem, quantity = 1) => {
+  const addToCart = useCallback((product: ProductItem, quantity = 1, openCart = false) => {
     setItems((prev) => {
       const existing = prev.find((i) => i.productId === product.id);
       if (existing) {
@@ -92,7 +92,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
       ];
     });
-    setIsCartOpen(true);
+    if (openCart) {
+      setIsCartOpen(true);
+    }
   }, []);
 
   const removeFromCart = useCallback((productId: string) => {

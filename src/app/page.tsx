@@ -42,7 +42,7 @@ export default function HomePage() {
         {/* Top Announcement Bar */}
         <div className="bg-[#1d1d1f] text-white text-[11px] sm:text-xs py-2.5 px-4 text-center font-medium tracking-wide flex items-center justify-center gap-2">
           <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-          <span>Free Express Air Delivery Across India on Orders Over ₹999 · 100% German NMR Tested Pure Honey</span>
+          <span>Free Insured Delivery Across India on Orders Over ₹999 · 100% German NMR Tested Pure Honey</span>
         </div>
 
         {/* Hero Section: Apple Minimalist Editorial (Mobile-First Optimized) */}

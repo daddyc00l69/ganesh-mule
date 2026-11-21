@@ -843,21 +843,21 @@ function CheckoutContent() {
   if (items.length === 0 && !completedOrder) {
     return (
       <StoreProvider>
-        <div className="bg-[#f5f5f7] min-h-screen py-24 px-4 flex items-center justify-center text-stone-900">
-          <div className="max-w-md w-full bg-white rounded-3xl border border-stone-200/90 p-8 sm:p-10 text-center space-y-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-            <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200/60 flex items-center justify-center mx-auto text-amber-700">
+        <div className="bg-[#f5f5f7] min-h-screen py-24 px-4 flex items-center justify-center text-[#1d1d1f]">
+          <div className="max-w-md w-full bg-white rounded-3xl border border-[#d2d2d7]/80 p-8 sm:p-10 text-center space-y-5 shadow-sm">
+            <div className="w-16 h-16 rounded-2xl bg-[#f5f5f7] border border-[#d2d2d7] flex items-center justify-center mx-auto text-[#1d1d1f]">
               <ShoppingBag className="w-8 h-8 stroke-[1.75]" />
             </div>
             <div className="space-y-2">
-              <h1 className="text-2xl font-serif font-bold text-stone-950">Your Bag is Empty</h1>
-              <p className="text-xs sm:text-sm text-stone-600 leading-relaxed max-w-xs mx-auto">
+              <h1 className="text-2xl font-bold text-[#1d1d1f]">Your Bag is Empty</h1>
+              <p className="text-xs sm:text-sm text-[#86868b] leading-relaxed max-w-xs mx-auto">
                 Explore our cold-extracted wild forest harvests bottled exclusively in heavy solid glass jars.
               </p>
             </div>
             <div className="pt-2">
               <Link
                 href="/shop"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs sm:text-sm font-semibold bg-amber-600 hover:bg-amber-700 active:scale-95 text-white shadow-md shadow-amber-600/20 transition-all cursor-pointer"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs sm:text-sm font-semibold bg-[#0071e3] hover:bg-[#0077ed] active:scale-95 text-white shadow-sm transition-all cursor-pointer"
               >
                 <span>Browse Raw Honey Reserves</span>
                 <ArrowRight className="w-4 h-4" />
@@ -873,7 +873,7 @@ function CheckoutContent() {
   if (completedOrder) {
     return (
       <StoreProvider>
-        <div className="bg-[#f5f5f7] min-h-screen py-16 px-4 sm:px-6 text-stone-900">
+        <div className="bg-[#f5f5f7] min-h-screen py-16 px-4 sm:px-6 text-[#1d1d1f]">
           <div className="max-w-xl mx-auto text-center space-y-6">
             <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center mx-auto shadow-sm">
               <CheckCircle2 className="w-9 h-9 stroke-[2]" />
@@ -884,29 +884,29 @@ function CheckoutContent() {
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
                 Payment Verified • Delhivery Insured Booking
               </span>
-              <h1 className="text-3xl font-serif font-bold tracking-tight text-stone-950">
+              <h1 className="text-3xl font-bold tracking-tight text-[#1d1d1f]">
                 Thank You for Your Order.
               </h1>
-              <p className="text-xs sm:text-sm text-stone-600 max-w-md mx-auto leading-relaxed">
+              <p className="text-xs sm:text-sm text-[#86868b] max-w-md mx-auto leading-relaxed">
                 Your solid glass jars are being cushioned in custom shock-absorbing kraft packaging at our Western Ghats dispatch hub.
               </p>
             </div>
 
-            <div className="bg-white rounded-3xl border border-stone-200/90 p-6 sm:p-7 text-left space-y-3.5 shadow-sm">
-              <div className="flex justify-between items-center pb-3 border-b border-stone-100 text-xs">
-                <span className="text-stone-500">Order Number</span>
-                <span className="font-mono font-bold text-stone-900 text-sm">
+            <div className="bg-white rounded-3xl border border-[#d2d2d7]/80 p-6 sm:p-7 text-left space-y-3.5 shadow-sm">
+              <div className="flex justify-between items-center pb-3 border-b border-[#d2d2d7]/50 text-xs">
+                <span className="text-[#86868b]">Order Number</span>
+                <span className="font-mono font-bold text-[#1d1d1f] text-sm">
                   {completedOrder.orderNumber}
                 </span>
               </div>
-              <div className="flex justify-between items-center pb-3 border-b border-stone-100 text-xs">
-                <span className="text-stone-500">Razorpay Payment ID</span>
-                <span className="font-mono text-stone-600 text-[11px]">
+              <div className="flex justify-between items-center pb-3 border-b border-[#d2d2d7]/50 text-xs">
+                <span className="text-[#86868b]">Razorpay Payment ID</span>
+                <span className="font-mono text-[#86868b] text-[11px]">
                   {completedOrder.paymentId}
                 </span>
               </div>
               {completedOrder.couponCode && (
-                <div className="flex justify-between items-center pb-3 border-b border-stone-100 text-xs">
+                <div className="flex justify-between items-center pb-3 border-b border-[#d2d2d7]/50 text-xs">
                   <span className="text-emerald-700 font-medium flex items-center gap-1">
                     <Tag className="w-3.5 h-3.5" />
                     Coupon Applied ({completedOrder.couponCode})
@@ -916,15 +916,15 @@ function CheckoutContent() {
                   </span>
                 </div>
               )}
-              <div className="flex justify-between items-center pb-3 border-b border-stone-100 text-xs">
-                <span className="text-stone-500">Dispatched Via</span>
-                <span className="font-semibold text-amber-800">
-                  {shippingMode === 'Express' ? 'Delhivery One Air Express' : 'Delhivery One Surface'}
+              <div className="flex justify-between items-center pb-3 border-b border-[#d2d2d7]/50 text-xs">
+                <span className="text-[#86868b]">Dispatched Via</span>
+                <span className="font-semibold text-[#1d1d1f]">
+                  Delhivery One Insured Delivery
                 </span>
               </div>
               <div className="flex justify-between items-center text-xs pt-1">
-                <span className="text-stone-600 font-medium">Total Paid</span>
-                <span className="font-bold text-stone-950 text-base sm:text-lg">
+                <span className="text-[#1d1d1f] font-medium">Total Paid</span>
+                <span className="font-bold text-[#1d1d1f] text-base sm:text-lg font-mono">
                   {formatCurrency(completedOrder.amount)}
                 </span>
               </div>
@@ -934,20 +934,20 @@ function CheckoutContent() {
               <Link
                 href={`/invoice/${completedOrder.orderNumber}`}
                 target="_blank"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-stone-900 hover:bg-stone-800 text-white font-medium text-xs shadow-sm transition-all active:scale-95 cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#1d1d1f] hover:bg-black text-white font-medium text-xs shadow-sm transition-all active:scale-95 cursor-pointer"
               >
-                <FileText className="w-4 h-4 text-amber-400" />
+                <FileText className="w-4 h-4 text-white/80" />
                 <span>View Official Tax Invoice (PDF)</span>
               </Link>
               <Link
                 href="/account"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-amber-600 hover:bg-amber-700 text-white font-medium text-xs shadow-sm transition-all active:scale-95 cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white font-medium text-xs shadow-sm transition-all active:scale-95 cursor-pointer"
               >
                 <span>Track in My Orders</span>
               </Link>
               <Link
                 href="/shop"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-white border border-stone-300 text-stone-800 hover:bg-stone-50 font-medium text-xs transition-all cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-white border border-[#d2d2d7] text-[#1d1d1f] hover:bg-[#f5f5f7] font-medium text-xs transition-all cursor-pointer shadow-2xs"
               >
                 <span>Continue Shopping</span>
               </Link>
@@ -960,14 +960,14 @@ function CheckoutContent() {
 
   return (
     <StoreProvider>
-      <div className="bg-[#f5f5f7] min-h-screen pb-44 lg:pb-20 text-stone-900 selection:bg-[#0071e3]/20 selection:text-[#0071e3] scroll-smooth overscroll-y-contain">
+      <div className="bg-[#f5f5f7] min-h-screen pb-44 lg:pb-20 text-[#1d1d1f] selection:bg-[#0071e3]/20 selection:text-[#0071e3] scroll-smooth overscroll-y-contain">
         
         {/* Top Progress & Guarantee Header */}
-        <div className="border-b border-stone-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-20">
+        <div className="border-b border-[#d2d2d7]/80 bg-white/80 backdrop-blur-md sticky top-0 z-20">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
             <Link
               href="/shop"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-700 hover:text-amber-700 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1d1d1f] hover:text-[#0071e3] transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Shop</span>
@@ -975,19 +975,19 @@ function CheckoutContent() {
 
             {/* Stepper Breadcrumbs */}
             <div className="hidden sm:flex items-center gap-2 text-xs">
-              <div className="flex items-center gap-1.5 text-emerald-700 font-semibold">
-                <CheckCircle2 className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-1.5 text-[#1d1d1f] font-medium">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                 <span>1. Bag</span>
               </div>
-              <span className="text-stone-300">/</span>
-              <div className="flex items-center gap-1.5 text-amber-900 font-bold bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
-                <MapPin className="w-3.5 h-3.5 text-amber-700" />
-                <span>2. Address &amp; Delhivery Speed</span>
+              <span className="text-[#86868b]">/</span>
+              <div className="flex items-center gap-1.5 text-[#1d1d1f] font-semibold bg-[#f5f5f7] px-2.5 py-0.5 rounded-full border border-[#d2d2d7]">
+                <MapPin className="w-3.5 h-3.5 text-[#0071e3]" />
+                <span>2. Address &amp; Delivery</span>
               </div>
-              <span className="text-stone-300">/</span>
-              <div className="flex items-center gap-1.5 text-stone-400">
+              <span className="text-[#86868b]">/</span>
+              <div className="flex items-center gap-1.5 text-[#86868b]">
                 <Lock className="w-3.5 h-3.5" />
-                <span>3. 100% Prepaid Payment</span>
+                <span>3. Secure Payment</span>
               </div>
             </div>
 
@@ -1000,24 +1000,15 @@ function CheckoutContent() {
           </div>
         </div>
 
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
 
-          {/* Heading and Quality Pillars */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#1d1d1f] bg-white border border-[#d2d2d7] px-2.5 py-0.5 rounded-full shadow-2xs">
-                Western Ghats Direct Dispatch
-              </span>
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#86868b] bg-[#f5f5f7] border border-[#d2d2d7] px-2.5 py-0.5 rounded-full">
-                Delhivery One Automated Courier
-              </span>
-            </div>
+          {/* Heading */}
+          <div className="space-y-1.5">
             <h1 className="text-3xl sm:text-4xl font-bold text-[#1d1d1f] tracking-tight">
-              Checkout &amp; Shipment Speed.
+              Checkout
             </h1>
-            <p className="text-xs sm:text-sm text-stone-600 max-w-2xl leading-relaxed">
-              Real-time Delhivery One transit speeds and rates calculated based on your 6-digit delivery PIN code.
-              Every jar is secured with tamper-proof NMR seal and shock-absorbing kraft protection.
+            <p className="text-xs sm:text-sm text-[#86868b] max-w-xl leading-relaxed">
+              Encrypted 256-bit checkout with Delhivery One insured solid glass direct delivery.
             </p>
           </div>
 
@@ -1039,23 +1030,23 @@ function CheckoutContent() {
           )}
 
           {/* Mobile Collapsible Order Summary Ribbon */}
-          <div className="lg:hidden bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
+          <div className="lg:hidden bg-white rounded-2xl border border-[#d2d2d7] shadow-xs overflow-hidden">
             <button
               type="button"
               onClick={() => setIsOrderSummaryOpen(!isOrderSummaryOpen)}
               className="w-full p-4 flex items-center justify-between text-left text-xs font-medium cursor-pointer"
             >
               <div className="flex items-center gap-2">
-                <Droplets className="w-4 h-4 text-amber-600" />
-                <span className="font-semibold text-stone-900">
+                <ShoppingBag className="w-4 h-4 text-[#0071e3]" />
+                <span className="font-semibold text-[#1d1d1f]">
                   Order Summary ({totalQuantity} {totalQuantity === 1 ? 'jar' : 'jars'})
                 </span>
-                <span className="text-stone-300">•</span>
-                <span className="font-bold text-amber-900">
+                <span className="text-[#86868b]">•</span>
+                <span className="font-bold text-[#1d1d1f] font-mono">
                   {formatCurrency(totalAmount)}
                 </span>
               </div>
-              <div className="flex items-center gap-1 text-amber-700 font-semibold text-xs">
+              <div className="flex items-center gap-1 text-[#0071e3] font-semibold text-xs">
                 <span>{isOrderSummaryOpen ? 'Hide' : 'Review'}</span>
                 {isOrderSummaryOpen ? (
                   <ChevronUp className="w-4 h-4" />
@@ -1089,17 +1080,17 @@ function CheckoutContent() {
                             <button
                               type="button"
                               onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                              className="px-2 py-0.5 text-stone-700 hover:text-amber-700 font-bold"
+                              className="px-2 py-0.5 text-[#1d1d1f] hover:text-[#0071e3] font-bold"
                             >
                               -
                             </button>
-                            <span className="px-2 text-[11px] font-bold text-stone-900">
+                            <span className="px-2 text-[11px] font-bold text-[#1d1d1f]">
                               {item.quantity}
                             </span>
                             <button
                               type="button"
                               onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                              className="px-2 py-0.5 text-stone-700 hover:text-amber-700 font-bold"
+                              className="px-2 py-0.5 text-[#1d1d1f] hover:text-[#0071e3] font-bold"
                             >
                               +
                             </button>
@@ -1133,13 +1124,13 @@ function CheckoutContent() {
             <div className="lg:col-span-2 space-y-6">
 
               {/* 1. Contact Information */}
-              <div className="bg-white rounded-3xl border border-stone-200/90 p-6 sm:p-7 space-y-4 shadow-sm">
-                <div className="flex items-center justify-between border-b border-stone-100 pb-3">
-                  <h2 className="text-xs font-bold text-stone-900 uppercase tracking-wider flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-amber-100 text-amber-900 flex items-center justify-center text-[10px] font-bold">1</span>
+              <div className="bg-white rounded-3xl border border-[#d2d2d7]/80 p-6 sm:p-7 space-y-4 shadow-sm">
+                <div className="flex items-center justify-between border-b border-[#d2d2d7]/50 pb-3">
+                  <h2 className="text-xs font-bold text-[#1d1d1f] uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-[#1d1d1f] text-white flex items-center justify-center text-[10px] font-semibold">1</span>
                     <span>Contact Details</span>
                   </h2>
-                  <span className="text-[11px] text-stone-500 font-medium">SMS Courier Tracking &amp; PDF Invoice</span>
+                  <span className="text-[11px] text-[#86868b] font-medium">SMS Courier Tracking &amp; PDF Invoice</span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1203,10 +1194,10 @@ function CheckoutContent() {
               </div>
 
               {/* 2. Delivery Destination */}
-              <div className="bg-white rounded-3xl border border-stone-200/90 p-6 sm:p-7 space-y-4 shadow-sm">
-                <div className="flex items-center justify-between border-b border-stone-100 pb-3">
-                  <h2 className="text-xs font-bold text-stone-900 uppercase tracking-wider flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-amber-100 text-amber-900 flex items-center justify-center text-[10px] font-bold">2</span>
+              <div className="bg-white rounded-3xl border border-[#d2d2d7]/80 p-6 sm:p-7 space-y-4 shadow-sm">
+                <div className="flex items-center justify-between border-b border-[#d2d2d7]/50 pb-3">
+                  <h2 className="text-xs font-bold text-[#1d1d1f] uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-[#1d1d1f] text-white flex items-center justify-center text-[10px] font-semibold">2</span>
                     <span>Delivery Destination</span>
                   </h2>
                   <span className="text-[11px] text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full font-semibold">
@@ -1217,7 +1208,7 @@ function CheckoutContent() {
                 <div className="space-y-4">
                   {/* Country (Default: India) */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-stone-800 flex items-center justify-between">
+                    <label className="text-xs font-semibold text-[#1d1d1f] flex items-center justify-between">
                       <span>Country / Territory</span>
                       <span className="text-[10px] text-emerald-700 font-bold flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3" /> Default: India
@@ -1226,7 +1217,7 @@ function CheckoutContent() {
                     <select
                       value={country}
                       onChange={(e) => setCountry(e.target.value)}
-                      className="w-full h-11 px-3.5 text-xs rounded-xl border border-stone-200 bg-stone-50/80 text-stone-900 font-medium focus:outline-none focus:bg-white focus:border-amber-600 transition-all cursor-pointer"
+                      className="w-full h-12 sm:h-11 px-3.5 text-base sm:text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] font-medium focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all cursor-pointer"
                     >
                       <option value="India">India 🇮🇳 (National Insured Courier Delivery)</option>
                     </select>
@@ -1313,15 +1304,15 @@ function CheckoutContent() {
                           <button
                             type="button"
                             onClick={() => fetchPinDetails(postalCode)}
-                            className="text-[9px] text-amber-700 hover:underline cursor-pointer shrink-0 ml-1 flex items-center gap-0.5"
+                            className="text-[9px] text-[#0071e3] hover:underline cursor-pointer shrink-0 ml-1 flex items-center gap-0.5"
                           >
                             <RefreshCw className="w-2.5 h-2.5" /> Re-check
                           </button>
                         </div>
                       ) : postalCode.length > 0 && postalCode.length < 6 ? (
-                        <p className="text-[10px] text-amber-700">Enter 6 digits for courier calculation</p>
+                        <p className="text-[10px] text-[#86868b]">Enter 6 digits for courier calculation</p>
                       ) : pinError ? (
-                        <p className="text-[10px] text-amber-600">{pinError}</p>
+                        <p className="text-[10px] text-rose-600">{pinError}</p>
                       ) : null}
 
                       {district && (
@@ -1360,7 +1351,7 @@ function CheckoutContent() {
                           setPinAutoDetected(`${e.target.value}${e.target.value && state ? ', ' : ''}${state}`);
                         }}
                         placeholder="Town or City"
-                        className="w-full h-11 px-3.5 text-xs rounded-xl border border-stone-200 bg-stone-50/60 text-stone-900 focus:outline-none focus:bg-white focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 transition-all font-medium"
+                        className="w-full h-12 sm:h-11 px-3.5 text-base sm:text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all font-medium"
                       />
                       {availableTowns.length > 0 && (
                         <div className="flex flex-wrap gap-1 pt-0.5 max-h-16 overflow-y-auto">
@@ -1374,8 +1365,8 @@ function CheckoutContent() {
                               }}
                               className={`text-[9px] px-1.5 py-0.5 rounded-md transition-colors cursor-pointer border ${
                                 city === t
-                                  ? 'bg-amber-600 text-white border-amber-600 font-semibold'
-                                  : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border-stone-200'
+                                  ? 'bg-[#0071e3] text-white border-[#0071e3] font-semibold'
+                                  : 'bg-[#f5f5f7] hover:bg-stone-100 text-[#1d1d1f] border-[#d2d2d7]'
                               }`}
                             >
                               {t}
@@ -1397,7 +1388,7 @@ function CheckoutContent() {
                           setState(e.target.value);
                           setPinAutoDetected(`${city}${city && e.target.value ? ', ' : ''}${e.target.value}`);
                         }}
-                        className="w-full h-11 px-3.5 text-xs rounded-xl border border-stone-200 bg-stone-50/60 text-stone-900 focus:outline-none focus:bg-white focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 transition-all cursor-pointer font-medium"
+                        className="w-full h-12 sm:h-11 px-3.5 text-base sm:text-xs rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] focus:outline-none focus:border-[#0071e3] focus:ring-2 focus:ring-[#0071e3]/20 transition-all cursor-pointer font-medium"
                       >
                         <optgroup label="States (28)">
                           {INDIAN_STATES.filter((s) => s.type === 'STATE').map((s) => (
@@ -1419,249 +1410,96 @@ function CheckoutContent() {
                 </div>
               </div>
 
-              {/* 3. SELECT SHIPMENT SPEED (DELHIVERY ONE) — DEPENDENT ON PINCODE */}
-              <div className="bg-white rounded-3xl border border-stone-200/90 p-6 sm:p-7 space-y-4 shadow-sm">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-100 pb-3">
+              {/* 3. Insured Delivery (Delhivery One) */}
+              <div className="bg-white rounded-3xl border border-[#d2d2d7]/80 p-6 sm:p-7 space-y-4 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#d2d2d7]/50 pb-3">
                   <div>
-                    <h2 className="text-xs font-bold text-stone-900 uppercase tracking-wider flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-full bg-amber-100 text-amber-900 flex items-center justify-center text-[10px] font-bold">3</span>
-                      <span>Select Shipment Speed (Delhivery One)</span>
+                    <h2 className="text-xs font-bold text-[#1d1d1f] uppercase tracking-wider flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-full bg-[#1d1d1f] text-white flex items-center justify-center text-[10px] font-semibold">3</span>
+                      <span>Insured Delivery</span>
                     </h2>
-                    <p className="text-[11px] text-stone-500 mt-0.5">
-                      Transit speeds &amp; live rates depend on your 6-digit delivery PIN code
+                    <p className="text-[11px] text-[#86868b] mt-0.5">
+                      Direct insured dispatch via Delhivery One Logistics
                     </p>
                   </div>
 
                   {postalCode.length === 6 && isValidIndianPin(postalCode) && (
                     <div className="flex items-center gap-1.5 self-start sm:self-auto">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-900 border border-amber-200">
-                        <Truck className="w-3 h-3 text-amber-600" />
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-[#f5f5f7] text-[#1d1d1f] border border-[#d2d2d7]">
+                        <Truck className="w-3 h-3 text-[#0071e3]" />
                         PIN: {postalCode}
                       </span>
-                      {speedQuotes.express?.available ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-900 border border-emerald-200">
-                          <Check className="w-3 h-3 text-emerald-600" />
-                          Air &amp; Surface Active
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-stone-100 text-stone-800 border border-stone-200">
-                          Surface Mode Enabled
-                        </span>
-                      )}
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                        <Check className="w-3 h-3 text-emerald-600" />
+                        Serviceable
+                      </span>
                     </div>
                   )}
                 </div>
 
-                {/* PIN Prompt Guidance (When PIN not yet entered) */}
-                {(!postalCode || postalCode.length < 6 || !isValidIndianPin(postalCode)) ? (
-                  <div className="rounded-2xl border border-dashed border-amber-300 bg-amber-50/50 p-5 text-center space-y-3">
-                    <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center mx-auto shadow-2xs">
-                      <MapPin className="w-5 h-5 text-amber-700" />
-                    </div>
-                    <div className="space-y-1">
-                      <h3 className="text-xs font-bold text-amber-950 uppercase tracking-wider">
-                        Enter 6-Digit Delivery PIN to Compare Delhivery Speeds
-                      </h3>
-                      <p className="text-xs text-amber-900/80 max-w-md mx-auto leading-relaxed">
-                        Delhivery One Surface (Road Logistics) and Air Express (Priority Flight) live rates, transit timelines, and delivery dates will unlock automatically for your destination zone.
-                      </p>
-                    </div>
-
-                    {/* Teaser Preview Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-left opacity-75">
-                      <div className="p-3.5 rounded-xl border border-stone-200 bg-white">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5 font-bold text-xs text-stone-800">
-                            <Truck className="w-4 h-4 text-amber-700" />
-                            <span>Surface Standard</span>
-                          </div>
-                          <span className="text-[9px] bg-stone-100 text-stone-600 font-semibold px-2 py-0.5 rounded-full">
-                            3-5 Days
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-stone-500 mt-1">Ground freight for solid glass jars</p>
-                        <span className="text-[10px] text-amber-700 font-semibold block mt-2">Enter PIN to view rate</span>
-                      </div>
-
-                      <div className="p-3.5 rounded-xl border border-stone-200 bg-white">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1.5 font-bold text-xs text-stone-800">
-                            <Plane className="w-4 h-4 text-emerald-700" />
-                            <span>Air Express Priority</span>
-                          </div>
-                          <span className="text-[9px] bg-amber-100 text-amber-900 font-bold px-2 py-0.5 rounded-full">
-                            1-2 Days
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-stone-500 mt-1">Fastest door-to-door domestic air transit</p>
-                        <span className="text-[10px] text-amber-700 font-semibold block mt-2">Enter PIN to view rate</span>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  /* Interactive Delhivery One Speed Option Cards */
-                  <div className="space-y-3">
-                    {isCalculatingFreight && (
-                      <div className="flex items-center justify-center gap-2 p-3 rounded-xl bg-amber-50/70 border border-amber-200 text-xs text-amber-900 font-medium animate-pulse">
-                        <Loader2 className="w-4 h-4 animate-spin text-amber-700" />
-                        <span>Querying Delhivery One rate calculation API for PIN {postalCode}...</span>
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                      
-                      {/* 1. Surface Standard Card */}
-                      <button
-                        type="button"
-                        onClick={() => handleSelectSpeedMode('Surface')}
-                        className={`p-4 rounded-2xl text-left transition-all border-2 relative flex flex-col justify-between cursor-pointer ${
-                          shippingMode === 'Surface'
-                            ? 'bg-amber-50/40 border-amber-600 ring-2 ring-amber-500/20 shadow-sm'
-                            : 'bg-white hover:bg-stone-50 border-stone-200'
-                        }`}
-                      >
-                        <div className="space-y-2">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex items-center gap-2">
-                              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                                shippingMode === 'Surface' ? 'bg-amber-600 text-white' : 'bg-stone-100 text-stone-700'
-                              }`}>
-                                <Truck className="w-4 h-4" />
-                              </div>
-                              <div>
-                                <h3 className="text-xs font-bold text-stone-950">Surface Standard</h3>
-                                <p className="text-[10px] text-stone-500">Delhivery Ground Road Logistics</p>
-                              </div>
-                            </div>
-
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                              shippingMode === 'Surface'
-                                ? 'border-amber-600 bg-amber-600 text-white'
-                                : 'border-stone-300 bg-white'
-                            }`}>
-                              {shippingMode === 'Surface' && <Check className="w-3 h-3 stroke-[3]" />}
-                            </div>
-                          </div>
-
-                          <div className="space-y-1 pt-1">
-                            <div className="flex items-baseline justify-between">
-                              <span className="text-[11px] font-semibold text-stone-700">Estimated Delivery:</span>
-                              <span className="text-xs font-bold text-stone-900 font-mono">
-                                {speedQuotes.surface?.estimatedDeliveryDate || '3-5 Business Days'}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between text-[11px]">
-                              <span className="text-stone-500">Transit Speed:</span>
-                              <span className="font-semibold text-stone-800">
-                                {speedQuotes.surface?.estimatedDays || 3}-5 business days
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="pt-3 mt-3 border-t border-stone-100 flex items-center justify-between">
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                            <Shield className="w-3 h-3 text-emerald-600" />
-                            Insured Glass Transit
-                          </span>
-                          <span className="text-sm font-bold text-stone-950 font-mono">
-                            {speedQuotes.surface
-                              ? formatCurrency(speedQuotes.surface.bundledDeliveryTotal)
-                              : isCalculatingFreight
-                              ? '...'
-                              : formatCurrency(bundledShippingTotal)}
-                          </span>
-                        </div>
-                      </button>
-
-                      {/* 2. Air Express Priority Card */}
-                      <button
-                        type="button"
-                        disabled={speedQuotes.express !== null && !speedQuotes.express.available}
-                        onClick={() => handleSelectSpeedMode('Express')}
-                        className={`p-4 rounded-2xl text-left transition-all border-2 relative flex flex-col justify-between ${
-                          speedQuotes.express && !speedQuotes.express.available
-                            ? 'bg-stone-50 border-stone-200 opacity-60 cursor-not-allowed'
-                            : shippingMode === 'Express'
-                            ? 'bg-amber-50/40 border-amber-600 ring-2 ring-amber-500/20 shadow-sm cursor-pointer'
-                            : 'bg-white hover:bg-stone-50 border-stone-200 cursor-pointer'
-                        }`}
-                      >
-                        <div className="space-y-2">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex items-center gap-2">
-                              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                                shippingMode === 'Express' ? 'bg-amber-600 text-white' : 'bg-stone-100 text-stone-700'
-                              }`}>
-                                <Plane className="w-4 h-4" />
-                              </div>
-                              <div>
-                                <div className="flex items-center gap-1.5">
-                                  <h3 className="text-xs font-bold text-stone-950">Air Express Priority</h3>
-                                  <span className="text-[9px] px-1.5 py-0.2 rounded-full font-bold bg-amber-100 text-amber-900 border border-amber-300">
-                                    ⚡ Fastest
-                                  </span>
-                                </div>
-                                <p className="text-[10px] text-stone-500">Delhivery Priority Aviation Freight</p>
-                              </div>
-                            </div>
-
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                              shippingMode === 'Express'
-                                ? 'border-amber-600 bg-amber-600 text-white'
-                                : 'border-stone-300 bg-white'
-                            }`}>
-                              {shippingMode === 'Express' && <Check className="w-3 h-3 stroke-[3]" />}
-                            </div>
-                          </div>
-
-                          <div className="space-y-1 pt-1">
-                            <div className="flex items-baseline justify-between">
-                              <span className="text-[11px] font-semibold text-stone-700">Estimated Delivery:</span>
-                              <span className="text-xs font-bold text-emerald-800 font-mono">
-                                {speedQuotes.express?.estimatedDeliveryDate || '1-2 Business Days'}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between text-[11px]">
-                              <span className="text-stone-500">Transit Speed:</span>
-                              <span className="font-semibold text-emerald-800">
-                                {speedQuotes.express?.estimatedDays || 1}-2 business days
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {speedQuotes.express && !speedQuotes.express.available ? (
-                          <div className="pt-2 mt-2 border-t border-stone-100">
-                            <p className="text-[10px] text-amber-800 font-medium bg-amber-50 p-1.5 rounded-lg border border-amber-200">
-                              {speedQuotes.express.restrictionReason || `Air transport restricted for liquid glass consignments to PIN ${postalCode}. Surface transit is active.`}
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="pt-3 mt-3 border-t border-stone-100 flex items-center justify-between">
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-900 bg-amber-100/70 border border-amber-200 px-2 py-0.5 rounded-full">
-                              <Zap className="w-3 h-3 text-amber-700" />
-                              Priority Dispatch
-                            </span>
-                            <span className="text-sm font-bold text-stone-950 font-mono">
-                              {speedQuotes.express
-                                ? formatCurrency(speedQuotes.express.bundledDeliveryTotal)
-                                : isCalculatingFreight
-                                ? '...'
-                                : formatCurrency(bundledShippingTotal)}
-                            </span>
-                          </div>
-                        )}
-                      </button>
-                    </div>
+                {isCalculatingFreight && (
+                  <div className="flex items-center justify-center gap-2 p-3 rounded-xl bg-[#f5f5f7] border border-[#d2d2d7] text-xs text-[#1d1d1f] font-medium animate-pulse">
+                    <Loader2 className="w-4 h-4 animate-spin text-[#0071e3]" />
+                    <span>Calculating live courier rate for PIN {postalCode}...</span>
                   </div>
                 )}
+
+                {/* Single Premium Insured Delivery Card */}
+                <div className="p-4 sm:p-5 rounded-2xl border-2 border-[#0071e3] bg-[#0071e3]/5 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#0071e3] text-white flex items-center justify-center shadow-xs shrink-0">
+                        <Truck className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-bold text-[#1d1d1f]">Insured Standard Delivery</h3>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold bg-white border border-[#0071e3]/30 text-[#0071e3]">
+                            Delhivery One
+                          </span>
+                        </div>
+                        <p className="text-xs text-[#6e6e73] mt-0.5">
+                          100% Zero-Breakage Insured Solid Glass Transit · Shock-absorbing kraft packaging
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="w-5 h-5 rounded-full border-2 border-[#0071e3] bg-[#0071e3] text-white flex items-center justify-center shrink-0 mt-1">
+                      <Check className="w-3 h-3 stroke-[3]" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-[#0071e3]/20 text-xs">
+                    <div className="flex items-center justify-between sm:justify-start sm:gap-2">
+                      <span className="text-[#86868b]">Estimated Delivery:</span>
+                      <span className="font-semibold text-[#1d1d1f]">
+                        {speedQuotes.surface?.estimatedDeliveryDate || '3–5 Business Days'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between sm:justify-end sm:gap-2">
+                      <span className="text-[#86868b]">Shipping Fee:</span>
+                      <span className="font-bold text-[#1d1d1f] font-mono">
+                        {isFreeShipping ? (
+                          <span className="text-emerald-700 font-semibold">FREE (Order &gt; ₹999)</span>
+                        ) : speedQuotes.surface ? (
+                          formatCurrency(speedQuotes.surface.bundledDeliveryTotal)
+                        ) : isCalculatingFreight ? (
+                          '...'
+                        ) : postalCode.length === 6 && isValidIndianPin(postalCode) ? (
+                          formatCurrency(bundledShippingTotal)
+                        ) : (
+                          'Enter PIN to calculate'
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </div>
 
                 {/* Live Airway Bill (AWB) & Shipping Destination Confirmation */}
                 <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/90 text-xs space-y-2">
                   <div className="flex items-center justify-between text-[10px] uppercase font-bold text-stone-500 tracking-wider">
                     <span className="flex items-center gap-1.5">
-                      <Truck className="w-3.5 h-3.5 text-amber-700" />
+                      <Truck className="w-3.5 h-3.5 text-[#0071e3]" />
                       Delhivery One Airway Bill (AWB) Preview
                     </span>
                     <span className="text-emerald-800 font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
@@ -1706,8 +1544,8 @@ function CheckoutContent() {
                 {/* 4. Payment Method: Strictly 100% Prepaid */}
                 <div className="space-y-2 pt-2 border-t border-stone-100">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-stone-900 uppercase tracking-wider flex items-center gap-1.5">
-                      <CreditCard className="w-3.5 h-3.5 text-amber-700" />
+                    <label className="text-xs font-bold text-[#1d1d1f] uppercase tracking-wider flex items-center gap-1.5">
+                      <CreditCard className="w-3.5 h-3.5 text-[#0071e3]" />
                       <span>Payment Method</span>
                     </label>
                     <span className="text-[10px] text-emerald-900 bg-emerald-100/70 border border-emerald-300 px-2.5 py-0.5 rounded-full font-bold">
@@ -1715,28 +1553,28 @@ function CheckoutContent() {
                     </span>
                   </div>
 
-                  <div className="p-4 rounded-2xl border-2 border-amber-600/60 bg-amber-50/30 flex items-start justify-between gap-3">
+                  <div className="p-4 rounded-2xl border-2 border-[#0071e3] bg-[#0071e3]/5 flex items-start justify-between gap-3">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-stone-950">
+                        <span className="text-xs font-bold text-[#1d1d1f]">
                           Instant Online Payment (Razorpay Encrypted)
                         </span>
                         <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-900 border border-emerald-200">
                           ✓ 256-Bit SSL
                         </span>
                       </div>
-                      <p className="text-[11px] text-stone-600 leading-relaxed">
+                      <p className="text-[11px] text-[#6e6e73] leading-relaxed">
                         Instant checkout via UPI (Google Pay, PhonePe, Paytm, BHIM), Credit/Debit Cards &amp; NetBanking.
                         No Cash on Delivery (COD) to safeguard tamper-evident sealed glass consignments.
                       </p>
-                      <div className="flex items-center gap-2 pt-1 flex-wrap text-[10px] font-semibold text-stone-500">
-                        <span className="bg-white border border-stone-200 px-2 py-0.5 rounded-md">Google Pay</span>
-                        <span className="bg-white border border-stone-200 px-2 py-0.5 rounded-md">PhonePe</span>
-                        <span className="bg-white border border-stone-200 px-2 py-0.5 rounded-md">Paytm</span>
-                        <span className="bg-white border border-stone-200 px-2 py-0.5 rounded-md">Visa / Mastercard / RuPay</span>
+                      <div className="flex items-center gap-2 pt-1 flex-wrap text-[10px] font-semibold text-[#86868b]">
+                        <span className="bg-white border border-[#d2d2d7] px-2 py-0.5 rounded-md">Google Pay</span>
+                        <span className="bg-white border border-[#d2d2d7] px-2 py-0.5 rounded-md">PhonePe</span>
+                        <span className="bg-white border border-[#d2d2d7] px-2 py-0.5 rounded-md">Paytm</span>
+                        <span className="bg-white border border-[#d2d2d7] px-2 py-0.5 rounded-md">Visa / Mastercard / RuPay</span>
                       </div>
                     </div>
-                    <div className="w-5 h-5 rounded-full border-2 border-amber-600 bg-amber-600 text-white flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="w-5 h-5 rounded-full border-2 border-[#0071e3] bg-[#0071e3] text-white flex items-center justify-center shrink-0 mt-0.5">
                       <Check className="w-3 h-3 stroke-[3]" />
                     </div>
                   </div>
@@ -1776,18 +1614,18 @@ function CheckoutContent() {
                             <button
                               type="button"
                               onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                              className="px-2 py-0.5 text-stone-700 hover:text-amber-700 font-bold"
+                              className="px-2 py-0.5 text-[#1d1d1f] hover:text-[#0071e3] font-bold"
                               title="Decrease"
                             >
                               -
                             </button>
-                            <span className="px-1.5 text-[11px] font-bold text-stone-900">
+                            <span className="px-1.5 text-[11px] font-bold text-[#1d1d1f]">
                               {item.quantity}
                             </span>
                             <button
                               type="button"
                               onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                              className="px-2 py-0.5 text-stone-700 hover:text-amber-700 font-bold"
+                              className="px-2 py-0.5 text-[#1d1d1f] hover:text-[#0071e3] font-bold"
                               title="Increase"
                             >
                               +
@@ -1816,8 +1654,8 @@ function CheckoutContent() {
                 {/* DISCOUNT COUPON ENTRY BOX */}
                 <div className="pt-3 border-t border-stone-100 space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-stone-800 flex items-center gap-1.5">
-                      <TicketPercent className="w-3.5 h-3.5 text-amber-700" />
+                    <label className="text-xs font-bold text-[#1d1d1f] flex items-center gap-1.5">
+                      <TicketPercent className="w-3.5 h-3.5 text-[#0071e3]" />
                       <span>Discount Coupon</span>
                     </label>
                     {appliedCoupon && (
@@ -1860,13 +1698,13 @@ function CheckoutContent() {
                           value={couponInput}
                           onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
                           placeholder="e.g. VIKRAM15"
-                          className="flex-1 h-9 px-3 text-xs uppercase font-mono font-bold rounded-xl border border-stone-200 bg-stone-50/70 text-stone-900 focus:outline-none focus:bg-white focus:border-amber-600"
+                          className="flex-1 h-9 px-3 text-xs uppercase font-mono font-bold rounded-xl border border-[#d2d2d7] bg-white text-[#1d1d1f] focus:outline-none focus:border-[#0071e3]"
                         />
                         <button
                           type="button"
                           disabled={couponLoading || !couponInput.trim()}
                           onClick={() => validateAndApplyCoupon()}
-                          className="px-4 h-9 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-semibold cursor-pointer disabled:opacity-40 transition-all"
+                          className="px-4 h-9 rounded-xl bg-[#1d1d1f] hover:bg-black text-white text-xs font-semibold cursor-pointer disabled:opacity-40 transition-all"
                         >
                           {couponLoading ? 'Checking...' : 'Apply'}
                         </button>
@@ -1878,7 +1716,7 @@ function CheckoutContent() {
                           type="button"
                           onClick={fetchPublicOffers}
                           disabled={isLoadingOffers}
-                          className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 hover:text-amber-900 transition-colors cursor-pointer py-0.5"
+                          className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#0071e3] hover:text-[#0077ed] transition-colors cursor-pointer py-0.5"
                         >
                           <RefreshCw className={`w-3 h-3 ${isLoadingOffers ? 'animate-spin' : ''}`} />
                           <span>
@@ -1889,27 +1727,27 @@ function CheckoutContent() {
                         {showPublicOffers && (
                           <div className="mt-2 space-y-1.5 animate-in fade-in">
                             {publicOffers.length === 0 ? (
-                              <p className="text-[11px] text-stone-500 italic">
+                              <p className="text-[11px] text-[#86868b] italic">
                                 No public offers active right now. Enter your promo code above.
                               </p>
                             ) : (
                               publicOffers.map((offer) => (
                                 <div
                                   key={offer.code}
-                                  className="p-2.5 rounded-xl bg-stone-50 border border-stone-200 flex items-center justify-between text-xs transition-all hover:border-amber-400"
+                                  className="p-2.5 rounded-xl bg-[#f5f5f7] border border-[#d2d2d7] flex items-center justify-between text-xs transition-all hover:border-[#0071e3]"
                                 >
                                   <div className="space-y-0.5 pr-2">
                                     <div className="flex items-center gap-1.5">
-                                      <span className="font-mono font-bold text-stone-950 text-xs">
+                                      <span className="font-mono font-bold text-[#1d1d1f] text-xs">
                                         {offer.code}
                                       </span>
-                                      <span className="text-[10px] px-1.5 py-0.2 rounded font-bold bg-amber-100 text-amber-900">
+                                      <span className="text-[10px] px-1.5 py-0.2 rounded font-bold bg-[#0071e3]/10 text-[#0071e3]">
                                         {offer.discountType === 'PERCENTAGE'
                                           ? `${offer.value}% OFF`
                                           : `₹${offer.value / 100} OFF`}
                                       </span>
                                     </div>
-                                    <p className="text-[10px] text-stone-500 leading-snug">
+                                    <p className="text-[10px] text-[#86868b] leading-snug">
                                       {offer.description}
                                     </p>
                                   </div>
@@ -1953,7 +1791,7 @@ function CheckoutContent() {
                     <div>
                       <div className="flex items-center gap-1.5 font-semibold text-stone-900">
                         <span>Items Total</span>
-                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 font-bold font-mono">5% GST</span>
+                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#f5f5f7] border border-[#d2d2d7] text-[#1d1d1f] font-semibold font-mono">5% GST</span>
                       </div>
                       <p className="text-[10px] text-stone-400 mt-0.5">
                         Base: {formatCurrency(productTaxable)} + 5% GST: {formatCurrency(productGst)}
@@ -1981,25 +1819,25 @@ function CheckoutContent() {
                         </span>
                         {delhiveryRate && (
                           <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-800 font-bold whitespace-nowrap border border-emerald-200">
-                            {shippingMode === 'Express' ? 'Air Express' : 'Surface'}
+                            Insured Solid Glass
                           </span>
                         )}
                       </div>
                       {delhiveryRate ? (
                         <div className="mt-0.5 space-y-0.5">
-                          <p className="text-[10px] text-amber-800 font-semibold leading-tight">
+                          <p className="text-[10px] text-[#1d1d1f] font-medium leading-tight">
                             Estimated Delivery: {delhiveryRate.estimatedDays || 2}-3 business days
                           </p>
-                          <p className="text-[10px] text-stone-400 font-mono">
+                          <p className="text-[10px] text-[#86868b] font-mono">
                             Base: {formatCurrency(bundledShippingBase)} + 18% GST: {formatCurrency(bundledShippingGst)}
                           </p>
                         </div>
                       ) : (
-                        <p className="text-[10px] text-stone-400 mt-0.5 leading-relaxed">
+                        <p className="text-[10px] text-[#86868b] mt-0.5 leading-relaxed">
                           {isCalculatingFreight
                             ? 'Calculating live freight with Delhivery One API...'
                             : isFreeShipping
-                            ? 'Free Express Courier Delivery Applied'
+                            ? 'Free Insured Delivery Applied'
                             : postalCode.length === 6 && isValidIndianPin(postalCode)
                             ? `Base: ${formatCurrency(bundledShippingBase)} + 18% GST: ${formatCurrency(bundledShippingGst)}`
                             : 'Enter 6-digit PIN code to calculate exact delivery charges'}
@@ -2010,7 +1848,7 @@ function CheckoutContent() {
                       {isFreeShipping ? (
                         <span className="text-emerald-700 font-bold text-xs whitespace-nowrap">FREE</span>
                       ) : isCalculatingFreight ? (
-                        <span className="text-xs text-amber-700 font-semibold flex items-center gap-1 whitespace-nowrap">
+                        <span className="text-xs text-[#0071e3] font-semibold flex items-center gap-1 whitespace-nowrap">
                           <Loader2 className="w-3 h-3 animate-spin" /> Calculating...
                         </span>
                       ) : delhiveryRate || (postalCode.length === 6 && isValidIndianPin(postalCode) && bundledShippingTotal > 0) ? (
@@ -2033,7 +1871,7 @@ function CheckoutContent() {
                     <button
                       type="button"
                       onClick={() => setShowGstBreakdown(!showGstBreakdown)}
-                      className="w-full flex items-center justify-between text-left text-[11px] font-semibold text-amber-800 hover:text-amber-950 cursor-pointer py-0.5"
+                      className="w-full flex items-center justify-between text-left text-[11px] font-semibold text-[#1d1d1f] hover:text-[#0071e3] transition-colors cursor-pointer py-0.5"
                     >
                       <span className="flex items-center gap-1">
                         <FileText className="w-3.5 h-3.5" />
@@ -2064,12 +1902,12 @@ function CheckoutContent() {
                     )}
                   </div>
 
-                  <div className="flex justify-between items-baseline text-base font-bold text-stone-950 pt-3 border-t border-stone-200">
+                  <div className="flex justify-between items-baseline text-base font-bold text-[#1d1d1f] pt-3 border-t border-[#d2d2d7]">
                     <div>
-                      <span className="font-serif text-lg">Total Amount</span>
-                      <p className="text-[10px] font-normal text-stone-500">All taxes, shipping &amp; handling included</p>
+                      <span className="font-bold text-base text-[#1d1d1f]">Total Amount</span>
+                      <p className="text-[10px] font-normal text-[#86868b]">All taxes &amp; delivery included</p>
                     </div>
-                    <span className="text-xl font-bold text-amber-950 font-mono">{formatCurrency(totalAmount)}</span>
+                    <span className="text-2xl font-bold text-[#1d1d1f] font-mono">{formatCurrency(totalAmount)}</span>
                   </div>
                 </div>
 
