@@ -101,7 +101,17 @@ export const StorefrontFooter: React.FC = () => {
 
         <div className="pt-6 border-t border-[#d2d2d7]/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[11px] text-[#86868b]">
           <p>© 2026 Ganesh Mule Pure Honey. All rights reserved.</p>
-          <p>Insured Solid Glass Delivery across India</p>
+          <div className="flex items-center gap-4">
+            <Link href="/privacy" className="hover:text-[#1d1d1f] hover:underline transition-colors">
+              Privacy Policy
+            </Link>
+            <span>•</span>
+            <Link href="/terms" className="hover:text-[#1d1d1f] hover:underline transition-colors">
+              Terms of Service
+            </Link>
+            <span>•</span>
+            <span>Insured Solid Glass Delivery</span>
+          </div>
         </div>
       </div>
     </footer>
