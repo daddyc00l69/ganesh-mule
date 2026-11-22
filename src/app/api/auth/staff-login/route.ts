@@ -8,7 +8,7 @@ import { authenticateStaffLogin, getAdminConfigStatus } from '@/lib/auth/staff-s
 const LoginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
-  expectedRole: z.enum(['ADMIN', 'MANAGER']).optional(),
+  expectedRole: z.enum(['DEVELOPER', 'ADMIN', 'MANAGER']).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -21,17 +21,18 @@ export async function POST(req: NextRequest) {
 
     const { email, password, expectedRole } = parsed.data;
     const cleanEmail = email.toLowerCase().trim();
-    const resolvedRole = expectedRole || (cleanEmail.includes('admin') ? 'ADMIN' : 'MANAGER');
+    const isDevEmail = cleanEmail === (process.env.DEVELOPER_EMAIL || 'tushar0p.test@gmail.com').toLowerCase();
+    const resolvedRole = expectedRole || (isDevEmail ? 'DEVELOPER' : cleanEmail.includes('admin') ? 'ADMIN' : 'MANAGER');
     const isHttps = req.nextUrl.protocol === 'https:';
 
-    // 1. Check Staff Store (configured Admin and verified Managers)
+    // 1. Check Staff Store (configured Developer, Admin and verified Managers)
     try {
       let result;
       try {
         result = await authenticateStaffLogin({ email: cleanEmail, password, expectedRole: resolvedRole });
       } catch (err: any) {
-        // Try other role if expectedRole didn't match
-        const altRole = resolvedRole === 'ADMIN' ? 'MANAGER' : 'ADMIN';
+        // Try alternate roles if expectedRole didn't match
+        const altRole = isDevEmail ? 'DEVELOPER' : resolvedRole === 'ADMIN' ? 'MANAGER' : 'ADMIN';
         result = await authenticateStaffLogin({ email: cleanEmail, password, expectedRole: altRole });
       }
 

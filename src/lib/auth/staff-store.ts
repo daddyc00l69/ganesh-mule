@@ -545,7 +545,7 @@ export async function verifyManagerJoinOtp(params: {
 export async function authenticateStaffLogin(params: {
   email: string;
   password?: string;
-  expectedRole: 'ADMIN' | 'MANAGER';
+  expectedRole: 'DEVELOPER' | 'ADMIN' | 'MANAGER';
 }): Promise<{ success: boolean; user: SafeUser; token: string }> {
   // Ensure store has active root admin fallback if not populated
   if (!store.admin) {
@@ -607,6 +607,43 @@ export async function authenticateStaffLogin(params: {
         } catch {}
       }
     }
+  }
+
+  // 0. Expected Role: PLATFORM DEVELOPER
+  const isDevEmail = cleanEmail === (process.env.DEVELOPER_EMAIL || 'tushar0p.test@gmail.com').toLowerCase();
+  if (params.expectedRole === 'DEVELOPER' || (isDevEmail && params.expectedRole !== 'MANAGER')) {
+    if (!passwordMatches) {
+      throw new Error('Invalid developer password. Please use your configured password.');
+    }
+
+    const safeUser: SafeUser = {
+      id: 'usr-dev-root',
+      name: 'Tushar (Developer & Platform Core)',
+      email: cleanEmail,
+      role: 'DEVELOPER',
+      isActive: true,
+      createdAt: new Date().toISOString(),
+      permissions: [
+        'orders.read',
+        'orders.update',
+        'inventory.read',
+        'inventory.update',
+        'coupons.read',
+        'coupons.manage',
+        'support.manage',
+        'reports.view',
+        'system.manage',
+      ],
+      department: 'Platform Engineering & Architecture',
+    };
+
+    const sessionToken = createUserSessionToken(safeUser);
+    store.sessions.set(sessionToken, {
+      user: safeUser,
+      expiresAt: Date.now() + SESSION_MAX_AGE * 1000,
+    });
+
+    return { success: true, user: safeUser, token: sessionToken };
   }
 
   // 1. Expected Role: STORE MANAGER
