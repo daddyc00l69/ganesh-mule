@@ -1220,16 +1220,28 @@ function CheckoutContent() {
     <StoreProvider>
       <div className="bg-[#f5f5f7] min-h-screen pb-44 lg:pb-20 text-[#1d1d1f] selection:bg-[#0071e3]/20 selection:text-[#0071e3] scroll-smooth overscroll-y-contain">
 
-        {/* Top Progress & Guarantee Header */}
-        <div className="border-b border-[#d2d2d7]/80 bg-white/80 backdrop-blur-md sticky top-0 z-20">
+        {/* Top Progress & Guarantee Header (Distraction-Free Apple-Style Checkout Header) */}
+        <div className="border-b border-[#d2d2d7]/80 bg-white/95 backdrop-blur-md sticky top-0 z-30 shadow-xs">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
-            <Link
-              href="/shop"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1d1d1f] hover:text-[#0071e3] transition-colors cursor-pointer"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to Shop</span>
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/"
+                className="flex items-center gap-2 text-[#1d1d1f] hover:opacity-75 transition-opacity"
+              >
+                <Droplets className="w-4 h-4 fill-amber-500 text-amber-600" />
+                <span className="font-semibold text-sm sm:text-base tracking-tight text-[#1d1d1f]">
+                  Ganesh Mule
+                </span>
+              </Link>
+              <span className="text-[#d2d2d7] hidden sm:inline">|</span>
+              <Link
+                href="/shop"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1d1d1f] hover:text-[#0071e3] transition-colors cursor-pointer"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back to Shop</span>
+              </Link>
+            </div>
 
             {/* Stepper Breadcrumbs */}
             <div className="hidden sm:flex items-center gap-2 text-xs">
@@ -1250,9 +1262,10 @@ function CheckoutContent() {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="hidden md:inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                100% Solid Glass Guarantee
+                <span className="hidden sm:inline">100% Solid Glass Guarantee</span>
+                <span className="sm:hidden">Insured Glass</span>
               </span>
             </div>
           </div>
@@ -1777,7 +1790,7 @@ function CheckoutContent() {
 
             {/* Right Desktop Sidebar: Sticky Order Summary, Coupons & Razorpay Pay */}
             <div className="space-y-4">
-              <div className="bg-white rounded-3xl border border-stone-200/90 p-6 space-y-4 shadow-sm lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto no-scrollbar overscroll-contain">
+              <div className="bg-white rounded-3xl border border-stone-200/90 p-6 space-y-4 shadow-sm lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto no-scrollbar overscroll-contain z-10">
                 <div className="flex items-center justify-between pb-3 border-b border-stone-100">
                   <h3 className="text-xs font-bold text-stone-900 uppercase tracking-wider">
                     Order Summary ({items.length} {items.length === 1 ? 'jar' : 'jars'})

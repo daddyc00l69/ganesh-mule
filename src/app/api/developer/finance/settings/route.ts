@@ -84,7 +84,7 @@ export async function GET() {
           orderBy: { createdAt: 'desc' },
           take: 20,
         });
-      } catch {}
+      } catch { }
     }
 
     return NextResponse.json({
@@ -108,8 +108,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const rawBody = await req.json();
-    const body = (rawBody.settings || rawBody.businessProfile) ? rawBody : { settings: rawBody, reason: rawBody.reason };
+    const body = await req.json();
     const parsed = UpdateSettingsSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
@@ -130,10 +129,10 @@ export async function POST(req: NextRequest) {
     let updatedSettings = null;
     let updatedProfile = null;
 
-    if (settingsUpdates && Object.keys(settingsUpdates).length > 0) {
+    if (settingsUpdates) {
       updatedSettings = await updatePlatformFinanceSettings(settingsUpdates, actor);
     }
-    if (profileUpdates && Object.keys(profileUpdates).length > 0) {
+    if (profileUpdates) {
       updatedProfile = await updatePlatformBusinessProfile(profileUpdates, actor);
     }
 
@@ -150,6 +149,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
-export const PATCH = POST;
-export const PUT = POST;
