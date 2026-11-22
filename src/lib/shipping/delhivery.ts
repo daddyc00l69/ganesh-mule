@@ -896,6 +896,8 @@ export async function syncAllActiveDelhiveryOrders(): Promise<{
               trackingNumber: liveAwb,
             },
           });
+          const { scheduleOrderReviewInvitation } = await import('@/lib/reviews/invitation-service');
+          await scheduleOrderReviewInvitation(targetOrder.id);
         } catch {}
         details.push({
           orderNumber: targetOrder.orderNumber,

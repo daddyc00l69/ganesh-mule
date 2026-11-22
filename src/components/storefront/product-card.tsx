@@ -21,8 +21,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     product.slug.replace(/-(250g|500g|1kg|300g|750g|1050g)$/, '') ||
     'forest-honey';
 
-  const rating = product.rating || 4.9;
-  const ratingCount = product.ratingCount || 500;
+  const rating = (product as any).averageRating ? Number((product as any).averageRating).toFixed(1) : (product.rating || 4.9);
+  const ratingCount = (product as any).reviewCount ?? product.ratingCount ?? 500;
 
   // Starting price across the 3 sizes is ₹199 (250g), MRP ₹275
   const startingPrice = 19900;

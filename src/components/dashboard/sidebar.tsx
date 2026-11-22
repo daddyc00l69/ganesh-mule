@@ -20,6 +20,7 @@ import {
   X,
   Sparkles,
   TicketPercent,
+  Star,
 } from 'lucide-react';
 import { GlassBadge } from '@/components/ui/glass-badge';
 import { cn } from '@/lib/utils';
@@ -64,6 +65,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, isOpen, onClose }) => {
     { title: 'Orders', href: '/admin/orders', icon: ShoppingBag, badge: pendingOrdersCount },
     { title: 'Inventory', href: '/admin/inventory', icon: Boxes },
     { title: 'Customers', href: '/admin/customers', icon: UserCheck },
+    { title: 'Product Reviews', href: '/admin/reviews', icon: Star },
     { title: 'Discount Coupons', href: '/admin/coupons', icon: TicketPercent },
     { title: 'Reports', href: '/admin/reports', icon: BarChart3 },
     { title: 'Audit Logs', href: '/admin/audit-logs', icon: ShieldAlert },
@@ -86,6 +88,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, isOpen, onClose }) => {
   const managerNavItems: NavItem[] = [
     { title: 'Overview', href: '/manager', icon: LayoutDashboard },
     { title: 'Order Queue', href: '/manager/orders', icon: ShoppingBag, badge: pendingOrdersCount },
+    { title: 'Product Reviews', href: '/manager/reviews', icon: Star },
     { title: 'Inventory Desk', href: '/manager/inventory', icon: Boxes },
     { title: 'My Promo Codes', href: '/manager/coupons', icon: TicketPercent },
     { title: 'Fees & Shipping', href: '/manager/settings', icon: Settings },

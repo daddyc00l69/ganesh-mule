@@ -154,11 +154,30 @@ export async function POST(req: NextRequest) {
 
     if (parsed.data.couponCode) {
       const normalizedCode = parsed.data.couponCode.trim().toUpperCase();
-      const coupon = getLiveCouponByCode(normalizedCode);
+      let coupon: any = null;
+      if (dbOnline) {
+        try {
+          coupon = await prisma.discountCoupon.findUnique({ where: { code: normalizedCode } });
+        } catch {}
+      }
+      if (!coupon) {
+        coupon = getLiveCouponByCode(normalizedCode);
+      }
 
       if (coupon && coupon.isActive) {
+        // Enforce strict customer email ownership for review reward coupons
+        if (
+          coupon.customerEmail &&
+          coupon.customerEmail.trim().toLowerCase() !== customer.email.trim().toLowerCase()
+        ) {
+          return NextResponse.json(
+            { error: 'This personalized reward coupon is registered to a different customer email address.' },
+            { status: 400 }
+          );
+        }
+
         const notExpired = !coupon.expiresAt || new Date(coupon.expiresAt) > new Date();
-        const limitNotReached = !coupon.usageLimit || coupon.usageCount < coupon.usageLimit;
+        const limitNotReached = !coupon.usageLimit || (coupon.usedCount ?? coupon.usageCount ?? 0) < coupon.usageLimit;
         const minOrderMet = !coupon.minOrderAmount || subtotal >= coupon.minOrderAmount;
 
         if (notExpired && limitNotReached && minOrderMet) {
@@ -175,6 +194,16 @@ export async function POST(req: NextRequest) {
           }
           // Increment coupon usage
           incrementCouponUsage(coupon.code);
+
+          // If this was a review reward coupon, mark reward redeemed in DB
+          if (dbOnline && coupon.isReviewReward) {
+            try {
+              await prisma.reviewReward.updateMany({
+                where: { couponId: coupon.id },
+                data: { status: 'REDEEMED' },
+              });
+            } catch {}
+          }
         }
       }
     }

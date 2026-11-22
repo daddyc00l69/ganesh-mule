@@ -53,6 +53,7 @@ describe('Developer Finance & Control Centre - Precision Engine', () => {
       {
         productId: 'honey-1kg',
         name: 'Raw Honey Comb (1kg)',
+        sku: 'SKU-HONEY-1KG',
         unitPricePaise: 89900, // ₹899.00
         quantity: 1,
         weight: '1000g',
@@ -103,6 +104,7 @@ describe('Developer Finance & Control Centre - Precision Engine', () => {
       {
         productId: 'honey-500g',
         name: 'Wild Forest Honey (500g)',
+        sku: 'SKU-HONEY-500G',
         unitPricePaise: 49900,
         quantity: 2,
         weight: '500g',
@@ -135,6 +137,7 @@ describe('Developer Finance & Control Centre - Precision Engine', () => {
       {
         productId: 'honey-raw-comb-1000',
         name: 'Raw Honey Comb (1kg)',
+        sku: 'SKU-HONEY-COMB-1KG',
         unitPricePaise: 89900,
         quantity: 1,
         weight: '1000g',

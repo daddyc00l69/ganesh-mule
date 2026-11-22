@@ -28,18 +28,53 @@ import {
   KeyRound,
   Shield,
   HelpCircle,
+  Star,
+  TicketPercent,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { BRAND_NAME, SUPPORT_EMAIL, SUPPORT_PHONE } from '@/lib/constants/brand';
 import { GoogleSignInButton } from '@/components/auth/google-sign-in-button';
 
 export default function CustomerAccountPage() {
-  const [activeTab, setActiveTab] = useState<'ORDERS' | 'TRACK_ORDER' | 'ADDRESSES'>('ORDERS');
+  const [activeTab, setActiveTab] = useState<'ORDERS' | 'TRACK_ORDER' | 'ADDRESSES' | 'REVIEWS_REWARDS'>('ORDERS');
   const [unauthTab, setUnauthTab] = useState<'LOGIN' | 'DIRECT_TRACK'>('LOGIN');
 
   const [user, setUser] = useState<{ email: string; name: string; role: string; phone?: string } | null>(null);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Reviews & Rewards state
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [myReviews, setMyReviews] = useState<any[]>([]);
+  const [myRewards, setMyRewards] = useState<any[]>([]);
+  const [eligibleReviewItems, setEligibleReviewItems] = useState<any[]>([]);
+  const [copiedRewardCode, setCopiedRewardCode] = useState<string | null>(null);
+
+  // Quick Review Modal State
+  const [activeReviewItem, setActiveReviewItem] = useState<any | null>(null);
+  const [modalRating, setModalRating] = useState(5);
+  const [modalComment, setModalComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewSuccessReward, setReviewSuccessReward] = useState<any | null>(null);
+
+  const loadMyReviewsAndRewards = async () => {
+    try {
+      setReviewsLoading(true);
+      const res = await fetch('/api/reviews/my');
+      const data = await res.json();
+      if (data.success) {
+        setMyReviews(data.reviews || []);
+        setMyRewards(data.rewards || []);
+        setEligibleReviewItems(data.eligibleItems || []);
+      }
+    } catch (err) {
+      console.warn('Failed to load my reviews & rewards:', err);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
 
   // Direct Tracking state
   const [trackNumberInput, setTrackNumberInput] = useState('');
@@ -94,6 +129,7 @@ export default function CustomerAccountPage() {
           const ordersData = await ordersRes.json();
           setOrders(ordersData.orders || []);
         }
+        loadMyReviewsAndRewards();
       } else {
         setUser(null);
       }
@@ -298,6 +334,26 @@ export default function CustomerAccountPage() {
                   }`}
                 >
                   Saved Addresses
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('REVIEWS_REWARDS');
+                    loadMyReviewsAndRewards();
+                  }}
+                  className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                    activeTab === 'REVIEWS_REWARDS'
+                      ? 'bg-white text-stone-950 shadow-xs'
+                      : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                >
+                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
+                  <span>Reviews &amp; Rewards</span>
+                  {eligibleReviewItems.length > 0 && (
+                    <span className="w-4 h-4 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center">
+                      {eligibleReviewItems.length}
+                    </span>
+                  )}
                 </button>
               </div>
             </div>
@@ -958,6 +1014,381 @@ export default function CustomerAccountPage() {
                   ) : (
                     <div className="bg-white rounded-3xl border border-stone-200/80 p-8 text-center text-xs text-stone-500">
                       No delivery addresses saved yet. Addresses are automatically recorded during your first checkout.
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Tab 4: My Reviews & Rewards */}
+              {activeTab === 'REVIEWS_REWARDS' && (
+                <div className="space-y-8 animate-in fade-in">
+                  {/* Notice banner on honest feedback */}
+                  <div className="p-4 rounded-3xl bg-amber-500/10 border border-amber-300/70 flex items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-2.5">
+                      <TicketPercent className="w-5 h-5 text-amber-700 shrink-0" />
+                      <div>
+                        <span className="font-bold text-[#1d1d1f] block">
+                          Honest Customer Feedback Rewards
+                        </span>
+                        <span className="text-[11px] text-stone-600">
+                          Review any delivered solid glass honey jar and automatically receive a personalized 5% OFF discount code for your next order.
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section A: Eligible Products Pending Review */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-bold text-stone-900 uppercase tracking-wider flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                        <span>Ready For Review ({eligibleReviewItems.length})</span>
+                      </h3>
+                      <span className="text-[11px] text-stone-500">Delivered Orders</span>
+                    </div>
+
+                    {eligibleReviewItems.length === 0 ? (
+                      <div className="p-6 rounded-3xl bg-white border border-stone-200/80 text-center space-y-1">
+                        <CheckCircle2 className="w-6 h-6 text-emerald-600 mx-auto" />
+                        <p className="text-xs font-semibold text-stone-900">All caught up!</p>
+                        <p className="text-[11px] text-stone-500">
+                          You have submitted reviews for all delivered honey jars. Thank you for your support!
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                        {eligibleReviewItems.map((item) => (
+                          <div
+                            key={item.orderItemId}
+                            className="p-5 rounded-3xl bg-white border border-stone-200/90 shadow-xs flex flex-col justify-between gap-3"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <span className="font-bold text-xs text-stone-950 block">
+                                  {item.productName} ({item.weight})
+                                </span>
+                                <span className="text-[10px] text-stone-500 block mt-0.5">
+                                  Order #{item.orderNumber} • Delivered {new Date(item.orderDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                </span>
+                              </div>
+                              <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 shrink-0">
+                                Eligible for 5% OFF
+                              </span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setReviewSuccessReward(null);
+                                setModalRating(5);
+                                setModalComment('');
+                                setActiveReviewItem(item);
+                              }}
+                              className="w-full py-2.5 px-4 rounded-full bg-[#1d1d1f] hover:bg-black text-white text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-all shadow-xs active:scale-98"
+                            >
+                              <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                              <span>Write Review &amp; Unlock Reward</span>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Section B: My Earned Personalized Discount Coupons */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-bold text-stone-900 uppercase tracking-wider flex items-center gap-1.5">
+                        <TicketPercent className="w-3.5 h-3.5 text-purple-600" />
+                        <span>My Personalized Reward Coupons ({myRewards.length})</span>
+                      </h3>
+                      <span className="text-[11px] text-stone-500">Auto-applies at checkout</span>
+                    </div>
+
+                    {myRewards.length === 0 ? (
+                      <div className="p-6 rounded-3xl bg-white border border-stone-200/80 text-center space-y-1">
+                        <TicketPercent className="w-6 h-6 text-stone-300 mx-auto" />
+                        <p className="text-xs font-semibold text-stone-900">No reward coupons yet</p>
+                        <p className="text-[11px] text-stone-500">
+                          Submit your first honey review above to receive an instant personalized discount code.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                        {myRewards.map((rew) => (
+                          <div
+                            key={rew.id}
+                            className="p-5 rounded-3xl bg-white border-2 border-dashed border-purple-200/80 shadow-xs flex flex-col justify-between gap-3 relative overflow-hidden"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <span className="font-mono font-black text-base text-stone-950 tracking-wider block">
+                                  {rew.couponCode}
+                                </span>
+                                <span className="text-[11px] text-purple-700 font-semibold block mt-0.5">
+                                  {rew.discountPercentage}% OFF any future honey order
+                                </span>
+                              </div>
+                              <span
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                  rew.status === 'ACTIVE'
+                                    ? 'bg-purple-100 text-purple-800'
+                                    : rew.status === 'REDEEMED'
+                                    ? 'bg-emerald-100 text-emerald-800'
+                                    : 'bg-stone-100 text-stone-600'
+                                }`}
+                              >
+                                {rew.status}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center justify-between text-[10px] text-stone-500 pt-2 border-t border-stone-100">
+                              <span>
+                                Expires: {new Date(rew.expiresAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </span>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(rew.couponCode);
+                                  setCopiedRewardCode(rew.couponCode);
+                                  setTimeout(() => setCopiedRewardCode(null), 2000);
+                                }}
+                                className="px-3 py-1 rounded-full bg-purple-50 hover:bg-purple-100 text-purple-800 font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                              >
+                                {copiedRewardCode === rew.couponCode ? (
+                                  <>
+                                    <Check className="w-3 h-3 text-emerald-600" />
+                                    <span>Copied!</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="w-3 h-3" />
+                                    <span>Copy Code</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Section C: My Submitted Reviews */}
+                  <div className="space-y-3">
+                    <h3 className="text-xs font-bold text-stone-900 uppercase tracking-wider flex items-center gap-1.5">
+                      <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                      <span>My Submitted Reviews ({myReviews.length})</span>
+                    </h3>
+
+                    {myReviews.length === 0 ? (
+                      <div className="p-6 rounded-3xl bg-white border border-stone-200/80 text-center text-xs text-stone-500">
+                        You have not submitted any reviews yet.
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {myReviews.map((rev) => (
+                          <div
+                            key={rev.id}
+                            className="p-5 rounded-3xl bg-white border border-stone-200/80 space-y-2 shadow-xs"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <span className="font-bold text-xs text-stone-900 block">
+                                  {rev.product?.name || rev.orderItem?.productName}
+                                </span>
+                                <span className="text-[10px] text-stone-500">
+                                  Submitted {new Date(rev.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-1">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <Star
+                                    key={s}
+                                    className={`w-3.5 h-3.5 ${
+                                      s <= rev.rating ? 'fill-amber-400 text-amber-400' : 'text-stone-200'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+
+                            <p className="text-xs text-stone-700 bg-stone-50 p-3 rounded-2xl border border-stone-100">
+                              {rev.reviewText || <span className="italic text-stone-400">No written comment.</span>}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Quick Review Modal Popup */}
+                  {activeReviewItem && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+                      <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 space-y-5 shadow-2xl relative border border-stone-200">
+                        {reviewSuccessReward ? (
+                          <div className="text-center space-y-4 py-2 animate-in zoom-in-95">
+                            <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+                              <Sparkles className="w-6 h-6" />
+                            </div>
+                            <div>
+                              <h4 className="text-base font-bold text-stone-900">
+                                Review Submitted! Reward Unlocked!
+                              </h4>
+                              <p className="text-xs text-stone-500 mt-1">
+                                Here is your personalized discount code for your honest feedback:
+                              </p>
+                            </div>
+
+                            <div className="p-4 rounded-2xl bg-amber-50 border-2 border-dashed border-amber-300 space-y-1">
+                              <span className="font-mono text-xl font-bold text-stone-950 block">
+                                {reviewSuccessReward.code}
+                              </span>
+                              <span className="text-[11px] text-amber-800 font-semibold block">
+                                {reviewSuccessReward.discountPercentage}% OFF any future order
+                              </span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveReviewItem(null);
+                                setReviewSuccessReward(null);
+                              }}
+                              className="w-full py-3 rounded-full bg-[#0071e3] text-white text-xs font-semibold cursor-pointer"
+                            >
+                              Done
+                            </button>
+                          </div>
+                        ) : (
+                          <form
+                            onSubmit={async (e) => {
+                              e.preventDefault();
+                              if (!activeReviewItem) return;
+                              try {
+                                setSubmittingReview(true);
+                                const res = await fetch('/api/reviews', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    orderItemId: activeReviewItem.orderItemId,
+                                    productId: activeReviewItem.productId,
+                                    rating: modalRating,
+                                    reviewText: modalComment,
+                                    customerEmail: user?.email,
+                                    customerName: user?.name,
+                                  }),
+                                });
+                                const data = await res.json();
+                                if (data.success) {
+                                  if (data.rewardCoupon) {
+                                    setReviewSuccessReward(data.rewardCoupon);
+                                  } else {
+                                    setActiveReviewItem(null);
+                                  }
+                                  await loadMyReviewsAndRewards();
+                                } else {
+                                  alert(data.error || 'Failed to submit review');
+                                }
+                              } catch (err: any) {
+                                alert(err.message || 'Submission failed');
+                              } finally {
+                                setSubmittingReview(false);
+                              }
+                            }}
+                            className="space-y-4"
+                          >
+                            <div className="flex items-center justify-between pb-2 border-b border-stone-100">
+                              <div>
+                                <h4 className="text-sm font-bold text-stone-900">
+                                  Review {activeReviewItem.productName}
+                                </h4>
+                                <span className="text-[10px] text-stone-500">
+                                  Order #{activeReviewItem.orderNumber}
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setActiveReviewItem(null)}
+                                className="text-stone-400 hover:text-stone-600 text-sm p-1"
+                              >
+                                ✕
+                              </button>
+                            </div>
+
+                            {/* Rating Selector */}
+                            <div className="text-center py-2 bg-stone-50 rounded-2xl border border-stone-200/80 space-y-1">
+                              <span className="text-[10px] text-stone-500 uppercase tracking-wider block">
+                                Select Star Rating
+                              </span>
+                              <div className="flex items-center justify-center gap-1.5">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <button
+                                    key={s}
+                                    type="button"
+                                    onClick={() => setModalRating(s)}
+                                    className="p-1 cursor-pointer transition-transform hover:scale-115"
+                                  >
+                                    <Star
+                                      className={`w-6 h-6 ${
+                                        s <= modalRating
+                                          ? 'text-amber-400 fill-amber-400'
+                                          : 'text-stone-300'
+                                      }`}
+                                    />
+                                  </button>
+                                ))}
+                              </div>
+                              <span className="text-xs font-semibold text-stone-800 block">
+                                {modalRating === 5
+                                  ? '5 - Excellent'
+                                  : modalRating === 4
+                                  ? '4 - Very Good'
+                                  : modalRating === 3
+                                  ? '3 - Good'
+                                  : modalRating === 2
+                                  ? '2 - Fair'
+                                  : '1 - Poor'}
+                              </span>
+                            </div>
+
+                            {/* Comment */}
+                            <div className="space-y-1">
+                              <label className="text-xs font-semibold text-stone-800">
+                                Your Honest Feedback
+                              </label>
+                              <textarea
+                                rows={3}
+                                required
+                                value={modalComment}
+                                onChange={(e) => setModalComment(e.target.value)}
+                                placeholder="How was the aroma, texture, and taste of this pure honey?..."
+                                className="w-full p-2.5 rounded-xl border border-stone-200 text-xs focus:outline-none focus:border-[#0071e3] resize-none"
+                              />
+                            </div>
+
+                            <button
+                              type="submit"
+                              disabled={submittingReview}
+                              className="w-full py-3 rounded-full bg-[#0071e3] hover:bg-[#0077ed] text-white text-xs font-semibold cursor-pointer shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                              {submittingReview ? (
+                                <>
+                                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                  <span>Submitting &amp; Minting Reward...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <span>Submit Review &amp; Get 5% OFF Coupon</span>
+                                  <ArrowRight className="w-3.5 h-3.5" />
+                                </>
+                              )}
+                            </button>
+                          </form>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

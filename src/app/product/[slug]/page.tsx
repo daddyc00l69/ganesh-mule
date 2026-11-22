@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { StoreProvider } from '@/components/storefront/store-provider';
 import { ProductCard } from '@/components/storefront/product-card';
+import { ProductReviewsSection } from '@/components/storefront/product-reviews-section';
 import { MOCK_PRODUCTS, MOCK_CATEGORIES } from '@/lib/mock-data';
 import { ProductItem } from '@/types';
 import { formatCurrency } from '@/lib/utils';
@@ -626,10 +627,37 @@ export default function ProductDetailPage() {
     ];
   }, [categoryMeta, selectedWeight, cleanName]);
 
+  const searchParams = useSearchParams();
+  const directReviewToken = searchParams?.get('reviewToken') || undefined;
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isAdded, setIsAdded] = useState(false);
-  const [activeTab, setActiveTab] = useState<'STORY' | 'SPECS' | 'PURITY' | 'QA'>('STORY');
+  const [activeTab, setActiveTab] = useState<'STORY' | 'SPECS' | 'PURITY' | 'QA' | 'REVIEWS'>(
+    directReviewToken ? 'REVIEWS' : 'STORY'
+  );
+  const [productRatingSummary, setProductRatingSummary] = useState<{
+    averageRating: number;
+    totalReviews: number;
+  } | null>(null);
+
+  const currentProductId = currentOption.productRecord?.id ?? categoryMeta.baseSlug;
+  const currentProductSlug = currentOption.productRecord?.slug ?? categoryMeta.baseSlug;
+
+  useEffect(() => {
+    if (currentProductId) {
+      fetch(`/api/reviews?productId=${currentProductId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.summary) {
+            setProductRatingSummary({
+              averageRating: data.summary.averageRating,
+              totalReviews: data.summary.totalReviews,
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }, [currentProductId]);
   const [copiedLink, setCopiedLink] = useState(false);
   const [showStickyBar, setShowStickyBar] = useState(false);
 
@@ -812,11 +840,21 @@ export default function ProductDetailPage() {
 
                 {/* Rating & Tested Tag */}
                 <div className="flex items-center gap-3 mt-3">
-                  <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-white border border-[#d2d2d7] text-xs font-semibold text-[#1d1d1f] shadow-2xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab('REVIEWS');
+                      const el = document.getElementById('extended-info-section');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-[#d2d2d7] text-xs font-semibold text-[#1d1d1f] shadow-2xs hover:border-[#0071e3] transition-colors cursor-pointer"
+                  >
                     <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
-                    <span>4.9</span>
-                    <span className="text-[#86868b] font-normal">(783 verified reviews)</span>
-                  </div>
+                    <span>{productRatingSummary ? productRatingSummary.averageRating.toFixed(1) : '4.9'}</span>
+                    <span className="text-[#86868b] font-normal">
+                      ({productRatingSummary ? productRatingSummary.totalReviews : '783'} verified reviews)
+                    </span>
+                  </button>
                   <span className="text-xs text-[#d2d2d7]">•</span>
                   <span className="text-xs text-emerald-800 font-medium flex items-center gap-1">
                     <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -1150,7 +1188,7 @@ export default function ProductDetailPage() {
         </div>
 
         {/* Extended Information Section */}
-        <section className="bg-white border-t border-[#d2d2d7]/70 py-16">
+        <section id="extended-info-section" className="bg-white border-t border-[#d2d2d7]/70 py-16 scroll-mt-12">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
             
             {/* Segmented Nav Tabs (Apple Clean Scrollable Strip) */}
@@ -1160,6 +1198,10 @@ export default function ProductDetailPage() {
                 { id: 'SPECS', label: 'Technical Specifications' },
                 { id: 'PURITY', label: `NMR Lab Report (Batch 2026)` },
                 { id: 'QA', label: 'Customer Q&A (3)' },
+                {
+                  id: 'REVIEWS',
+                  label: `Verified Reviews (${productRatingSummary ? productRatingSummary.totalReviews : '783'})`,
+                },
               ].map((t) => (
                 <button
                   key={t.id}
@@ -1337,6 +1379,16 @@ export default function ProductDetailPage() {
                   ))}
                 </div>
               </div>
+            )}
+
+            {/* Tab 5: Verified Customer Reviews & Reward Engine */}
+            {activeTab === 'REVIEWS' && (
+              <ProductReviewsSection
+                productId={currentProductId}
+                productName={cleanName}
+                productSlug={currentProductSlug}
+                directToken={directReviewToken}
+              />
             )}
           </div>
         </section>

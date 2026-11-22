@@ -46,6 +46,28 @@ enum MovementReason {
   DAMAGE_WRITE_OFF
 }
 
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  HIDDEN
+}
+
+enum InvitationStatus {
+  PENDING
+  SENT
+  COMPLETED
+  EXPIRED
+  FAILED
+}
+
+enum RewardStatus {
+  ACTIVE
+  REDEEMED
+  EXPIRED
+  REVOKED
+}
+
 model User {
   id              String           @id @default(cuid())
   email           String           @unique
@@ -63,6 +85,7 @@ model User {
   sessions        Session[]
   addresses       Address[]
   orders          Order[]
+  reviews         ProductReview[]
   auditLogs       AuditLog[]       @relation("ActorAuditLogs")
 
   @@index([email])
@@ -137,6 +160,9 @@ model Product {
   images             ProductImage[]
   inventoryMovements InventoryMovement[]
   orderItems         OrderItem[]
+  reviews            ProductReview[]
+  averageRating      Float               @default(5.0)
+  reviewCount        Int                 @default(0)
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 
@@ -227,6 +253,8 @@ model Order {
   payments            Payment[]
   refunds             Refund[]
   shipments           Shipment[]
+  reviews             ProductReview[]
+  reviewInvitations   ReviewInvitation[]
   platformTransaction PlatformTransaction?
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
@@ -238,19 +266,20 @@ model Order {
 }
 
 model OrderItem {
-  id          String   @id @default(cuid())
+  id          String         @id @default(cuid())
   orderId     String
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order       Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId   String
-  product     Product  @relation(fields: [productId], references: [id])
-  productName String   // Snapshot
-  sku         String   // Snapshot
-  weight      String?  // Snapshot e.g. "250g", "500g", "1kg"
-  weightGrams Int?     // Snapshot e.g. 250, 500, 1000
-  price       Int      // Snapshot in minor units
+  product     Product        @relation(fields: [productId], references: [id])
+  productName String         // Snapshot
+  sku         String         // Snapshot
+  weight      String?        // Snapshot e.g. "250g", "500g", "1kg"
+  weightGrams Int?           // Snapshot e.g. 250, 500, 1000
+  price       Int            // Snapshot in minor units
   quantity    Int
-  total       Int      // price * quantity
-  createdAt   DateTime @default(now())
+  total       Int            // price * quantity
+  review      ProductReview?
+  createdAt   DateTime       @default(now())
 
   @@index([orderId])
   @@index([productId])
@@ -361,24 +390,29 @@ model StoreSettings {
 }
 
 model DiscountCoupon {
-  id                 String    @id @default(cuid())
-  code               String    @unique
+  id                 String        @id @default(cuid())
+  code               String        @unique
   description        String
-  discountType       String    @default("PERCENTAGE") // PERCENTAGE | FIXED_AMOUNT
-  value              Int       // e.g. 15 for 15% or 10000 for ₹100
-  minOrderAmount     Int       @default(0) // in minor units (paise)
-  maxDiscountAmount  Int?      // in minor units (paise)
+  discountType       String        @default("PERCENTAGE") // PERCENTAGE | FIXED_AMOUNT
+  value              Int           // e.g. 15 for 15% or 10000 for ₹100
+  minOrderAmount     Int           @default(0) // in minor units (paise)
+  maxDiscountAmount  Int?          // in minor units (paise)
   expiresAt          DateTime?
   usageLimit         Int?
-  usedCount          Int       @default(0)
-  isPublic           Boolean   @default(false)
-  isActive           Boolean   @default(true)
-  assignedManagerIds String[]  @default([])
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  usedCount          Int           @default(0)
+  isPublic           Boolean       @default(false)
+  isActive           Boolean       @default(true)
+  customerEmail      String?       // Customer-specific restriction for review rewards
+  customerId         String?       // Customer-specific user ID restriction
+  isReviewReward     Boolean       @default(false)
+  reviewReward       ReviewReward?
+  assignedManagerIds String[]      @default([])
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
   @@index([code])
   @@index([isActive])
+  @@index([customerEmail])
 }
 
 // ==========================================
@@ -549,4 +583,101 @@ model PlatformFinancialAuditLog {
   @@index([category])
   @@index([actorEmail])
   @@index([createdAt])
+}
+
+// ==========================================
+// PRODUCT RATING, REVIEW & REWARDS MODELS
+// ==========================================
+
+model ProductReview {
+  id                 String        @id @default(cuid())
+  productId          String
+  product            Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId             String?
+  user               User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  orderId            String
+  order              Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderItemId        String        @unique // Strict: One review per purchased item!
+  orderItem          OrderItem     @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  
+  rating             Int           // 1 to 5 stars
+  title              String?
+  comment            String
+  customerName       String
+  customerEmail      String
+  isVerifiedPurchase Boolean       @default(true)
+  status             ReviewStatus  @default(APPROVED)
+  
+  reward             ReviewReward?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@index([productId])
+  @@index([userId])
+  @@index([customerEmail])
+  @@index([status])
+  @@index([orderId])
+  @@index([rating])
+}
+
+model ReviewInvitation {
+  id            String           @id @default(cuid())
+  orderId       String
+  order         Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customerEmail String
+  customerName  String
+  token         String           @unique // Cryptographic URL-safe token for 1-click review link
+  status        InvitationStatus @default(PENDING)
+  scheduledFor  DateTime
+  sentAt        DateTime?
+  completedAt   DateTime?
+  retryCount    Int              @default(0)
+  errorReason   String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([orderId])
+  @@index([customerEmail])
+  @@index([token])
+  @@index([status])
+  @@index([scheduledFor])
+}
+
+model ReviewReward {
+  id              String         @id @default(cuid())
+  reviewId        String         @unique
+  review          ProductReview  @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  couponId        String         @unique
+  coupon          DiscountCoupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  customerId      String?
+  customerEmail   String
+  discountPercent Int
+  status          RewardStatus   @default(ACTIVE)
+  revokedReason   String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([customerEmail])
+  @@index([customerId])
+  @@index([status])
+}
+
+model ReviewRewardSettings {
+  id                       String   @id @default("singleton")
+  isEnabled                Boolean  @default(true)
+  defaultDiscountPercent   Int      @default(5)
+  availablePercentages     Int[]    @default([3, 5, 7, 10])
+  maxDiscountPercent       Int      @default(15)
+  requireAdminApproval     Boolean  @default(false)
+  autoGenerateCoupon       Boolean  @default(true)
+  expiryDays               Int      @default(30)
+  minOrderValuePaise       Int      @default(0)
+  maxDiscountPaise         Int?
+  delayDaysAfterDelivery   Int      @default(2)
+  sendInvitationEmails     Boolean  @default(true)
+  sendRewardEmails         Boolean  @default(true)
+  allowMultipleRedemptions Boolean  @default(false)
+  applicableCategoryIds    String[] @default([])
+  updatedAt                DateTime @updatedAt
+  updatedBy                String?
 }

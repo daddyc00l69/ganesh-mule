@@ -12,6 +12,7 @@ import { OrderStatus } from '@/types';
 import { createDelhiveryShipment } from '@/lib/shipping/delhivery';
 import { requireAuthInProduction, getCurrentUser } from '@/lib/auth/server';
 import { PERMISSIONS } from '@/lib/permissions';
+import { scheduleOrderReviewInvitation } from '@/lib/reviews/invitation-service';
 
 export async function POST(
   req: NextRequest,
@@ -175,6 +176,13 @@ export async function POST(
           'ORDER_DELIVERED'
         );
         emailDispatched = res.success;
+
+        // Schedule Automated Review Invitation
+        try {
+          await scheduleOrderReviewInvitation(order.id);
+        } catch (invErr) {
+          console.warn('[ReviewInvitation] Schedule notice:', invErr);
+        }
       }
     } catch (emailErr) {
       console.warn('[Transition Email Warning]', emailErr);

@@ -27,6 +27,7 @@ const QuoteRequestSchema = z.object({
   destinationState: z.string().optional(),
   shippingMode: z.enum(['Express', 'Surface']).optional().default('Express'),
   couponCode: z.string().optional(),
+  customerEmail: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { items: cartItems, destinationPin, destinationState, shippingMode, couponCode } = parsed.data;
+    const { items: cartItems, destinationPin, destinationState, shippingMode, couponCode, customerEmail } = parsed.data;
     const dbOnline = await isDatabaseOnline();
 
     // 1. Authoritative Server-Side Product Price Validation
@@ -101,7 +102,13 @@ export async function POST(req: NextRequest) {
         const limitNotReached = !coupon.usageLimit || coupon.usedCount < coupon.usageLimit;
         const minOrderMet = !coupon.minOrderAmount || grossSubtotalPaise >= coupon.minOrderAmount;
 
-        if (notExpired && limitNotReached && minOrderMet) {
+        // Check customer ownership for personalized review rewards
+        const isEmailBound = coupon.customerEmail && coupon.customerEmail.trim().length > 0;
+        const emailMatches =
+          !isEmailBound ||
+          (customerEmail && customerEmail.trim().toLowerCase() === coupon.customerEmail.trim().toLowerCase());
+
+        if (notExpired && limitNotReached && minOrderMet && emailMatches) {
           verifiedCouponCode = coupon.code;
           if (coupon.discountType === 'PERCENTAGE') {
             const calculated = Math.round((grossSubtotalPaise * coupon.value) / 100);

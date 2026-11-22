@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ valid: false, error: firstIssue }, { status: 400 });
     }
 
-    const { code, subtotal } = parsed.data;
+    const { code, subtotal, customerEmail } = parsed.data;
     const normalizedCode = code.trim().toUpperCase();
 
     // 1. Look up coupon from database or fallback to mock coupons
@@ -77,7 +77,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 5. Check minimum order subtotal requirement
+    // 5. Check personalized customer email ownership for review reward coupons
+    if (coupon.customerEmail && coupon.customerEmail.trim().length > 0) {
+      if (!customerEmail) {
+        return NextResponse.json(
+          {
+            valid: false,
+            error: `Coupon "${coupon.code}" is a personalized reward. Please enter your email address in contact details to apply this reward.`,
+          },
+          { status: 400 }
+        );
+      }
+      if (coupon.customerEmail.trim().toLowerCase() !== customerEmail.trim().toLowerCase()) {
+        return NextResponse.json(
+          {
+            valid: false,
+            error: `Coupon "${coupon.code}" is registered exclusively to ${coupon.customerEmail} and cannot be redeemed with a different email address.`,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    // 6. Check minimum order subtotal requirement
     if (coupon.minOrderAmount && subtotal < coupon.minOrderAmount) {
       const minRequiredRupees = (coupon.minOrderAmount / 100).toLocaleString('en-IN', {
         style: 'currency',

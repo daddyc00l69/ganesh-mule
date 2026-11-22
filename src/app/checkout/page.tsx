@@ -178,6 +178,23 @@ function CheckoutContent() {
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponError, setCouponError] = useState<string | null>(null);
   const [couponSuccessMsg, setCouponSuccessMsg] = useState<string | null>(null);
+  const [availableReviewRewards, setAvailableReviewRewards] = useState<any[]>([]);
+
+  // Auto-discover customer review reward coupons upon email entry
+  useEffect(() => {
+    if (email && email.includes('@') && email.trim().length > 5) {
+      fetch(`/api/coupons/available?email=${encodeURIComponent(email.trim().toLowerCase())}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.rewards) {
+            setAvailableReviewRewards(data.rewards);
+          }
+        })
+        .catch(() => {});
+    } else {
+      setAvailableReviewRewards([]);
+    }
+  }, [email]);
 
   // Public Offers & Refresh Button States
   const [showPublicOffers, setShowPublicOffers] = useState(false);
@@ -1942,6 +1959,39 @@ function CheckoutContent() {
                           {couponLoading ? 'Checking...' : 'Apply'}
                         </button>
                       </div>
+
+                      {/* Available Customer Review Rewards Ribbon */}
+                      {availableReviewRewards.length > 0 && !appliedCoupon && (
+                        <div className="p-2.5 rounded-xl bg-purple-50/90 border border-purple-200 text-xs space-y-2 animate-in fade-in">
+                          <div className="flex items-center gap-1.5 text-purple-950 font-bold text-[11px]">
+                            <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                            <span>Your Available Review Reward</span>
+                          </div>
+                          {availableReviewRewards.map((reward) => (
+                            <div
+                              key={reward.id}
+                              className="flex items-center justify-between gap-2 pt-1 border-t border-purple-100"
+                            >
+                              <div>
+                                <span className="font-mono font-bold text-xs text-stone-900 block">
+                                  {reward.couponCode}
+                                </span>
+                                <span className="text-[10px] text-purple-700">
+                                  {reward.discountPercentage}% OFF Personalized Reward
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => validateAndApplyCoupon(reward.couponCode)}
+                                disabled={couponLoading}
+                                className="px-3 py-1 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold text-[10px] transition-colors cursor-pointer shadow-2xs"
+                              >
+                                Apply Reward
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
 
                       {/* Public Offers Accordion */}
                       <div className="pt-0.5">
