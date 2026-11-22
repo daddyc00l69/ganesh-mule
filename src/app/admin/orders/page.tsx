@@ -46,6 +46,7 @@ export default function AdminOrdersPage() {
   const [trackingModalOrder, setTrackingModalOrder] = useState<OrderRecord | null>(null);
   const [trackingDetails, setTrackingDetails] = useState<any | null>(null);
   const [isLoadingTracking, setIsLoadingTracking] = useState(false);
+  const [statusBanner, setStatusBanner] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
 
   const fetchLiveOrders = async () => {
     setIsRefreshing(true);
@@ -63,14 +64,21 @@ export default function AdminOrdersPage() {
 
   const handleSyncDelhiveryStatus = async () => {
     setIsSyncingDelhivery(true);
+    setStatusBanner(null);
     try {
       const res = await fetch('/api/shipping/delhivery/sync', { method: 'POST' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to sync with Delhivery');
       await fetchLiveOrders();
-      alert(`✓ ${data.message || 'Delhivery sync complete'}`);
+      setStatusBanner({
+        type: 'success',
+        message: `✓ ${data.message || 'Delhivery sync complete'}`,
+      });
     } catch (err: any) {
-      alert(err.message || 'Delhivery sync failed');
+      setStatusBanner({
+        type: 'error',
+        message: err.message || 'Delhivery sync failed',
+      });
     } finally {
       setIsSyncingDelhivery(false);
     }
@@ -100,17 +108,12 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     fetchLiveOrders();
-    // Auto-sync Delhivery shipments on page mount
-    fetch('/api/shipping/delhivery/sync', { method: 'POST' })
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.cancelledCount > 0 || d.updatedCount > 0) {
-          fetchLiveOrders();
-        }
-      })
-      .catch(() => {});
-
-    const timer = setInterval(fetchLiveOrders, 8000); // Live poll every 8 seconds
+    // Fast periodic polling without blocking external sync
+    const timer = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchLiveOrders();
+      }
+    }, 12000);
     return () => clearInterval(timer);
   }, []);
 
@@ -234,14 +237,21 @@ export default function AdminOrdersPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to cancel shipment');
-      alert(data.message || 'Shipment cancelled on Delhivery One.');
+      setStatusBanner({
+        type: 'success',
+        message: data.message || 'Shipment cancelled on Delhivery One.',
+      });
       fetchLiveOrders();
     } catch (err: any) {
-      alert(err.message || 'Cancellation failed.');
+      setStatusBanner({
+        type: 'error',
+        message: err.message || 'Cancellation failed.',
+      });
     }
   };
 
   const handleBookLiveDelhivery = async (order: OrderRecord) => {
+    setStatusBanner(null);
     try {
       const res = await fetch('/api/shipping/delhivery/ship', {
         method: 'POST',
@@ -255,11 +265,17 @@ export default function AdminOrdersPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to book live Delhivery shipment');
       if (data?.shipment?.waybill) {
-        alert(`✓ Live Delhivery shipment booked! AWB: ${data.shipment.waybill} (${data.shipment.carrier})`);
+        setStatusBanner({
+          type: 'success',
+          message: `✓ Live Delhivery shipment booked! AWB: ${data.shipment.waybill} (${data.shipment.carrier})`,
+        });
         fetchLiveOrders();
       }
     } catch (err: any) {
-      alert(err.message || 'Live booking error');
+      setStatusBanner({
+        type: 'error',
+        message: err.message || 'Live booking error',
+      });
     }
   };
 
@@ -397,8 +413,20 @@ export default function AdminOrdersPage() {
               <span className="text-xs text-zinc-500 font-mono italic">Unassigned</span>
             )}
             {(order as any).delhiveryRemarks && (
-              <p className="text-[10px] text-zinc-400 font-medium leading-tight flex items-center gap-1 mt-0.5">
-                <span>⚠️ {((order as any).delhiveryRemarks || '').slice(0, 50)}</span>
+              <p
+                className="text-[10px] text-amber-500 font-medium leading-tight flex items-center gap-1 mt-0.5"
+                title={(order as any).delhiveryRemarks}
+              >
+                <span>
+                  ⚠️{' '}
+                  {(order as any).delhiveryRemarks.toLowerCase().includes('wallet') ||
+                  (order as any).delhiveryRemarks.toLowerCase().includes('balance') ||
+                  (order as any).delhiveryRemarks.toLowerCase().includes('crashing') ||
+                  (order as any).delhiveryRemarks.toLowerCase().includes('exception') ||
+                  (order as any).delhiveryRemarks.toLowerCase().includes('manifest')
+                    ? 'Recharge Delhivery One Wallet'
+                    : ((order as any).delhiveryRemarks || '').slice(0, 45)}
+                </span>
               </p>
             )}
           </div>
@@ -526,6 +554,36 @@ export default function AdminOrdersPage() {
           </a>
         </div>
       </div>
+
+      {statusBanner && (
+        <div
+          className={`p-3.5 rounded-xl border text-xs flex items-center justify-between gap-3 animate-in fade-in ${
+            statusBanner.type === 'success'
+              ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300'
+              : statusBanner.type === 'error'
+              ? 'bg-rose-950/40 border-rose-500/30 text-rose-300'
+              : 'bg-zinc-900 border-zinc-700 text-zinc-300'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {statusBanner.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            ) : statusBanner.type === 'error' ? (
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+            ) : (
+              <Clock className="w-4 h-4 text-zinc-400 shrink-0" />
+            )}
+            <span>{statusBanner.message}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setStatusBanner(null)}
+            className="text-xs font-semibold underline hover:opacity-80 cursor-pointer"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* Operations Manager Inbox Desk Filters */}
       <div className="p-3 rounded-2xl glass-panel space-y-2">

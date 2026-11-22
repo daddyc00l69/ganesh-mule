@@ -73,6 +73,7 @@ export default function ManagerOrdersPage() {
 
   const handleSyncDelhiveryStatus = async () => {
     setIsSyncingDelhivery(true);
+    setTransitionError(null);
     try {
       const res = await fetch('/api/shipping/delhivery/sync', { method: 'POST' });
       const data = await res.json();
@@ -82,7 +83,7 @@ export default function ManagerOrdersPage() {
         `✓ ${data.message || 'Delhivery sync complete'} (${data.cancelledCount || 0} cancellations updated)`
       );
     } catch (err: any) {
-      alert(err.message || 'Delhivery sync failed');
+      setTransitionError(err.message || 'Delhivery sync failed');
     } finally {
       setIsSyncingDelhivery(false);
     }
@@ -113,17 +114,12 @@ export default function ManagerOrdersPage() {
 
   useEffect(() => {
     fetchLiveOrders();
-    // Auto-sync active Delhivery shipments on page mount
-    fetch('/api/shipping/delhivery/sync', { method: 'POST' })
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.cancelledCount > 0 || d.updatedCount > 0) {
-          fetchLiveOrders();
-        }
-      })
-      .catch(() => {});
-
-    const timer = setInterval(fetchLiveOrders, 8000);
+    // Fast periodic polling without blocking external sync
+    const timer = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchLiveOrders();
+      }
+    }, 12000);
     return () => clearInterval(timer);
   }, []);
 
@@ -133,6 +129,7 @@ export default function ManagerOrdersPage() {
   const [carrier, setCarrier] = useState('Delhivery Surface');
   const [trackingNumber, setTrackingNumber] = useState('');
   const [transitionError, setTransitionError] = useState<string | null>(null);
+  const [transitionNotice, setTransitionNotice] = useState<string | null>(null);
   const [transitionSuccess, setTransitionSuccess] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -212,11 +209,28 @@ export default function ManagerOrdersPage() {
     setTransitionError(null);
 
     // Enforce business rules:
-    // 1. Cannot ship without tracking number
-    if (newStatus === 'SHIPPED' && !trackingNumber.trim()) {
-      setTransitionError('Carrier tracking number is strictly required when transitioning to SHIPPED.');
-      setIsUpdating(false);
-      return;
+    // 1. Auto-generate tracking number if transitioning to SHIPPED and not explicitly filled
+    let finalTracking = trackingNumber.trim();
+    let finalCarrier = carrier;
+    if (newStatus === 'SHIPPED' && !finalTracking) {
+      try {
+        const shipRes = await fetch('/api/shipping/delhivery/ship', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderNumber: activeOrder.orderNumber,
+            mode: carrier.toLowerCase().includes('surface') ? 'Surface' : 'Express',
+          }),
+        });
+        const shipData = await shipRes.json();
+        if (shipData?.shipment?.waybill) {
+          finalTracking = shipData.shipment.waybill;
+          finalCarrier = shipData.shipment.carrier || carrier;
+          setTrackingNumber(finalTracking);
+        }
+      } catch (genErr) {
+        console.warn('Auto AWB generation during transition:', genErr);
+      }
     }
 
     // 2. Paid online orders or COD orders can be advanced to shipped/delivered
@@ -233,8 +247,8 @@ export default function ManagerOrdersPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           status: newStatus,
-          carrier: newStatus === 'SHIPPED' ? carrier : activeOrder.carrier,
-          trackingNumber: newStatus === 'SHIPPED' ? trackingNumber : activeOrder.trackingNumber,
+          carrier: newStatus === 'SHIPPED' ? finalCarrier : activeOrder.carrier,
+          trackingNumber: newStatus === 'SHIPPED' ? finalTracking : activeOrder.trackingNumber,
         }),
       });
     } catch {}
@@ -245,8 +259,8 @@ export default function ManagerOrdersPage() {
           ? {
               ...o,
               orderStatus: newStatus,
-              carrier: newStatus === 'SHIPPED' ? carrier : o.carrier,
-              trackingNumber: newStatus === 'SHIPPED' ? trackingNumber : o.trackingNumber,
+              carrier: newStatus === 'SHIPPED' ? finalCarrier : o.carrier,
+              trackingNumber: newStatus === 'SHIPPED' ? finalTracking : o.trackingNumber,
               updatedAt: new Date().toISOString(),
             }
           : o
@@ -511,8 +525,20 @@ export default function ManagerOrdersPage() {
               <span className="text-xs text-zinc-500 font-mono italic">Awaiting Courier Dispatch</span>
             )}
             {(o as any).delhiveryRemarks && (
-              <p className="text-[10px] text-zinc-400 font-medium leading-tight flex items-center gap-1 mt-0.5">
-                <span>⚠️ {((o as any).delhiveryRemarks || '').slice(0, 50)}</span>
+              <p
+                className="text-[10px] text-amber-500 font-medium leading-tight flex items-center gap-1 mt-0.5"
+                title={(o as any).delhiveryRemarks}
+              >
+                <span>
+                  ⚠️{' '}
+                  {(o as any).delhiveryRemarks.toLowerCase().includes('wallet') ||
+                  (o as any).delhiveryRemarks.toLowerCase().includes('balance') ||
+                  (o as any).delhiveryRemarks.toLowerCase().includes('crashing') ||
+                  (o as any).delhiveryRemarks.toLowerCase().includes('exception') ||
+                  (o as any).delhiveryRemarks.toLowerCase().includes('manifest')
+                    ? 'Recharge Delhivery One Wallet'
+                    : ((o as any).delhiveryRemarks || '').slice(0, 45)}
+                </span>
               </p>
             )}
           </div>
@@ -750,6 +776,13 @@ export default function ManagerOrdersPage() {
               </div>
             )}
 
+            {transitionNotice && (
+              <div className="p-3 rounded-xl bg-amber-500/10 text-amber-300 text-xs flex items-center gap-2 border border-amber-500/20 animate-in fade-in">
+                <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+                <span>{transitionNotice}</span>
+              </div>
+            )}
+
             {/* Manager Assignment Desk inside modal */}
             <div className="p-3.5 rounded-xl glass-control flex items-center justify-between text-xs">
               <div className="space-y-0.5">
@@ -858,7 +891,10 @@ export default function ManagerOrdersPage() {
                           setTrackingNumber(data.shipment.waybill);
                           setCarrier(data.shipment.carrier);
                           if (data.shipment.remarks) {
-                            setTransitionError(data.shipment.remarks);
+                            setTransitionNotice(data.shipment.remarks);
+                            setTransitionError(null);
+                          } else {
+                            setTransitionNotice(null);
                           }
                         }
                       } catch (err) {

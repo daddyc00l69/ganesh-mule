@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { StoreProvider } from '@/components/storefront/store-provider';
 import { useCart } from '@/lib/cart/cart-context';
 import { formatCurrency } from '@/lib/utils';
 import {
@@ -1117,7 +1116,7 @@ function CheckoutContent() {
   // EMPTY BAG STATE
   if (items.length === 0 && !completedOrder) {
     return (
-      <StoreProvider>
+      <div className="min-h-screen flex flex-col bg-[#f5f5f7] text-[#1d1d1f] antialiased">
         <div className="bg-[#f5f5f7] min-h-screen py-24 px-4 flex items-center justify-center text-[#1d1d1f]">
           <div className="max-w-md w-full bg-white rounded-3xl border border-[#d2d2d7]/80 p-8 sm:p-10 text-center space-y-5 shadow-sm">
             <div className="w-16 h-16 rounded-2xl bg-[#f5f5f7] border border-[#d2d2d7] flex items-center justify-center mx-auto text-[#1d1d1f]">
@@ -1140,14 +1139,14 @@ function CheckoutContent() {
             </div>
           </div>
         </div>
-      </StoreProvider>
+      </div>
     );
   }
 
   // ORDER SUCCESS STATE
   if (completedOrder) {
     return (
-      <StoreProvider>
+      <div className="min-h-screen flex flex-col bg-[#f5f5f7] text-[#1d1d1f] antialiased">
         <div className="bg-[#f5f5f7] min-h-screen py-16 px-4 sm:px-6 text-[#1d1d1f]">
           <div className="max-w-xl mx-auto text-center space-y-6">
             <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center mx-auto shadow-sm">
@@ -1229,12 +1228,12 @@ function CheckoutContent() {
             </div>
           </div>
         </div>
-      </StoreProvider>
+      </div>
     );
   }
 
   return (
-    <StoreProvider>
+    <div className="min-h-screen flex flex-col bg-[#f5f5f7] text-[#1d1d1f] antialiased">
       <div className="bg-[#f5f5f7] min-h-screen pb-44 lg:pb-20 text-[#1d1d1f] selection:bg-[#0071e3]/20 selection:text-[#0071e3] scroll-smooth overscroll-y-contain">
 
         {/* Top Progress & Guarantee Header (Distraction-Free Apple-Style Checkout Header) */}
@@ -2371,7 +2370,7 @@ function CheckoutContent() {
           </form>
         </div>
       </div>
-    </StoreProvider>
+    </div>
   );
 }
 

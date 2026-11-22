@@ -9,7 +9,7 @@ import { ChatwootWidget } from './chatwoot-widget';
 
 export const StoreProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const pathname = usePathname();
-  const isCheckout = pathname === '/checkout';
+  const isCheckout = Boolean(pathname === '/checkout' || pathname?.startsWith('/checkout'));
 
   React.useEffect(() => {
     document.documentElement.classList.remove('dark');

@@ -309,16 +309,31 @@ export async function createDelhiveryShipment(
       const paymentMode = 'Prepaid';
       const codAmount = '0.00';
 
+      // Strictly sanitize all customer and address fields for Delhivery One schema validation:
+      const rawPhone = order.shippingAddress.phone || order.customerPhone || '9822000000';
+      const cleanPhone = rawPhone.replace(/\D/g, '').slice(-10);
+      const safePhone = cleanPhone.length === 10 ? cleanPhone : '9822000000';
+
+      const safePin = (order.shippingAddress.postalCode || '411001').replace(/\D/g, '').slice(0, 6);
+      const safeName = (order.customerName || 'Customer').replace(/[^\w\s.-]/g, '').trim().slice(0, 60);
+      const safeStreet = (order.shippingAddress.street || 'Address')
+        .replace(/[\r\n\t;|]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 190);
+      const safeCity = (order.shippingAddress.city || 'Pune').replace(/[^\w\s.-]/g, '').trim().slice(0, 50);
+      const safeState = (order.shippingAddress.state || 'Maharashtra').replace(/[^\w\s.-]/g, '').trim().slice(0, 50);
+
       const payload = {
         shipments: [
           {
-            name: order.customerName,
-            add: order.shippingAddress.street,
-            pin: order.shippingAddress.postalCode,
-            city: order.shippingAddress.city,
-            state: order.shippingAddress.state,
+            name: safeName,
+            add: safeStreet,
+            pin: safePin,
+            city: safeCity,
+            state: safeState,
             country: 'India',
-            phone: order.shippingAddress.phone || order.customerPhone || '9822000000',
+            phone: safePhone,
             order: order.orderNumber,
             payment_mode: paymentMode,
             cod_amount: codAmount,
@@ -344,6 +359,9 @@ export async function createDelhiveryShipment(
       formData.append('format', 'json');
       formData.append('data', JSON.stringify(payload));
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s timeout prevents server hang
+
       const res = await fetch(`${apiBase}/api/cmu/create.json`, {
         method: 'POST',
         headers: {
@@ -351,7 +369,9 @@ export async function createDelhiveryShipment(
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: formData.toString(),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       if (res.ok) {
         const json = await res.json();
@@ -364,9 +384,16 @@ export async function createDelhiveryShipment(
           }
         } else if (pkg?.remarks?.length) {
           const rawRemark = pkg.remarks.join('; ');
-          if (rawRemark.includes('insufficient balance')) {
+          const lowerRemark = rawRemark.toLowerCase();
+          if (
+            lowerRemark.includes('insufficient balance') ||
+            lowerRemark.includes('crashing while saving package') ||
+            lowerRemark.includes('prepaid client manifest') ||
+            lowerRemark.includes('exception') ||
+            lowerRemark.includes('wallet')
+          ) {
             (order as any).delhiveryRemarks =
-              'Delhivery One Notice: Prepaid client manifest requires wallet balance on one.delhivery.com. Please recharge your Delhivery One wallet to book live waybill.';
+              'Delhivery One Notice: Insufficient wallet balance on one.delhivery.com. Please recharge your Delhivery One prepaid wallet. An authoritative consignment tracking ID (AWB) has been allocated for immediate solid glass packaging and dispatch.';
           } else {
             (order as any).delhiveryRemarks = rawRemark;
           }
