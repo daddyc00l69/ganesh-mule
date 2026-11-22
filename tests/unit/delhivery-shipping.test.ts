@@ -116,6 +116,11 @@ describe('Delhivery One Automatic Shipping Integration (https://one.delhivery.co
     const mumbaiCheck = await checkDelhiveryServiceability('400001');
     expect(mumbaiCheck.serviceable).toBe(true);
 
+    const pandharpurCheck = await checkDelhiveryServiceability('413304');
+    expect(pandharpurCheck.serviceable).toBe(true);
+    expect(pandharpurCheck.city).toBe('Pandharpur');
+    expect(pandharpurCheck.carrier).toBe('Delhivery One');
+
     const invalidCheck = await checkDelhiveryServiceability('000000');
     expect(invalidCheck.serviceable).toBe(false);
   });

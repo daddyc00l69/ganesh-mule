@@ -127,4 +127,56 @@ describe('Delhivery Resilience & Error Interception Suite', () => {
     expect(awb).toMatch(/^(71890010|143)\d+/);
     expect(awb.length).toBe(14);
   });
+
+  it('should route Pandharpur PIN 413304 via active delivery hub 413302 while preserving customer destination in address', async () => {
+    let capturedBody = '';
+    global.fetch = vi.fn().mockImplementation(async (url: string, init?: any) => {
+      if (url.includes('/api/cmu/create.json')) {
+        capturedBody = init.body;
+        return {
+          ok: true,
+          json: async () => ({
+            success: true,
+            packages: [
+              {
+                waybill: '71890010000490',
+                status: 'Success',
+                sort_code: 'SLP/KDI',
+                serviceable: true,
+              },
+            ],
+          }),
+        };
+      }
+      return { ok: true, json: async () => ({}) };
+    }) as any;
+
+    const pandharpurOrder: OrderRecord = {
+      ...mockOrder,
+      orderNumber: 'SG-2026-3141',
+      shippingAddress: {
+        street: 'Gokul Nagar, Pandharpur',
+        city: 'Pandharpur',
+        state: 'Maharashtra',
+        postalCode: '413304',
+        country: 'India',
+        phone: '7020658722',
+      },
+    };
+
+    const result = await createDelhiveryShipment(pandharpurOrder, { forceRegenerate: true });
+
+    expect(result.success).toBe(true);
+    expect(result.waybill).toBe('71890010000490');
+
+    const params = new URLSearchParams(capturedBody);
+    const parsedData = JSON.parse(params.get('data') || '{}');
+    const shipment = parsedData.shipments[0];
+
+    // Hub routing must map 413304 to active delivery hub 413302
+    expect(shipment.pin).toBe('413302');
+    // Street address must retain the customer destination PIN 413304
+    expect(shipment.add).toContain('413304');
+    expect(shipment.city).toBe('Pandharpur');
+  });
 });
