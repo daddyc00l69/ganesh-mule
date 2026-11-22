@@ -36,6 +36,13 @@ export async function GET() {
         } else if (devSettings.fixedFeePaise) {
           settings.platformBaseFee = Math.round(devSettings.fixedFeePaise / 1.18);
         }
+
+        // Synchronize delivery configuration with developer settings
+        if (devSettings.deliveryEnabled === false) {
+          settings.shippingBaseFee = 0;
+          settings.freeShippingEnabled = true;
+          settings.freeShippingThreshold = 0;
+        }
       }
     } catch (syncErr) {
       console.warn('[FeeSettingsAPI] Sync with developer finance settings warning:', syncErr);

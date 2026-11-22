@@ -2124,7 +2124,11 @@ function CheckoutContent() {
                           <p className="text-[10px] text-[#1d1d1f] font-medium leading-tight">
                             Estimated Delivery: {delhiveryRate.estimatedDays || 2}-3 business days
                           </p>
-                          {hasDeliveryGst ? (
+                          {isFreeShipping ? (
+                            <p className="text-[10px] text-emerald-700 font-medium">
+                              Free Insured Solid Glass Delivery Applied
+                            </p>
+                          ) : hasDeliveryGst ? (
                             <p className="text-[10px] text-[#86868b] font-mono">
                               Base: {formatCurrency(bundledShippingBase)} + {deliveryGstRate}% GST: {formatCurrency(bundledShippingGst)}
                             </p>

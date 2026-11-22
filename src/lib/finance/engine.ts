@@ -243,7 +243,7 @@ export async function calculateAuthoritativeQuote(
 
   const isDeliveryGstActive = settings.deliveryGstEnabled !== false && settings.deliveryGstRate > 0;
 
-  if ((settings.deliveryEnabled || (input.customDeliveryTotalPaise !== undefined && input.customDeliveryTotalPaise > 0)) && isPinComplete && discountedSubtotalPaise > 0) {
+  if (settings.deliveryEnabled && isPinComplete && discountedSubtotalPaise > 0) {
     if (input.customDeliveryTotalPaise !== undefined && input.customDeliveryTotalPaise > 0) {
       if (isDeliveryGstActive) {
         deliveryTotalPaise = input.customDeliveryTotalPaise;
