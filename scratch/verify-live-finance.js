@@ -18,16 +18,22 @@ async function main() {
   console.log('Testing live POST /api/checkout/quote ...');
   const quoteRes = await page.request.post(`${BASE_URL}/api/checkout/quote`, {
     data: {
-      items: [{ productId: 'honey-raw-comb-1000', quantity: 1 }],
+      items: [{ productId: 'prod-forest-honey-1kg', quantity: 1 }],
       destinationPin: '411001',
       destinationState: 'Maharashtra',
-      shippingMode: 'Surface',
+      shippingMode: 'Express',
     },
   });
   console.log(`Quote API status: ${quoteRes.status()}`);
   if (quoteRes.ok()) {
     const qJson = await quoteRes.json();
-    console.log('Quote API response:', JSON.stringify(qJson.formatted, null, 2));
+    console.log('Quote API formatted quote:', JSON.stringify(qJson.formatted, null, 2));
+    console.log('Quote API snapshot summary:', JSON.stringify({
+      grandTotalPaise: qJson.snapshot?.grandTotalPaise,
+      platformFeeBasePaise: qJson.snapshot?.platformFeeBasePaise,
+      platformGstPaise: qJson.snapshot?.platformGstPaise,
+      totalTaxPaise: qJson.snapshot?.totalTaxPaise,
+    }, null, 2));
   } else {
     console.error('Quote API error:', await quoteRes.text());
   }
@@ -41,14 +47,18 @@ async function main() {
   await page.evaluate(() => {
     const testCart = [
       {
-        productId: 'honey-raw-comb-1000',
-        productName: 'Raw Honey Comb (1kg)',
-        price: 89900,
+        productId: 'prod-forest-honey-1kg',
+        productName: 'Forest Honey (1kg)',
+        slug: 'forest-honey-1kg',
+        sku: 'GM-FOR-1KG',
+        price: 74900,
         quantity: 1,
         weight: '1000g',
+        weightGrams: 1000,
+        stockAvailable: 50,
       },
     ];
-    localStorage.setItem('ganesh_cart', JSON.stringify(testCart));
+    localStorage.setItem('sg_cart', JSON.stringify(testCart));
   });
 
   // 3. Visit Checkout on Live
@@ -120,6 +130,21 @@ async function main() {
   await page.goto(`${BASE_URL}/developer/finance/exports`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(1000);
   await page.screenshot({ path: path.join(ARTIFACT_DIR, 'verified-live-developer-finance-exports.png') });
+
+  // Test Authenticated Excel Export Download
+  console.log('Testing live GET /api/developer/finance/exports ...');
+  const exportRes = await page.request.get(`${BASE_URL}/api/developer/finance/exports?reportType=platform_earnings&format=xlsx`);
+  console.log(`Excel export status: ${exportRes.status()}, Content-Type: ${exportRes.headers()['content-type']}`);
+  const exportBuffer = await exportRes.body();
+  console.log(`Excel export payload size: ${exportBuffer.length} bytes (starts with PK: ${exportBuffer.slice(0, 2).toString() === 'PK'})`);
+
+  // Test Settings API
+  const settingsRes = await page.request.get(`${BASE_URL}/api/developer/finance/settings`);
+  console.log(`Settings API status: ${settingsRes.status()}`);
+  if (settingsRes.ok()) {
+    const sJson = await settingsRes.json();
+    console.log(`Settings version: ${sJson.settings?.version}, platformFeeEnabled: ${sJson.settings?.platformFeeEnabled}, fixedFee: ₹${sJson.settings?.fixedFeePaise / 100}`);
+  }
 
   console.log('Live Verification completed successfully!');
   await browser.close();
