@@ -21,9 +21,9 @@ export interface GenerateInvoiceParams {
   notes?: string;
 }
 
-export function generateInvoiceNumber(seq: number, prefix: string = 'PINV'): string {
-  const currentYear = new Date().getFullYear();
-  return `${prefix}-${currentYear}-${String(seq).padStart(4, '0')}`;
+export function generateInvoiceNumber(sequence: number, prefix = 'PINV', year = new Date().getFullYear()): string {
+  const padded = String(sequence).padStart(4, '0');
+  return `${prefix}-${year}-${padded}`;
 }
 
 export async function generatePlatformInvoice(params: GenerateInvoiceParams) {
@@ -152,3 +152,4 @@ export async function generatePlatformInvoice(params: GenerateInvoiceParams) {
 
   return invoiceRecord;
 }
+

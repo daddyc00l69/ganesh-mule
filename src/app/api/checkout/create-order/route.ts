@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
       if (dbOnline) {
         try {
           product = await prisma.product.findUnique({ where: { id: item.productId } });
-        } catch {}
+        } catch { }
       }
 
       if (!product) {
@@ -315,7 +315,7 @@ export async function POST(req: NextRequest) {
               where: { code: appliedCouponCode },
               data: { usedCount: { increment: 1 } },
             });
-          } catch {}
+          } catch { }
         }
       } catch {
         // In-memory fallback if DB is offline
@@ -338,7 +338,7 @@ export async function POST(req: NextRequest) {
       delhiveryCourierFreight: snapshot.deliveryTotalPaise,
       carrier: chosenMode === 'Surface' ? 'Delhivery One (Surface)' : 'Delhivery One (Air Express)',
       shippingMode: chosenMode,
-      shippingZone: delhiveryPricing.zone,
+      shippingZone: delhiveryPricing?.zone || 'Zone A',
       delhiveryStatus: 'Payment Pending',
       platformFee: snapshot.platformFeeBasePaise,
       platformFeeGst: snapshot.platformGstPaise,
@@ -351,8 +351,19 @@ export async function POST(req: NextRequest) {
       couponCode: appliedCouponCode,
       assignedManagerName: appliedManagerName,
       totalAmount,
-      financialSnapshot: snapshot,
+      feeBreakdown: {
+        bundledShippingTotal: snapshot.deliveryTotalPaise,
+        bundledShippingBase: snapshot.deliveryBasePaise,
+        bundledShippingGst: snapshot.deliveryGstPaise,
+        shippingTotal: snapshot.deliveryTotalPaise,
+        platformBase: snapshot.platformFeeBasePaise,
+        platformGst: snapshot.platformGstPaise,
+        platformTotal: snapshot.platformTotalPaise,
+        totalTax: snapshot.totalTaxPaise,
+        grandTotal: snapshot.grandTotalPaise,
+      },
       delhiveryPricing,
+      financialSnapshot: snapshot,
       paymentMethod: 'ONLINE',
       orderStatus: 'PENDING',
       paymentStatus: 'CREATED',
@@ -397,7 +408,8 @@ export async function POST(req: NextRequest) {
       discountAmount,
       appliedCouponCode,
       appliedManagerName,
-      financialSnapshot: snapshot,
+      feeBreakdown: orderRecord.feeBreakdown,
+      snapshot,
     });
   } catch (err: any) {
     return NextResponse.json({ error: 'Checkout order creation failed', details: err.message }, { status: 500 });

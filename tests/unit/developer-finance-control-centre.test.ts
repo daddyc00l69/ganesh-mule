@@ -130,6 +130,48 @@ describe('Developer Finance & Control Centre - Precision Engine', () => {
     expect(snapshot.platformSgstPaise).toBe(0);
   });
 
+  it('correctly suppresses product GST, delivery GST, and platform fee when disabled in developer settings', async () => {
+    const items: AuthoritativeQuoteItemInput[] = [
+      {
+        productId: 'honey-raw-comb-1000',
+        name: 'Raw Honey Comb (1kg)',
+        unitPricePaise: 89900,
+        quantity: 1,
+        weight: '1000g',
+        weightGrams: 1000,
+      },
+    ];
+
+    const quote = await calculateAuthoritativeQuote({
+      items,
+      destinationPin: '411001',
+      destinationState: 'Maharashtra',
+      overrideSettings: {
+        productGstEnabled: false,
+        deliveryGstEnabled: false,
+        platformFeeEnabled: false,
+        showProductGstBreakdown: false,
+        customerGstBreakdownVisible: false,
+      },
+    });
+
+    const { snapshot, disclosures } = quote;
+
+    // Zero taxes across the entire order
+    expect(snapshot.productGstPaise).toBe(0);
+    expect(snapshot.productTaxablePaise).toBe(89900); // 100% of price is taxable/base
+    expect(snapshot.deliveryGstPaise).toBe(0);
+    expect(snapshot.platformFeeBasePaise).toBe(0);
+    expect(snapshot.platformGstPaise).toBe(0);
+    expect(snapshot.totalTaxPaise).toBe(0);
+
+    // Disclosures correctly report suppression for customer UI
+    expect(disclosures.productGstEnabled).toBe(false);
+    expect(disclosures.deliveryGstEnabled).toBe(false);
+    expect(disclosures.showPlatformFee).toBe(false);
+    expect(disclosures.customerGstBreakdownVisible).toBe(false);
+  });
+
   it('generates sequential B2B tax invoice numbers matching PINV-YYYY-XXXX', () => {
     const invNumber = generateInvoiceNumber(42);
     const currentYear = new Date().getFullYear();

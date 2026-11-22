@@ -25,19 +25,23 @@ export default function TaxReportsPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [dateRange, setDateRange] = useState('30d');
   const [stats, setStats] = useState<any>(null);
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
+  const [syncSecondsAgo, setSyncSecondsAgo] = useState(0);
 
-  const fetchTaxData = async () => {
-    setIsRefreshing(true);
+  const fetchTaxData = async (silent = false) => {
+    if (!silent) setIsRefreshing(true);
     try {
       const res = await fetch(`/api/developer/finance/stats?range=${dateRange}`);
       if (res.ok) {
         const data = await res.json();
         setStats(data);
+        setLastSyncedAt(new Date());
+        setSyncSecondsAgo(0);
       }
     } catch (err) {
       console.warn('Failed to load tax data:', err);
     } finally {
-      setIsRefreshing(false);
+      if (!silent) setIsRefreshing(false);
       setLoading(false);
     }
   };
@@ -45,6 +49,25 @@ export default function TaxReportsPage() {
   useEffect(() => {
     fetchTaxData();
   }, [dateRange]);
+
+  useEffect(() => {
+    const secTimer = setInterval(() => {
+      if (lastSyncedAt) {
+        setSyncSecondsAgo(Math.floor((Date.now() - lastSyncedAt.getTime()) / 1000));
+      }
+    }, 1000);
+
+    const pollTimer = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchTaxData(true);
+      }
+    }, 15000);
+
+    return () => {
+      clearInterval(secTimer);
+      clearInterval(pollTimer);
+    };
+  }, [lastSyncedAt, dateRange]);
 
   const formatINR = (paise: number = 0) => {
     return new Intl.NumberFormat('en-IN', {
@@ -81,10 +104,17 @@ export default function TaxReportsPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-background/50 border border-border/40 text-[11px] font-mono">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-muted-foreground">
+                {isRefreshing ? 'Syncing...' : syncSecondsAgo === 0 ? 'Live (0s)' : `Live (${syncSecondsAgo}s)`}
+              </span>
+            </div>
+
             <GlassButton
               variant="outline"
               size="sm"
-              onClick={fetchTaxData}
+              onClick={() => fetchTaxData(false)}
               disabled={isRefreshing}
               className="gap-1.5"
             >

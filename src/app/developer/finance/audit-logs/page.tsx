@@ -46,9 +46,11 @@ export default function FinancialAuditLogsPage() {
   const [totalCount, setTotalCount] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
+  const [syncSecondsAgo, setSyncSecondsAgo] = useState(0);
 
-  const fetchLogs = async () => {
-    setIsRefreshing(true);
+  const fetchLogs = async (silent = false) => {
+    if (!silent) setIsRefreshing(true);
     try {
       const params = new URLSearchParams({
         page: page.toString(),
@@ -62,11 +64,13 @@ export default function FinancialAuditLogsPage() {
         setLogs(data.logs || []);
         setTotalPages(data.pagination?.totalPages || 1);
         setTotalCount(data.pagination?.total || 0);
+        setLastSyncedAt(new Date());
+        setSyncSecondsAgo(0);
       }
     } catch (err) {
       console.warn('Failed to load audit logs:', err);
     } finally {
-      setIsRefreshing(false);
+      if (!silent) setIsRefreshing(false);
       setLoading(false);
     }
   };
@@ -74,6 +78,25 @@ export default function FinancialAuditLogsPage() {
   useEffect(() => {
     fetchLogs();
   }, [page, categoryFilter]);
+
+  useEffect(() => {
+    const secTimer = setInterval(() => {
+      if (lastSyncedAt) {
+        setSyncSecondsAgo(Math.floor((Date.now() - lastSyncedAt.getTime()) / 1000));
+      }
+    }, 1000);
+
+    const pollTimer = setInterval(() => {
+      if (!selectedLog && typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchLogs(true);
+      }
+    }, 15000);
+
+    return () => {
+      clearInterval(secTimer);
+      clearInterval(pollTimer);
+    };
+  }, [lastSyncedAt, selectedLog, page, categoryFilter]);
 
   const getCategoryBadgeVariant = (cat: string) => {
     switch (cat) {
@@ -113,10 +136,17 @@ export default function FinancialAuditLogsPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-background/50 border border-border/40 text-[11px] font-mono">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-muted-foreground">
+                {isRefreshing ? 'Syncing...' : syncSecondsAgo === 0 ? 'Live (0s)' : `Live (${syncSecondsAgo}s)`}
+              </span>
+            </div>
+
             <GlassButton
               variant="outline"
               size="sm"
-              onClick={fetchLogs}
+              onClick={() => fetchLogs(false)}
               disabled={isRefreshing}
               className="gap-1.5"
             >

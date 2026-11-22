@@ -60,9 +60,11 @@ export default function PlatformTransactionsPage() {
   const [selectedTx, setSelectedTx] = useState<PlatformTx | null>(null);
   const [showJsonRaw, setShowJsonRaw] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
+  const [syncSecondsAgo, setSyncSecondsAgo] = useState(0);
 
-  const fetchTransactions = async () => {
-    setIsRefreshing(true);
+  const fetchTransactions = async (silent = false) => {
+    if (!silent) setIsRefreshing(true);
     try {
       const params = new URLSearchParams({
         page: page.toString(),
@@ -78,11 +80,13 @@ export default function PlatformTransactionsPage() {
         setTransactions(data.transactions || []);
         setTotalPages(data.pagination?.totalPages || 1);
         setTotalCount(data.pagination?.total || 0);
+        setLastSyncedAt(new Date());
+        setSyncSecondsAgo(0);
       }
     } catch (err) {
       console.warn('Failed to fetch transactions:', err);
     } finally {
-      setIsRefreshing(false);
+      if (!silent) setIsRefreshing(false);
       setLoading(false);
     }
   };
@@ -90,6 +94,26 @@ export default function PlatformTransactionsPage() {
   useEffect(() => {
     fetchTransactions();
   }, [page, statusFilter, settlementFilter]);
+
+  useEffect(() => {
+    const secTimer = setInterval(() => {
+      if (lastSyncedAt) {
+        setSyncSecondsAgo(Math.floor((Date.now() - lastSyncedAt.getTime()) / 1000));
+      }
+    }, 1000);
+
+    const pollTimer = setInterval(() => {
+      // Auto-poll silently if no modal open and page is active
+      if (!selectedTx && typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchTransactions(true);
+      }
+    }, 15000);
+
+    return () => {
+      clearInterval(secTimer);
+      clearInterval(pollTimer);
+    };
+  }, [lastSyncedAt, selectedTx, page, statusFilter, settlementFilter, searchQuery]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,10 +152,17 @@ export default function PlatformTransactionsPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-background/50 border border-border/40 text-[11px] font-mono">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-muted-foreground">
+                {isRefreshing ? 'Syncing...' : syncSecondsAgo === 0 ? 'Live (0s)' : `Live (${syncSecondsAgo}s)`}
+              </span>
+            </div>
+
             <GlassButton
               variant="outline"
               size="sm"
-              onClick={fetchTransactions}
+              onClick={() => fetchTransactions(false)}
               disabled={isRefreshing}
               className="gap-1.5"
             >

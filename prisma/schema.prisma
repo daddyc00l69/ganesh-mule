@@ -410,8 +410,10 @@ model PlatformFinanceSettings {
   deliveryCustomerDisclosed Boolean  @default(true)
 
   // Product GST Configuration
+  productGstEnabled         Boolean  @default(true) // Master switch: enable or disable product GST (0%)
   defaultProductGstRate     Float    @default(5.0) // 5% on raw honey HSN 0409
   productPricesGstInclusive Boolean  @default(true)
+  customerGstBreakdownVisible Boolean @default(true) // Show/hide statutory tax breakdown on customer checkout
 
   // Client Admin Dashboard Visibility Isolation (Controls what client sees)
   showPlatformFeeToClient      Boolean  @default(false)

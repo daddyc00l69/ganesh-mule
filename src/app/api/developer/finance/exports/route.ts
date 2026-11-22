@@ -10,12 +10,12 @@ export async function GET(req: NextRequest) {
   if ('error' in auth) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
-  const currentUser = auth.user;
 
   const { searchParams } = new URL(req.url);
   const type = searchParams.get('type') || 'complete';
   const startDate = searchParams.get('startDate');
   const endDate = searchParams.get('endDate');
+  const userEmail = auth.user.email;
 
   const profile = await getPlatformBusinessProfile();
   const dbOnline = await isDatabaseOnline();
@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
   // Create ExcelJS Workbook
   const workbook = new ExcelJS.Workbook();
   workbook.creator = `${profile.legalName} Finance Platform`;
-  workbook.lastModifiedBy = currentUser.email;
+  workbook.lastModifiedBy = auth.user.email;
   workbook.created = new Date();
   workbook.modified = new Date();
 
@@ -95,7 +95,7 @@ export async function GET(req: NextRequest) {
 
     sheet.mergeCells('A2:G2');
     const subCell = sheet.getCell('A2');
-    subCell.value = `Generated on: ${new Date().toLocaleString('en-IN')} | User: ${currentUser.email} | Scope: Production Financial Ledger`;
+    subCell.value = `Generated on: ${new Date().toLocaleString('en-IN')} | User: ${userEmail} | Scope: Production Financial Ledger`;
     subCell.font = { name: 'Segoe UI', size: 9, italic: true, color: { argb: 'FF86868B' } };
     sheet.addRow([]); // Blank row
   }
@@ -310,142 +310,6 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // 4. Platform Invoices Register
-  if (type === 'invoices' || type === 'complete') {
-    const sheet = workbook.addWorksheet('Platform Invoices');
-    addReportHeader(sheet, 'Platform Service Tax Invoices (SAC 9971)');
-
-    sheet.columns = [
-      { header: 'Invoice Number', key: 'invoiceNumber', width: 20 },
-      { header: 'Date', key: 'date', width: 18 },
-      { header: 'Billed Client', key: 'client', width: 24 },
-      { header: 'Client GSTIN', key: 'gstin', width: 18 },
-      { header: 'Place of Supply', key: 'pos', width: 16 },
-      { header: 'Taxable Base (₹)', key: 'taxable', width: 18 },
-      { header: 'CGST 9% (₹)', key: 'cgst', width: 14 },
-      { header: 'SGST 9% (₹)', key: 'sgst', width: 14 },
-      { header: 'IGST 18% (₹)', key: 'igst', width: 14 },
-      { header: 'Total Invoice (₹)', key: 'total', width: 18 },
-      { header: 'Status', key: 'status', width: 14 },
-    ];
-
-    sheet.getRow(4).values = sheet.columns.map((c) => String(c.header || '')) as any;
-    sheet.getRow(4).fill = primaryHeaderFill;
-    sheet.getRow(4).font = headerFont;
-    sheet.getRow(4).height = 26;
-
-    let invIdx = 5;
-    for (const inv of invoicesList) {
-      const row = sheet.addRow({
-        invoiceNumber: inv.invoiceNumber,
-        date: new Date(inv.invoiceDate || inv.createdAt || Date.now()),
-        client: inv.clientBusinessName || profile.legalName,
-        gstin: inv.clientGstin || 'URP',
-        pos: inv.placeOfSupplyStateCode || '27 (MH)',
-        taxable: (inv.taxableAmountPaise || 0) / 100,
-        cgst: (inv.cgstPaise || 0) / 100,
-        sgst: (inv.sgstPaise || 0) / 100,
-        igst: (inv.igstPaise || 0) / 100,
-        total: (inv.totalAmountPaise || 0) / 100,
-        status: inv.status || 'ISSUED',
-      });
-      row.getCell('date').numFmt = dateFormat;
-      row.getCell('taxable').numFmt = currencyFormat;
-      row.getCell('cgst').numFmt = currencyFormat;
-      row.getCell('sgst').numFmt = currencyFormat;
-      row.getCell('igst').numFmt = currencyFormat;
-      row.getCell('total').numFmt = currencyFormat;
-      invIdx++;
-    }
-  }
-
-  // 5. Refunds & Credit Notes Register
-  if (type === 'refunds' || type === 'complete') {
-    const sheet = workbook.addWorksheet('Refunds & Credit Notes');
-    addReportHeader(sheet, 'Refunds & Platform Fee Adjustments');
-
-    sheet.columns = [
-      { header: 'Credit Note #', key: 'cnNumber', width: 20 },
-      { header: 'Order ID', key: 'orderId', width: 22 },
-      { header: 'Date', key: 'date', width: 18 },
-      { header: 'Refund Type', key: 'type', width: 18 },
-      { header: 'Gross Refund (₹)', key: 'grossRefund', width: 18 },
-      { header: 'Platform Fee Adj (₹)', key: 'feeAdj', width: 18 },
-      { header: 'GST Adj (₹)', key: 'gstAdj', width: 16 },
-      { header: 'Reason', key: 'reason', width: 30 },
-      { header: 'Status', key: 'status', width: 14 },
-    ];
-
-    sheet.getRow(4).values = sheet.columns.map((c) => String(c.header || '')) as any;
-    sheet.getRow(4).fill = primaryHeaderFill;
-    sheet.getRow(4).font = headerFont;
-    sheet.getRow(4).height = 26;
-
-    let refIdx = 5;
-    for (const ref of refundsList) {
-      const row = sheet.addRow({
-        cnNumber: ref.creditNoteNumber || `PCN-${ref.id.slice(0, 8)}`,
-        orderId: ref.orderId,
-        date: new Date(ref.createdAt || Date.now()),
-        type: ref.refundType || 'FULL',
-        grossRefund: (ref.grossRefundPaise || 0) / 100,
-        feeAdj: (ref.platformFeeRefundPaise || 0) / 100,
-        gstAdj: (ref.gstAdjustmentPaise || 0) / 100,
-        reason: ref.reason || 'Customer request',
-        status: ref.status || 'PROCESSED',
-      });
-      row.getCell('date').numFmt = dateFormat;
-      row.getCell('grossRefund').numFmt = currencyFormat;
-      row.getCell('feeAdj').numFmt = currencyFormat;
-      row.getCell('gstAdj').numFmt = currencyFormat;
-      refIdx++;
-    }
-  }
-
-  // 6. Audit Trail & Configuration Log
-  if (type === 'audit-logs' || type === 'complete') {
-    let auditLogsList: any[] = [];
-    if (dbOnline) {
-      try {
-        auditLogsList = await prisma.platformFinancialAuditLog.findMany({
-          orderBy: { createdAt: 'desc' },
-          take: 100,
-        });
-      } catch {}
-    }
-
-    const sheet = workbook.addWorksheet('Financial Audit Trail');
-    addReportHeader(sheet, 'Immutable Audit Trail of Financial Events');
-
-    sheet.columns = [
-      { header: 'Log ID', key: 'id', width: 20 },
-      { header: 'Timestamp', key: 'timestamp', width: 20 },
-      { header: 'Actor', key: 'actor', width: 24 },
-      { header: 'Role', key: 'role', width: 14 },
-      { header: 'Category', key: 'category', width: 20 },
-      { header: 'Action', key: 'action', width: 24 },
-      { header: 'Reason / Description', key: 'reason', width: 40 },
-    ];
-
-    sheet.getRow(4).values = sheet.columns.map((c) => String(c.header || '')) as any;
-    sheet.getRow(4).fill = primaryHeaderFill;
-    sheet.getRow(4).font = headerFont;
-    sheet.getRow(4).height = 26;
-
-    for (const log of auditLogsList) {
-      const row = sheet.addRow({
-        id: log.id,
-        timestamp: new Date(log.createdAt || Date.now()),
-        actor: log.actorEmail || 'System',
-        role: log.actorRole || 'DEVELOPER',
-        category: log.category || 'GENERAL',
-        action: log.action || 'EVENT',
-        reason: log.reason || '',
-      });
-      row.getCell('timestamp').numFmt = dateFormat;
-    }
-  }
-
   // Generate binary Excel buffer
   const buffer = await workbook.xlsx.writeBuffer();
 
@@ -454,15 +318,15 @@ export async function GET(req: NextRequest) {
     try {
       await prisma.platformFinancialAuditLog.create({
         data: {
-          actorId: currentUser.id,
-          actorEmail: currentUser.email,
-          actorRole: currentUser.role,
+          actorId: auth.user.id,
+          actorEmail: auth.user.email,
+          actorRole: auth.user.role,
           category: 'FINANCIAL_EXPORT',
           action: 'GENERATE_EXCEL_REPORT',
           reason: `Exported ${type.toUpperCase()} Excel workbook with ${ordersList.length} records`,
         },
       });
-    } catch {}
+    } catch { }
   }
 
   const filename = `ganesh_honey_platform_finance_${type}_${Date.now()}.xlsx`;
@@ -474,3 +338,4 @@ export async function GET(req: NextRequest) {
     },
   });
 }
+

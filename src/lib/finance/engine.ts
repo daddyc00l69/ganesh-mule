@@ -57,10 +57,12 @@ export interface OrderFinancialSnapshot {
   // 1. Products
   itemsCount: number;
   totalQuantity: number;
+  productGstEnabled: boolean;
   productSubtotalPaise: number;
   productTaxablePaise: number;
   productGstPaise: number;
   productGstRate: number;
+  customerGstBreakdownVisible: boolean;
   productLines: ProductLineFinancial[];
 
   // 2. Promotional Discounts
@@ -123,6 +125,11 @@ export interface AuthoritativeQuoteResponse {
   disclosures: {
     showPlatformFee: boolean;
     showDelivery: boolean;
+    deliveryGstEnabled: boolean;
+    deliveryGstRate: number;
+    productGstEnabled: boolean;
+    productGstRate: number;
+    customerGstBreakdownVisible: boolean;
     isPinServiceable: boolean;
     deliveryPendingPin: boolean;
   };
@@ -154,6 +161,7 @@ export async function calculateAuthoritativeQuote(
   );
 
   // 1. Calculate Items with Decimal Arithmetic
+  const isProductGstActive = settings.productGstEnabled !== false && settings.defaultProductGstRate > 0;
   let totalGross = FinanceDecimal.zero();
   let totalProductTaxable = FinanceDecimal.zero();
   let totalProductGst = FinanceDecimal.zero();
@@ -167,13 +175,16 @@ export async function calculateAuthoritativeQuote(
     const lineGrossDec = unitPriceDec.mulQuantity(qty);
     totalGross = totalGross.add(lineGrossDec);
 
-    const gstRate = item.customGstRate ?? settings.defaultProductGstRate;
+    const gstRate = isProductGstActive ? (item.customGstRate ?? settings.defaultProductGstRate) : 0;
     const isInclusive = settings.productPricesGstInclusive;
 
     let lineTaxableDec: FinanceDecimal;
     let lineGstDec: FinanceDecimal;
 
-    if (isInclusive) {
+    if (gstRate === 0) {
+      lineTaxableDec = lineGrossDec;
+      lineGstDec = FinanceDecimal.zero();
+    } else if (isInclusive) {
       const split = lineGrossDec.extractTaxFromInclusive(gstRate);
       lineTaxableDec = split.taxable;
       lineGstDec = split.tax;
@@ -230,18 +241,28 @@ export async function calculateAuthoritativeQuote(
   let deliverySgst = 0;
   let deliveryIgst = 0;
 
+  const isDeliveryGstActive = settings.deliveryGstEnabled !== false && settings.deliveryGstRate > 0;
+
   if (settings.deliveryEnabled && isPinComplete && discountedSubtotalPaise > 0) {
     if (input.customDeliveryTotalPaise !== undefined && input.customDeliveryTotalPaise > 0) {
-      deliveryTotalPaise = input.customDeliveryTotalPaise;
-      const totalDec = FinanceDecimal.fromPaise(deliveryTotalPaise);
-      const split = totalDec.extractTaxFromInclusive(settings.deliveryGstRate);
-      deliveryBasePaise = input.customDeliveryBasePaise ?? split.taxable.toPaise();
-      deliveryGstPaise = deliveryTotalPaise - deliveryBasePaise;
+      if (isDeliveryGstActive) {
+        deliveryTotalPaise = input.customDeliveryTotalPaise;
+        const totalDec = FinanceDecimal.fromPaise(deliveryTotalPaise);
+        const split = totalDec.extractTaxFromInclusive(settings.deliveryGstRate);
+        deliveryBasePaise = input.customDeliveryBasePaise ?? split.taxable.toPaise();
+        deliveryGstPaise = deliveryTotalPaise - deliveryBasePaise;
+      } else {
+        deliveryBasePaise = input.customDeliveryBasePaise ?? input.customDeliveryTotalPaise;
+        deliveryGstPaise = 0;
+        deliveryTotalPaise = deliveryBasePaise;
+      }
     } else {
       deliveryBasePaise = input.customDeliveryBasePaise ?? settings.deliveryFeePaise;
       const baseDec = FinanceDecimal.fromPaise(deliveryBasePaise);
-      if (settings.deliveryGstEnabled) {
+      if (isDeliveryGstActive) {
         deliveryGstPaise = baseDec.mulRate(settings.deliveryGstRate).toPaise();
+      } else {
+        deliveryGstPaise = 0;
       }
       deliveryTotalPaise = deliveryBasePaise + deliveryGstPaise;
     }
@@ -310,17 +331,19 @@ export async function calculateAuthoritativeQuote(
     currency: 'INR',
     itemsCount: input.items.length,
     totalQuantity: totalQty,
+    productGstEnabled: isProductGstActive,
     productSubtotalPaise: grossSubtotalPaise,
     productTaxablePaise: totalProductTaxable.toPaise(),
     productGstPaise: totalProductGst.toPaise(),
-    productGstRate: settings.defaultProductGstRate,
+    productGstRate: isProductGstActive ? settings.defaultProductGstRate : 0,
+    customerGstBreakdownVisible: Boolean(settings.customerGstBreakdownVisible && settings.showProductGstBreakdown),
     productLines,
     discountPaise,
     discountedSubtotalPaise,
     couponCode: input.couponCode || null,
     deliveryEnabled: settings.deliveryEnabled,
     deliveryBasePaise,
-    deliveryGstRate: settings.deliveryGstRate,
+    deliveryGstRate: isDeliveryGstActive ? settings.deliveryGstRate : 0,
     deliveryGstPaise,
     deliveryTotalPaise,
     isInterStateDelivery: isInterState,
@@ -362,8 +385,13 @@ export async function calculateAuthoritativeQuote(
       grandTotal: FinanceDecimal.fromPaise(grandTotalPaise).toFormattedINR(),
     },
     disclosures: {
-      showPlatformFee: settings.platformFeeEnabled && settings.customerDisclosed,
-      showDelivery: settings.deliveryEnabled,
+      showPlatformFee: Boolean(settings.platformFeeEnabled && settings.customerDisclosed && platformFeeBasePaise > 0),
+      showDelivery: Boolean(settings.deliveryEnabled),
+      deliveryGstEnabled: isDeliveryGstActive && deliveryGstPaise > 0,
+      deliveryGstRate: isDeliveryGstActive ? settings.deliveryGstRate : 0,
+      productGstEnabled: isProductGstActive,
+      productGstRate: isProductGstActive ? settings.defaultProductGstRate : 0,
+      customerGstBreakdownVisible: Boolean(settings.customerGstBreakdownVisible && settings.showProductGstBreakdown),
       isPinServiceable: isPinComplete,
       deliveryPendingPin: !isPinComplete,
     },

@@ -32,8 +32,10 @@ const UpdateSettingsSchema = z.object({
       deliveryClientVisible: z.boolean().optional(),
       deliveryCustomerDisclosed: z.boolean().optional(),
 
+      productGstEnabled: z.boolean().optional(),
       defaultProductGstRate: z.number().min(0).max(28).optional(),
       productPricesGstInclusive: z.boolean().optional(),
+      customerGstBreakdownVisible: z.boolean().optional(),
 
       showPlatformFeeToClient: z.boolean().optional(),
       showPlatformGstToClient: z.boolean().optional(),

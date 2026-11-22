@@ -31,6 +31,8 @@ import {
   Package,
   TicketPercent,
   ExternalLink,
+  Settings,
+  Sparkles,
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
@@ -213,45 +215,45 @@ export default function DeveloperDashboardPage() {
           </div>
         </div>
 
-        {/* Quick Fast Navigation Bar */}
+        {/* Quick Fast Navigation Bar - Developer Platform Suite */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
           <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap pl-1">
-            Quick Panels:
+            Platform Hub:
           </span>
-          <Link href="/developer/accounts">
-            <GlassBadge variant="default" size="sm" className="gap-1.5 cursor-pointer hover:bg-accent/40 transition-colors">
-              <Users className="w-3 h-3 text-blue-500" />
-              <span>Staff Accounts</span>
+          <Link href="/developer/finance/settings">
+            <GlassBadge variant="default" size="sm" className="gap-1.5 cursor-pointer bg-[#0071e3]/10 text-[#0071e3] border-[#0071e3]/30 hover:bg-[#0071e3]/20 transition-colors">
+              <Settings className="w-3 h-3 text-[#0071e3]" />
+              <span>Financial Settings</span>
             </GlassBadge>
           </Link>
-          <Link href="/admin/orders">
+          <Link href="/developer/finance">
+            <GlassBadge variant="outline" size="sm" className="gap-1.5 cursor-pointer hover:bg-accent/40 transition-colors">
+              <Activity className="w-3 h-3 text-emerald-500" />
+              <span>Platform Earnings</span>
+            </GlassBadge>
+          </Link>
+          <Link href="/developer/finance/transactions">
             <GlassBadge variant="outline" size="sm" className="gap-1.5 cursor-pointer hover:bg-accent/40 transition-colors">
               <ShoppingBag className="w-3 h-3 text-purple-500" />
-              <span>Orders &amp; Dispatch</span>
+              <span>Transactions Ledger</span>
             </GlassBadge>
           </Link>
-          <Link href="/admin/inventory">
+          <Link href="/developer/finance/invoices">
+            <GlassBadge variant="outline" size="sm" className="gap-1.5 cursor-pointer hover:bg-accent/40 transition-colors">
+              <Sparkles className="w-3 h-3 text-blue-500" />
+              <span>Platform Invoices</span>
+            </GlassBadge>
+          </Link>
+          <Link href="/developer/finance/exports">
             <GlassBadge variant="outline" size="sm" className="gap-1.5 cursor-pointer hover:bg-accent/40 transition-colors">
               <Boxes className="w-3 h-3 text-amber-500" />
-              <span>Inventory Desk</span>
+              <span>Excel Exports</span>
             </GlassBadge>
           </Link>
-          <Link href="/admin/products">
+          <Link href="/developer/accounts">
             <GlassBadge variant="outline" size="sm" className="gap-1.5 cursor-pointer hover:bg-accent/40 transition-colors">
-              <Package className="w-3 h-3 text-emerald-500" />
-              <span>Product Catalogue</span>
-            </GlassBadge>
-          </Link>
-          <Link href="/admin/coupons">
-            <GlassBadge variant="outline" size="sm" className="gap-1.5 cursor-pointer hover:bg-accent/40 transition-colors">
-              <TicketPercent className="w-3 h-3 text-pink-500" />
-              <span>Coupons &amp; Offers</span>
-            </GlassBadge>
-          </Link>
-          <Link href="/admin/audit-logs">
-            <GlassBadge variant="outline" size="sm" className="gap-1.5 cursor-pointer hover:bg-accent/40 transition-colors">
-              <ShieldAlert className="w-3 h-3 text-rose-500" />
-              <span>Security Logs</span>
+              <Users className="w-3 h-3 text-stone-500" />
+              <span>Staff Accounts</span>
             </GlassBadge>
           </Link>
           <Link href="/shop" target="_blank">

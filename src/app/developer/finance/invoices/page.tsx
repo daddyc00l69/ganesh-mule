@@ -50,6 +50,8 @@ export default function PlatformInvoicesPage() {
   const [selectedInvoice, setSelectedInvoice] = useState<PlatformInvoice | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [createSubmitting, setCreateSubmitting] = useState(false);
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
+  const [syncSecondsAgo, setSyncSecondsAgo] = useState(0);
 
   // New Invoice form state
   const [formTaxable, setFormTaxable] = useState('3000'); // ₹30 in rupees
@@ -59,25 +61,46 @@ export default function PlatformInvoicesPage() {
   const [formDescription, setFormDescription] = useState('Platform Technology Services, Payment Gateway Infrastructure & Automated Delivery Routing (SAC 9971)');
   const [formNotes, setFormNotes] = useState('Consolidated platform service fee billing for processed e-commerce customer transactions.');
 
-  const fetchInvoices = async () => {
-    setIsRefreshing(true);
+  const fetchInvoices = async (silent = false) => {
+    if (!silent) setIsRefreshing(true);
     try {
       const res = await fetch(`/api/developer/finance/invoices?q=${encodeURIComponent(searchQuery)}`);
       if (res.ok) {
         const data = await res.json();
         setInvoices(data.invoices || []);
+        setLastSyncedAt(new Date());
+        setSyncSecondsAgo(0);
       }
     } catch (err) {
       console.warn('Failed to fetch invoices:', err);
     } finally {
-      setIsRefreshing(false);
+      if (!silent) setIsRefreshing(false);
       setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchInvoices();
-  }, []);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const secTimer = setInterval(() => {
+      if (lastSyncedAt) {
+        setSyncSecondsAgo(Math.floor((Date.now() - lastSyncedAt.getTime()) / 1000));
+      }
+    }, 1000);
+
+    const pollTimer = setInterval(() => {
+      if (!isCreating && !selectedInvoice && typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchInvoices(true);
+      }
+    }, 20000);
+
+    return () => {
+      clearInterval(secTimer);
+      clearInterval(pollTimer);
+    };
+  }, [lastSyncedAt, isCreating, selectedInvoice, searchQuery]);
 
   const handleCreateInvoice = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,10 +169,17 @@ export default function PlatformInvoicesPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-background/50 border border-border/40 text-[11px] font-mono">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-muted-foreground">
+                {isRefreshing ? 'Syncing...' : syncSecondsAgo === 0 ? 'Live (0s)' : `Live (${syncSecondsAgo}s)`}
+              </span>
+            </div>
+
             <GlassButton
               variant="outline"
               size="sm"
-              onClick={fetchInvoices}
+              onClick={() => fetchInvoices(false)}
               disabled={isRefreshing}
               className="gap-1.5"
             >

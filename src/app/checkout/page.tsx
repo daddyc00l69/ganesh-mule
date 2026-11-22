@@ -557,6 +557,26 @@ function CheckoutContent() {
     serverQuote?.disclosures?.showPlatformFee && platformFeeBase > 0
   );
 
+  const productGstEnabled = hasServerSnapshot
+    ? (serverQuote?.disclosures?.productGstEnabled ?? (snap.productGstPaise > 0))
+    : (productGst > 0);
+
+  const productGstRate = hasServerSnapshot
+    ? (serverQuote?.disclosures?.productGstRate ?? snap.productGstRate ?? 5)
+    : 5;
+
+  const customerGstBreakdownVisible = hasServerSnapshot
+    ? (serverQuote?.disclosures?.customerGstBreakdownVisible ?? true)
+    : true;
+
+  const deliveryGstEnabled = hasServerSnapshot
+    ? (serverQuote?.disclosures?.deliveryGstEnabled ?? (bundledShippingGst > 0))
+    : (bundledShippingGst > 0);
+
+  const deliveryGstRate = hasServerSnapshot
+    ? (serverQuote?.disclosures?.deliveryGstRate ?? snap.deliveryGstRate ?? 18)
+    : 18;
+
   const totalTax = hasServerSnapshot
     ? snap.totalTaxPaise
     : fallbackBreakdown.totalTax;
@@ -564,6 +584,10 @@ function CheckoutContent() {
   const totalAmount = hasServerSnapshot
     ? snap.grandTotalPaise
     : fallbackBreakdown.grandTotal;
+
+  const hasTaxBreakdown = customerGstBreakdownVisible && totalTax > 0;
+  const hasProductGst = productGstEnabled && productGst > 0 && customerGstBreakdownVisible;
+  const hasDeliveryGst = deliveryGstEnabled && bundledShippingGst > 0 && customerGstBreakdownVisible;
 
   // Strict Form Validation for Pay button and Preview Card gating
   const isContactComplete = Boolean(
@@ -1987,11 +2011,17 @@ function CheckoutContent() {
                     <div>
                       <div className="flex items-center gap-1.5 font-semibold text-stone-900">
                         <span>Items Total</span>
-                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#f5f5f7] border border-[#d2d2d7] text-[#1d1d1f] font-semibold font-mono">5% GST</span>
+                        {hasProductGst && (
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#f5f5f7] border border-[#d2d2d7] text-[#1d1d1f] font-semibold font-mono">
+                            {productGstRate}% GST
+                          </span>
+                        )}
                       </div>
-                      <p className="text-[10px] text-stone-400 mt-0.5">
-                        Base: {formatCurrency(productTaxable)} + 5% GST: {formatCurrency(productGst)}
-                      </p>
+                      {hasProductGst && (
+                        <p className="text-[10px] text-stone-400 mt-0.5">
+                          Base: {formatCurrency(productTaxable)} + {productGstRate}% GST: {formatCurrency(productGst)}
+                        </p>
+                      )}
                     </div>
                     <span className="font-bold text-stone-950 font-mono">{formatCurrency(subtotal)}</span>
                   </div>
@@ -2010,9 +2040,11 @@ function CheckoutContent() {
                         <span className="font-semibold text-xs text-stone-900">
                           Shipping &amp; Delivery (Insured Express)
                         </span>
-                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-stone-100 text-stone-700 font-bold font-mono whitespace-nowrap border border-stone-200">
-                          18% GST
-                        </span>
+                        {hasDeliveryGst && (
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-stone-100 text-stone-700 font-bold font-mono whitespace-nowrap border border-stone-200">
+                            {deliveryGstRate}% GST
+                          </span>
+                        )}
                         {delhiveryRate && (
                           <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-800 font-bold whitespace-nowrap border border-emerald-200">
                             Insured Solid Glass
@@ -2024,9 +2056,15 @@ function CheckoutContent() {
                           <p className="text-[10px] text-[#1d1d1f] font-medium leading-tight">
                             Estimated Delivery: {delhiveryRate.estimatedDays || 2}-3 business days
                           </p>
-                          <p className="text-[10px] text-[#86868b] font-mono">
-                            Base: {formatCurrency(bundledShippingBase)} + 18% GST: {formatCurrency(bundledShippingGst)}
-                          </p>
+                          {hasDeliveryGst ? (
+                            <p className="text-[10px] text-[#86868b] font-mono">
+                              Base: {formatCurrency(bundledShippingBase)} + {deliveryGstRate}% GST: {formatCurrency(bundledShippingGst)}
+                            </p>
+                          ) : (
+                            <p className="text-[10px] text-[#86868b] font-mono">
+                              Courier Freight: {formatCurrency(bundledShippingTotal)}
+                            </p>
+                          )}
                         </div>
                       ) : (
                         <p className="text-[10px] text-[#86868b] mt-0.5 leading-relaxed">
@@ -2035,7 +2073,9 @@ function CheckoutContent() {
                             : isFreeShipping
                               ? 'Free Insured Delivery Applied'
                               : postalCode.length === 6 && isValidIndianPin(postalCode)
-                                ? `Base: ${formatCurrency(bundledShippingBase)} + 18% GST: ${formatCurrency(bundledShippingGst)}`
+                                ? (hasDeliveryGst
+                                    ? `Base: ${formatCurrency(bundledShippingBase)} + ${deliveryGstRate}% GST: ${formatCurrency(bundledShippingGst)}`
+                                    : `Standard Freight: ${formatCurrency(bundledShippingTotal)}`)
                                 : 'Enter 6-digit PIN code to calculate exact delivery charges'}
                         </p>
                       )}
@@ -2052,7 +2092,11 @@ function CheckoutContent() {
                           <span className="font-bold text-xs text-stone-950 font-mono whitespace-nowrap block">
                             {formatCurrency(bundledShippingTotal)}
                           </span>
-                          <span className="text-[9px] text-stone-400 font-normal whitespace-nowrap block">(incl. 18% GST)</span>
+                          {hasDeliveryGst && (
+                            <span className="text-[9px] text-stone-400 font-normal whitespace-nowrap block">
+                              (incl. {deliveryGstRate}% GST)
+                            </span>
+                          )}
                         </div>
                       ) : (
                         <button
@@ -2079,66 +2123,78 @@ function CheckoutContent() {
                           <span className="text-[9px] px-1.5 py-0.2 rounded bg-stone-100 text-stone-700 font-bold font-mono whitespace-nowrap border border-stone-200">
                             SAC 9971
                           </span>
-                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-stone-100 text-stone-700 font-bold font-mono whitespace-nowrap border border-stone-200">
-                            18% GST
-                          </span>
+                          {platformFeeGst > 0 && (
+                            <span className="text-[9px] px-1.5 py-0.2 rounded bg-stone-100 text-stone-700 font-bold font-mono whitespace-nowrap border border-stone-200">
+                              18% GST
+                            </span>
+                          )}
                         </div>
                         <p className="text-[10px] text-[#86868b] mt-0.5">
-                          Base: {formatCurrency(platformFeeBase)} + 18% GST: {formatCurrency(platformFeeGst)}
+                          {platformFeeGst > 0
+                            ? `Base: ${formatCurrency(platformFeeBase)} + 18% GST: ${formatCurrency(platformFeeGst)}`
+                            : `Base Service Fee: ${formatCurrency(platformFeeBase)}`}
                         </p>
                       </div>
                       <div className="shrink-0 text-right pt-0.5">
                         <span className="font-bold text-xs text-stone-950 font-mono whitespace-nowrap block">
                           {formatCurrency(platformFeeTotal)}
                         </span>
-                        <span className="text-[9px] text-stone-400 font-normal whitespace-nowrap block">
-                          (incl. 18% GST)
-                        </span>
+                        {platformFeeGst > 0 && (
+                          <span className="text-[9px] text-stone-400 font-normal whitespace-nowrap block">
+                            (incl. 18% GST)
+                          </span>
+                        )}
                       </div>
                     </div>
                   )}
 
                   {/* Statutory Tax Summary (Expandable Breakdown) */}
-                  <div className="pt-2 border-t border-stone-100">
-                    <button
-                      type="button"
-                      onClick={() => setShowGstBreakdown(!showGstBreakdown)}
-                      className="w-full flex items-center justify-between text-left text-[11px] font-semibold text-[#1d1d1f] hover:text-[#0071e3] transition-colors cursor-pointer py-0.5"
-                    >
-                      <span className="flex items-center gap-1">
-                        <FileText className="w-3.5 h-3.5" />
-                        <span>Statutory GST Breakdown ({formatCurrency(totalTax)} total)</span>
-                      </span>
-                      {showGstBreakdown ? (
-                        <ChevronUp className="w-3.5 h-3.5" />
-                      ) : (
-                        <ChevronDown className="w-3.5 h-3.5" />
-                      )}
-                    </button>
-
-                    {showGstBreakdown && (
-                      <div className="mt-2 p-3 rounded-xl bg-stone-50 border border-stone-200 text-[10px] space-y-1.5 animate-in fade-in">
-                        <div className="flex justify-between text-stone-600">
-                          <span>Raw Honey GST (5% on {formatCurrency(productTaxable)}):</span>
-                          <span className="font-mono font-semibold text-stone-900">{formatCurrency(productGst)}</span>
-                        </div>
-                        <div className="flex justify-between text-stone-600">
-                          <span>Delivery &amp; Logistics GST (18% on {formatCurrency(bundledShippingBase)}):</span>
-                          <span className="font-mono font-semibold text-stone-900">{formatCurrency(bundledShippingGst)}</span>
-                        </div>
-                        {showPlatformFee && (
-                          <div className="flex justify-between text-stone-600">
-                            <span>Platform Tech Fee GST (18% on {formatCurrency(platformFeeBase)}):</span>
-                            <span className="font-mono font-semibold text-stone-900">{formatCurrency(platformFeeGst)}</span>
-                          </div>
+                  {hasTaxBreakdown && (
+                    <div className="pt-2 border-t border-stone-100">
+                      <button
+                        type="button"
+                        onClick={() => setShowGstBreakdown(!showGstBreakdown)}
+                        className="w-full flex items-center justify-between text-left text-[11px] font-semibold text-[#1d1d1f] hover:text-[#0071e3] transition-colors cursor-pointer py-0.5"
+                      >
+                        <span className="flex items-center gap-1">
+                          <FileText className="w-3.5 h-3.5" />
+                          <span>Statutory GST Breakdown ({formatCurrency(totalTax)} total)</span>
+                        </span>
+                        {showGstBreakdown ? (
+                          <ChevronUp className="w-3.5 h-3.5" />
+                        ) : (
+                          <ChevronDown className="w-3.5 h-3.5" />
                         )}
-                        <div className="flex justify-between font-bold text-stone-900 pt-1 border-t border-stone-200">
-                          <span>Total Combined GST (CGST + SGST):</span>
-                          <span className="font-mono text-emerald-800">{formatCurrency(totalTax)}</span>
+                      </button>
+
+                      {showGstBreakdown && (
+                        <div className="mt-2 p-3 rounded-xl bg-stone-50 border border-stone-200 text-[10px] space-y-1.5 animate-in fade-in">
+                          {hasProductGst && (
+                            <div className="flex justify-between text-stone-600">
+                              <span>Raw Honey GST ({productGstRate}% on {formatCurrency(productTaxable)}):</span>
+                              <span className="font-mono font-semibold text-stone-900">{formatCurrency(productGst)}</span>
+                            </div>
+                          )}
+                          {hasDeliveryGst && (
+                            <div className="flex justify-between text-stone-600">
+                              <span>Delivery &amp; Logistics GST ({deliveryGstRate}% on {formatCurrency(bundledShippingBase)}):</span>
+                              <span className="font-mono font-semibold text-stone-900">{formatCurrency(bundledShippingGst)}</span>
+                            </div>
+                          )}
+                          {showPlatformFee && platformFeeGst > 0 && (
+                            <div className="flex justify-between text-stone-600">
+                              <span>Platform Tech Fee GST (18% on {formatCurrency(platformFeeBase)}):</span>
+                              <span className="font-mono font-semibold text-stone-900">{formatCurrency(platformFeeGst)}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between font-bold text-stone-900 pt-1 border-t border-stone-200">
+                            <span>Total Combined GST (CGST + SGST):</span>
+                            <span className="font-mono text-emerald-800">{formatCurrency(totalTax)}</span>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </div>
+                  )}
 
                   <div className="flex justify-between items-baseline text-base font-bold text-[#1d1d1f] pt-3 border-t border-[#d2d2d7]">
                     <div>
@@ -2148,7 +2204,9 @@ function CheckoutContent() {
                           ? 'All taxes & free delivery included'
                           : postalCode.length === 6 && isValidIndianPin(postalCode)
                             ? 'All taxes & express delivery included'
-                            : 'Includes 5% GST • Delivery calculated upon PIN entry'}
+                            : hasProductGst
+                              ? `Includes ${productGstRate}% GST • Delivery calculated upon PIN entry`
+                              : 'Delivery calculated upon PIN entry'}
                       </p>
                     </div>
                     <span className="text-2xl font-bold text-[#1d1d1f] font-mono">{formatCurrency(totalAmount)}</span>

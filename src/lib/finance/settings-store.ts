@@ -29,8 +29,10 @@ export interface PlatformFinanceConfig {
   deliveryClientVisible: boolean;
   deliveryCustomerDisclosed: boolean;
 
+  productGstEnabled: boolean;
   defaultProductGstRate: number;
   productPricesGstInclusive: boolean;
+  customerGstBreakdownVisible: boolean;
 
   showPlatformFeeToClient: boolean;
   showPlatformGstToClient: boolean;
@@ -86,8 +88,10 @@ export const DEFAULT_PLATFORM_FINANCE_CONFIG: PlatformFinanceConfig = {
   deliveryClientVisible: true,
   deliveryCustomerDisclosed: true,
 
+  productGstEnabled: true,
   defaultProductGstRate: 5.0, // 5% for honey HSN 0409
   productPricesGstInclusive: true,
+  customerGstBreakdownVisible: true,
 
   showPlatformFeeToClient: false,
   showPlatformGstToClient: false,
@@ -135,7 +139,10 @@ export async function getPlatformFinanceSettings(): Promise<PlatformFinanceConfi
       });
       if (record) {
         const mapped: PlatformFinanceConfig = {
+          ...DEFAULT_PLATFORM_FINANCE_CONFIG,
           ...record,
+          productGstEnabled: (record as any).productGstEnabled ?? true,
+          customerGstBreakdownVisible: (record as any).customerGstBreakdownVisible ?? true,
           feeType: record.feeType as 'FIXED' | 'PERCENTAGE',
           effectiveFrom: record.effectiveFrom.toISOString(),
           updatedAt: record.updatedAt.toISOString(),
@@ -167,8 +174,10 @@ export async function getPlatformFinanceSettings(): Promise<PlatformFinanceConfi
           deliveryGstInclusive: DEFAULT_PLATFORM_FINANCE_CONFIG.deliveryGstInclusive,
           deliveryClientVisible: DEFAULT_PLATFORM_FINANCE_CONFIG.deliveryClientVisible,
           deliveryCustomerDisclosed: DEFAULT_PLATFORM_FINANCE_CONFIG.deliveryCustomerDisclosed,
+          productGstEnabled: DEFAULT_PLATFORM_FINANCE_CONFIG.productGstEnabled,
           defaultProductGstRate: DEFAULT_PLATFORM_FINANCE_CONFIG.defaultProductGstRate,
           productPricesGstInclusive: DEFAULT_PLATFORM_FINANCE_CONFIG.productPricesGstInclusive,
+          customerGstBreakdownVisible: DEFAULT_PLATFORM_FINANCE_CONFIG.customerGstBreakdownVisible,
           showPlatformFeeToClient: DEFAULT_PLATFORM_FINANCE_CONFIG.showPlatformFeeToClient,
           showPlatformGstToClient: DEFAULT_PLATFORM_FINANCE_CONFIG.showPlatformGstToClient,
           showDeliveryToClient: DEFAULT_PLATFORM_FINANCE_CONFIG.showDeliveryToClient,
