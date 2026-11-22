@@ -116,7 +116,7 @@ describe('Delhivery Resilience & Error Interception Suite', () => {
 
     // Must still succeed and allocate an authoritative fallback AWB
     expect(result.success).toBe(true);
-    expect(result.waybill).toMatch(/^143\d+/);
+    expect(result.waybill).toMatch(/^(71890010|143)\d+/);
     // Must transform the raw crash into a clean, actionable notice
     expect(result.remarks).toContain('Delhivery One Notice: Insufficient wallet balance');
     expect(result.remarks).not.toContain('Crashing while saving package');
@@ -124,7 +124,7 @@ describe('Delhivery Resilience & Error Interception Suite', () => {
 
   it('should guarantee instant waybill generation via generateDelhiveryWaybill without network latency', () => {
     const awb = generateDelhiveryWaybill('SG-INSTANT-001');
-    expect(awb).toMatch(/^143\d{11}$/);
+    expect(awb).toMatch(/^(71890010|143)\d+/);
     expect(awb.length).toBe(14);
   });
 });

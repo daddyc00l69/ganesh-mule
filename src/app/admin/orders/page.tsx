@@ -29,6 +29,7 @@ import {
   Tag,
   UserCheck,
   AlertCircle,
+  AlertTriangle,
   Download,
 } from 'lucide-react';
 
@@ -46,7 +47,7 @@ export default function AdminOrdersPage() {
   const [trackingModalOrder, setTrackingModalOrder] = useState<OrderRecord | null>(null);
   const [trackingDetails, setTrackingDetails] = useState<any | null>(null);
   const [isLoadingTracking, setIsLoadingTracking] = useState(false);
-  const [statusBanner, setStatusBanner] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+  const [statusBanner, setStatusBanner] = useState<{ type: 'success' | 'error' | 'info' | 'warning'; message: string } | null>(null);
 
   const fetchLiveOrders = async () => {
     setIsRefreshing(true);
@@ -569,6 +570,8 @@ export default function AdminOrdersPage() {
               ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300'
               : statusBanner.type === 'error'
               ? 'bg-rose-950/40 border-rose-500/30 text-rose-300'
+              : statusBanner.type === 'warning'
+              ? 'bg-amber-950/40 border-amber-500/30 text-amber-300'
               : 'bg-zinc-900 border-zinc-700 text-zinc-300'
           }`}
         >
@@ -577,6 +580,8 @@ export default function AdminOrdersPage() {
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
             ) : statusBanner.type === 'error' ? (
               <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+            ) : statusBanner.type === 'warning' ? (
+              <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
             ) : (
               <Clock className="w-4 h-4 text-zinc-400 shrink-0" />
             )}

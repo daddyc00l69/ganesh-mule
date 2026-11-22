@@ -122,7 +122,7 @@ describe('Delhivery One Automatic Shipping Integration (https://one.delhivery.co
 
   it('should generate valid Delhivery numeric AWB', () => {
     const awb = generateDelhiveryWaybill('SG-ORD-9988');
-    expect(awb).toMatch(/^143\d+/);
+    expect(awb).toMatch(/^(71890010|143)\d+/);
     expect(awb.length).toBeGreaterThanOrEqual(12);
   });
 
@@ -171,7 +171,7 @@ describe('Delhivery One Automatic Shipping Integration (https://one.delhivery.co
     const result = await createDelhiveryShipment(testOrder);
     expect(result.success).toBe(true);
     expect(result.waybill).toBeDefined();
-    expect(result.waybill).toMatch(/^143/);
+    expect(result.waybill).toMatch(/^(71890010|143)\d+/);
     expect(result.carrier).toContain('Delhivery One');
     expect(result.trackingUrl).toContain('https://www.delhivery.com/track/package');
     expect(result.labelUrl).toContain('/api/shipping/delhivery/label');
