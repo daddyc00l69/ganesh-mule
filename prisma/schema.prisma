@@ -223,12 +223,13 @@ model Order {
   financialSnapshot   Json?
   notes               String?
 
-  items           OrderItem[]
-  payments        Payment[]
-  refunds         Refund[]
-  shipments       Shipment[]
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  items               OrderItem[]
+  payments            Payment[]
+  refunds             Refund[]
+  shipments           Shipment[]
+  platformTransaction PlatformTransaction?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
 
   @@index([orderNumber])
   @@index([userId])
@@ -378,4 +379,172 @@ model DiscountCoupon {
 
   @@index([code])
   @@index([isActive])
+}
+
+// ==========================================
+// DEVELOPER FINANCE & CONTROL CENTRE MODELS
+// ==========================================
+
+model PlatformFinanceSettings {
+  id                        String   @id @default("singleton")
+  version                   Int      @default(1)
+  platformFeeEnabled        Boolean  @default(true)
+  feeType                   String   @default("FIXED") // FIXED | PERCENTAGE
+  fixedFeePaise             Int      @default(3000) // ₹30.00
+  feePercent                Float    @default(2.5) // e.g. 2.5%
+  minFeePaise               Int      @default(1000) // ₹10.00 minimum for % mode
+  maxFeePaise               Int      @default(10000) // ₹100.00 maximum for % mode
+  platformGstEnabled        Boolean  @default(true)
+  platformGstRate           Float    @default(18.0) // 18% GST
+  platformGstInclusive      Boolean  @default(false)
+  customerDisclosed         Boolean  @default(true)
+  clientVisible             Boolean  @default(false)
+
+  // Delivery Charge Configuration
+  deliveryEnabled           Boolean  @default(true)
+  deliveryFeePaise          Int      @default(7000) // ₹70.00 base courier
+  deliveryGstRate           Float    @default(18.0)
+  deliveryGstEnabled        Boolean  @default(true)
+  deliveryGstInclusive      Boolean  @default(false)
+  deliveryClientVisible     Boolean  @default(true)
+  deliveryCustomerDisclosed Boolean  @default(true)
+
+  // Product GST Configuration
+  defaultProductGstRate     Float    @default(5.0) // 5% on raw honey HSN 0409
+  productPricesGstInclusive Boolean  @default(true)
+
+  // Client Admin Dashboard Visibility Isolation (Controls what client sees)
+  showPlatformFeeToClient      Boolean  @default(false)
+  showPlatformGstToClient      Boolean  @default(false)
+  showDeliveryToClient         Boolean  @default(true)
+  showDeliveryGstToClient      Boolean  @default(true)
+  showProductGstBreakdown      Boolean  @default(true)
+  showPlatformRevenueAnalytics Boolean  @default(false)
+  showPlatformTransactions     Boolean  @default(false)
+
+  effectiveFrom             DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+  updatedBy                 String   @default("System Initializer")
+}
+
+model PlatformFinanceSettingsHistory {
+  id            String   @id @default(cuid())
+  version       Int
+  snapshot      Json
+  effectiveFrom DateTime @default(now())
+  reason        String?
+  updatedBy     String
+  createdAt     DateTime @default(now())
+
+  @@index([version])
+  @@index([createdAt])
+}
+
+model PlatformBusinessProfile {
+  id             String   @id @default("singleton")
+  legalName      String   @default("DevTushar Software & Platform Technologies")
+  tradeName      String?  @default("Ganesh Mule Tech Platform")
+  gstin          String?
+  pan            String?
+  address        String   @default("Tech Park Hub, Maharashtra")
+  city           String   @default("Pandharpur")
+  state          String   @default("Maharashtra")
+  stateCode      String   @default("27")
+  pincode        String   @default("413304")
+  email          String   @default("auth@devtushar.uk")
+  phone          String   @default("+91 98765 43210")
+  invoicePrefix  String   @default("PINV")
+  nextInvoiceSeq Int      @default(1001)
+  updatedAt      DateTime @updatedAt
+}
+
+model PlatformTransaction {
+  id                        String         @id @default(cuid())
+  orderId                   String         @unique
+  order                     Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderNumber               String
+  customerRef               String         // Anonymized/masked for privacy
+  paymentRef                String?        // Razorpay payment ID
+  grossOrderAmountPaise     Int            // Gross order amount in paise
+  platformFeePaise          Int            // Platform fee in paise (e.g. 3000)
+  platformGstRate           Float          @default(18.0)
+  platformGstPaise          Int            // Applicable GST in paise (e.g. 540)
+  totalPlatformServicePaise Int            // Total platform service amount in paise (e.g. 3540)
+  currency                  String         @default("INR")
+  paymentStatus             PaymentStatus  @default(CREATED)
+  settlementStatus          String         @default("PENDING") // PENDING | SETTLED | REFUNDED
+  invoiceId                 String?
+  invoice                   PlatformInvoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  createdAt                 DateTime       @default(now())
+  updatedAt                 DateTime       @updatedAt
+
+  @@index([orderNumber])
+  @@index([paymentStatus])
+  @@index([settlementStatus])
+  @@index([createdAt])
+}
+
+model PlatformInvoice {
+  id                  String                @id @default(cuid())
+  invoiceNumber       String                @unique // e.g. PINV-2026-0001
+  invoiceDate         DateTime              @default(now())
+  orderId             String?
+  orderNumber         String?
+  clientBusinessName  String                @default("Ganesh Mule Pure Honey")
+  clientGstin         String?
+  clientAddress       Json?
+  serviceDescription  String                @default("E-Commerce Platform Infrastructure, Payment Gateway Orchestration & Order Processing Services")
+  taxableAmountPaise  Int
+  gstRate             Float                 @default(18.0)
+  cgstPaise           Int                   @default(0)
+  sgstPaise           Int                   @default(0)
+  igstPaise           Int                   @default(0)
+  totalAmountPaise    Int
+  status              String                @default("ISSUED") // ISSUED | PAID | CANCELLED | CREDITED
+  placeOfSupply       String?               @default("Maharashtra (27)")
+  notes               String?
+  pdfUrl              String?
+  transactions        PlatformTransaction[]
+  createdAt           DateTime              @default(now())
+
+  @@index([invoiceNumber])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model PlatformRefundRecord {
+  id                    String   @id @default(cuid())
+  orderId               String
+  platformTransactionId String?
+  refundType            String   @default("FULL") // FULL | PARTIAL | PLATFORM_FEE_ONLY
+  grossRefundPaise      Int
+  platformFeeRefundPaise Int
+  gstAdjustmentPaise    Int
+  creditNoteNumber      String?
+  reason                String
+  status                String   @default("COMPLETED")
+  actorId               String?
+  actorEmail            String?
+  createdAt             DateTime @default(now())
+
+  @@index([orderId])
+  @@index([createdAt])
+}
+
+model PlatformFinancialAuditLog {
+  id            String   @id @default(cuid())
+  actorId       String?
+  actorEmail    String
+  actorRole     String
+  category      String   // PLATFORM_FEE | GST_CONFIG | DELIVERY | VISIBILITY | INVOICE | REFUND
+  action        String
+  previousState Json?
+  newState      Json?
+  reason        String?
+  ipAddress     String?
+  createdAt     DateTime @default(now())
+
+  @@index([category])
+  @@index([actorEmail])
+  @@index([createdAt])
 }

@@ -432,7 +432,7 @@ export default function AdminReportsPage() {
                 {formatCurrency(totalTax)}
               </p>
               <span className="text-[11px] text-muted-foreground mt-2 inline-block">
-                5% Raw Nectar + 18% Logistics/Platform
+                5% Raw Honey + 18% Courier Logistics
               </span>
             </GlassCard>
 

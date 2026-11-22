@@ -71,18 +71,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, isOpen, onClose }) => {
   ];
 
   const developerNavItems: NavItem[] = [
-    { title: 'System & Health', href: '/developer', icon: LayoutDashboard },
-    { title: 'Staff Accounts', href: '/developer/accounts', icon: Users },
-    { title: 'Admin Overview', href: '/admin', icon: Layers },
-    { title: 'Orders & Dispatch', href: '/admin/orders', icon: ShoppingBag, badge: pendingOrdersCount },
-    { title: 'Inventory Desk', href: '/admin/inventory', icon: Boxes },
-    { title: 'Products & Catalogue', href: '/admin/products', icon: Package },
-    { title: 'Categories', href: '/admin/categories', icon: Layers },
-    { title: 'Customer Database', href: '/admin/customers', icon: UserCheck },
-    { title: 'Discount Coupons', href: '/admin/coupons', icon: TicketPercent },
-    { title: 'Financial Reports', href: '/admin/reports', icon: BarChart3 },
-    { title: 'Security & Audit', href: '/admin/audit-logs', icon: ShieldAlert },
-    { title: 'Store Settings', href: '/admin/settings', icon: Settings },
+    { title: 'Overview', href: '/developer', icon: LayoutDashboard },
+    { title: 'Financial Settings', href: '/developer/finance/settings', icon: Settings },
+    { title: 'Platform Earnings', href: '/developer/finance', icon: BarChart3 },
+    { title: 'Orders & Transactions', href: '/developer/finance/transactions', icon: ShoppingBag, badge: pendingOrdersCount },
+    { title: 'Platform Invoices', href: '/developer/finance/invoices', icon: Sparkles },
+    { title: 'Tax Reports', href: '/developer/finance/tax-reports', icon: Layers },
+    { title: 'Excel Exports', href: '/developer/finance/exports', icon: Boxes },
+    { title: 'Refunds & Adjustments', href: '/developer/finance/refunds', icon: ShieldAlert },
+    { title: 'Client Management', href: '/developer/accounts', icon: Users },
+    { title: 'Audit Logs', href: '/developer/finance/audit-logs', icon: UserCheck },
   ];
 
   const managerNavItems: NavItem[] = [

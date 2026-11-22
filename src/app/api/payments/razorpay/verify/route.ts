@@ -102,6 +102,17 @@ export async function POST(req: NextRequest) {
             include: { items: true },
           });
 
+          // Update Platform Financial Transaction Ledger
+          await tx.platformTransaction.updateMany({
+            where: { orderId: payment.orderId },
+            data: {
+              paymentStatus: 'PAID',
+              paymentRef: razorpayPaymentId,
+              settlementStatus: 'SETTLED',
+              updatedAt: new Date(),
+            },
+          });
+
           // Log inventory reservation movements
           for (const item of order.items) {
             await tx.inventoryMovement.create({

@@ -205,6 +205,10 @@ function CheckoutContent() {
     couponCode?: string;
   } | null>(null);
 
+  // Authoritative Server-Side Quote State
+  const [serverQuote, setServerQuote] = useState<any | null>(null);
+  const [isCalculatingQuote, setIsCalculatingQuote] = useState(false);
+
   // Billable package weight based on Delhivery slabs (250g -> 500g slab, 500g -> 800g slab, 1kg -> 1500g slab)
   const consignmentWeightGrams = items.reduce((acc, item) => {
     const name = (item.productName || (item as any).name || '').toLowerCase();
@@ -247,7 +251,7 @@ function CheckoutContent() {
             if (data.user.phone) setPhone(data.user.phone);
           }
         }
-      } catch {}
+      } catch { }
     }
     loadCustomerProfile();
   }, []);
@@ -274,7 +278,7 @@ function CheckoutContent() {
             setShippingMode(dData.settings.shippingMode === 'Express' ? 'Express' : 'Surface');
           }
         }
-      } catch {}
+      } catch { }
     }
     loadFeeSettings();
   }, []);
@@ -440,40 +444,126 @@ function CheckoutContent() {
     }
   };
 
+  // Fetch Authoritative Server-Side Quote
+  useEffect(() => {
+    if (items.length === 0) {
+      setServerQuote(null);
+      return;
+    }
+
+    let isMounted = true;
+    setIsCalculatingQuote(true);
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch('/api/checkout/quote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+            destinationPin: postalCode.length === 6 && isValidIndianPin(postalCode) ? postalCode : undefined,
+            destinationState: state,
+            shippingMode,
+            couponCode: appliedCoupon?.code,
+          }),
+        });
+
+        if (res.ok && isMounted) {
+          const data = await res.json();
+          setServerQuote(data);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch authoritative checkout quote:', err);
+      } finally {
+        if (isMounted) setIsCalculatingQuote(false);
+      }
+    }, 200);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [items, postalCode, state, shippingMode, appliedCoupon]);
+
   // Dynamic calculations with statutory GST and manager-controlled fees
   const totalQuantity = items.reduce((acc, item) => acc + item.quantity, 0);
-  const discountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+  const discountAmount = appliedCoupon ? appliedCoupon.discountAmount : (serverQuote?.snapshot?.discountPaise || 0);
   const isPinComplete = postalCode.length === 6 && isValidIndianPin(postalCode);
   const effectiveFeeSettings = isPinComplete
     ? feeSettings
     : { ...feeSettings, platformFeeEnabled: false };
 
-  const feeBreakdown = calculateOrderFees(
+  const fallbackBreakdown = calculateOrderFees(
     subtotal,
     discountAmount,
     effectiveFeeSettings,
     delhiveryRate
       ? delhiveryRate.subtotalPaise
       : isPinComplete
-      ? undefined
-      : 0,
+        ? undefined
+        : 0,
     delhiveryRate ? delhiveryRate.totalPaise : undefined
   );
 
-  const {
-    discountedSubtotal,
-    shippingBase,
-    shippingGst,
-    shippingTotal,
-    isFreeShipping,
-    bundledShippingBase,
-    bundledShippingGst,
-    bundledShippingTotal,
-    productTaxable,
-    productGst,
-    totalTax,
-    grandTotal: totalAmount,
-  } = feeBreakdown;
+  // Authoritative server quote resolution
+  const hasServerSnapshot = Boolean(serverQuote?.snapshot);
+  const snap = serverQuote?.snapshot;
+
+  const discountedSubtotal = hasServerSnapshot
+    ? snap.discountedSubtotalPaise
+    : fallbackBreakdown.discountedSubtotal;
+
+  const shippingBase = hasServerSnapshot
+    ? snap.deliveryBasePaise
+    : fallbackBreakdown.shippingBase;
+
+  const shippingGst = hasServerSnapshot
+    ? snap.deliveryGstPaise
+    : fallbackBreakdown.shippingGst;
+
+  const shippingTotal = hasServerSnapshot
+    ? snap.deliveryTotalPaise
+    : fallbackBreakdown.shippingTotal;
+
+  const bundledShippingBase = shippingBase;
+  const bundledShippingGst = shippingGst;
+  const bundledShippingTotal = shippingTotal;
+
+  const isFreeShipping = hasServerSnapshot
+    ? (snap.deliveryTotalPaise === 0 && isPinComplete)
+    : fallbackBreakdown.isFreeShipping;
+
+  const productTaxable = hasServerSnapshot
+    ? snap.productTaxablePaise
+    : fallbackBreakdown.productTaxable;
+
+  const productGst = hasServerSnapshot
+    ? snap.productGstPaise
+    : fallbackBreakdown.productGst;
+
+  const platformFeeBase = hasServerSnapshot
+    ? snap.platformFeeBasePaise
+    : 0;
+
+  const platformFeeGst = hasServerSnapshot
+    ? snap.platformGstPaise
+    : 0;
+
+  const platformFeeTotal = hasServerSnapshot
+    ? snap.platformTotalPaise
+    : 0;
+
+  const showPlatformFee = Boolean(
+    serverQuote?.disclosures?.showPlatformFee && platformFeeBase > 0
+  );
+
+  const totalTax = hasServerSnapshot
+    ? snap.totalTaxPaise
+    : fallbackBreakdown.totalTax;
+
+  const totalAmount = hasServerSnapshot
+    ? snap.grandTotalPaise
+    : fallbackBreakdown.grandTotal;
 
   // Strict Form Validation for Pay button and Preview Card gating
   const isContactComplete = Boolean(
@@ -632,7 +722,7 @@ function CheckoutContent() {
           setShowPublicOffers(true);
         }
       }
-    } catch {}
+    } catch { }
     setIsLoadingOffers(false);
   };
 
@@ -972,7 +1062,7 @@ function CheckoutContent() {
             errorReason: reason,
             customerEmail: email,
           }),
-        }).catch(() => {});
+        }).catch(() => { });
       });
 
       razorpayInstance.open();
@@ -1105,7 +1195,7 @@ function CheckoutContent() {
   return (
     <StoreProvider>
       <div className="bg-[#f5f5f7] min-h-screen pb-44 lg:pb-20 text-[#1d1d1f] selection:bg-[#0071e3]/20 selection:text-[#0071e3] scroll-smooth overscroll-y-contain">
-        
+
         {/* Top Progress & Guarantee Header */}
         <div className="border-b border-[#d2d2d7]/80 bg-white/80 backdrop-blur-md sticky top-0 z-20">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
@@ -1565,11 +1655,10 @@ function CheckoutContent() {
                                 setCity(t);
                                 setPinAutoDetected(`${t}, ${state}`);
                               }}
-                              className={`text-[9px] px-1.5 py-0.5 rounded-md transition-colors cursor-pointer border ${
-                                city === t
-                                  ? 'bg-[#0071e3] text-white border-[#0071e3] font-semibold'
-                                  : 'bg-[#f5f5f7] hover:bg-stone-100 text-[#1d1d1f] border-[#d2d2d7]'
-                              }`}
+                              className={`text-[9px] px-1.5 py-0.5 rounded-md transition-colors cursor-pointer border ${city === t
+                                ? 'bg-[#0071e3] text-white border-[#0071e3] font-semibold'
+                                : 'bg-[#f5f5f7] hover:bg-stone-100 text-[#1d1d1f] border-[#d2d2d7]'
+                                }`}
                             >
                               {t}
                             </button>
@@ -1944,10 +2033,10 @@ function CheckoutContent() {
                           {isCalculatingFreight
                             ? 'Calculating live express freight...'
                             : isFreeShipping
-                            ? 'Free Insured Delivery Applied'
-                            : postalCode.length === 6 && isValidIndianPin(postalCode)
-                            ? `Base: ${formatCurrency(bundledShippingBase)} + 18% GST: ${formatCurrency(bundledShippingGst)}`
-                            : 'Enter 6-digit PIN code to calculate exact delivery charges'}
+                              ? 'Free Insured Delivery Applied'
+                              : postalCode.length === 6 && isValidIndianPin(postalCode)
+                                ? `Base: ${formatCurrency(bundledShippingBase)} + 18% GST: ${formatCurrency(bundledShippingGst)}`
+                                : 'Enter 6-digit PIN code to calculate exact delivery charges'}
                         </p>
                       )}
                     </div>
@@ -1979,6 +2068,36 @@ function CheckoutContent() {
                     </div>
                   </div>
 
+                  {/* 3. Platform Service Fee (Dynamic & Configurable) */}
+                  {showPlatformFee && (
+                    <div className="flex justify-between items-start gap-2.5 pt-2 border-t border-stone-100">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-semibold text-xs text-stone-900">
+                            Platform Service Fee
+                          </span>
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-stone-100 text-stone-700 font-bold font-mono whitespace-nowrap border border-stone-200">
+                            SAC 9971
+                          </span>
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-stone-100 text-stone-700 font-bold font-mono whitespace-nowrap border border-stone-200">
+                            18% GST
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-[#86868b] mt-0.5">
+                          Base: {formatCurrency(platformFeeBase)} + 18% GST: {formatCurrency(platformFeeGst)}
+                        </p>
+                      </div>
+                      <div className="shrink-0 text-right pt-0.5">
+                        <span className="font-bold text-xs text-stone-950 font-mono whitespace-nowrap block">
+                          {formatCurrency(platformFeeTotal)}
+                        </span>
+                        <span className="text-[9px] text-stone-400 font-normal whitespace-nowrap block">
+                          (incl. 18% GST)
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Statutory Tax Summary (Expandable Breakdown) */}
                   <div className="pt-2 border-t border-stone-100">
                     <button
@@ -2007,6 +2126,12 @@ function CheckoutContent() {
                           <span>Delivery &amp; Logistics GST (18% on {formatCurrency(bundledShippingBase)}):</span>
                           <span className="font-mono font-semibold text-stone-900">{formatCurrency(bundledShippingGst)}</span>
                         </div>
+                        {showPlatformFee && (
+                          <div className="flex justify-between text-stone-600">
+                            <span>Platform Tech Fee GST (18% on {formatCurrency(platformFeeBase)}):</span>
+                            <span className="font-mono font-semibold text-stone-900">{formatCurrency(platformFeeGst)}</span>
+                          </div>
+                        )}
                         <div className="flex justify-between font-bold text-stone-900 pt-1 border-t border-stone-200">
                           <span>Total Combined GST (CGST + SGST):</span>
                           <span className="font-mono text-emerald-800">{formatCurrency(totalTax)}</span>
@@ -2022,8 +2147,8 @@ function CheckoutContent() {
                         {isFreeShipping
                           ? 'All taxes & free delivery included'
                           : postalCode.length === 6 && isValidIndianPin(postalCode)
-                          ? 'All taxes & express delivery included'
-                          : 'Includes 5% GST • Delivery calculated upon PIN entry'}
+                            ? 'All taxes & express delivery included'
+                            : 'Includes 5% GST • Delivery calculated upon PIN entry'}
                       </p>
                     </div>
                     <span className="text-2xl font-bold text-[#1d1d1f] font-mono">{formatCurrency(totalAmount)}</span>

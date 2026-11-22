@@ -8,6 +8,7 @@ import { getLiveCouponByCode, incrementCouponUsage } from '@/lib/coupons/store';
 import { getLiveProductById } from '@/lib/inventory/store';
 import { addLiveOrder } from '@/lib/orders/store';
 import { getGstStateCode } from '@/lib/constants/india';
+import { calculateAuthoritativeQuote } from '@/lib/finance/engine';
 import { calculateOrderFees } from '@/lib/config/fee-settings';
 import { getServerFeeSettings } from '@/lib/config/fee-settings-server';
 import {
@@ -189,19 +190,34 @@ export async function POST(req: NextRequest) {
     const delhiveryShippingBasePaise = Math.round(delhiveryPricing.pricing.subtotal * 100);
     const delhiveryShippingTotalPaise = delhiveryPricing.pricing.totalShippingCostPaise;
 
-    // Server-side calculation of shipping, platform fees, and statutory GST
-    const feeBreakdown = calculateOrderFees(
-      subtotal,
-      discountAmount,
-      getServerFeeSettings(),
-      delhiveryShippingBasePaise,
-      delhiveryShippingTotalPaise
-    );
-    const shippingCost = feeBreakdown.bundledShippingTotal; // Bundled delivery: Courier + Developer ₹30 + PG fee
-    const platformFee = feeBreakdown.platformBase; // developer base fee (₹25.42)
-    const taxAmount = feeBreakdown.totalTax; // products 5% + shipping & delivery 18%
-    const totalAmount = feeBreakdown.grandTotal;
+    // Central authoritative decimal calculation of items, shipping, platform fees & statutory GST
+    const quoteResult = await calculateAuthoritativeQuote({
+      items: verifiedLineItems.map((v) => ({
+        productId: v.productId,
+        name: v.name,
+        sku: v.sku,
+        unitPricePaise: v.price,
+        quantity: v.quantity,
+        weight: v.weight,
+        weightGrams: v.weightGrams,
+        hsnCode: '0409',
+      })),
+      destinationPin: address.postalCode,
+      destinationState: address.state,
+      shippingMode: chosenMode,
+      customDeliveryBasePaise: delhiveryShippingBasePaise,
+      customDeliveryTotalPaise: delhiveryShippingTotalPaise,
+      couponDiscountPaise: discountAmount,
+      couponCode: appliedCouponCode || undefined,
+    });
 
+    const snapshot = quoteResult.snapshot;
+    const shippingCost = snapshot.deliveryTotalPaise;
+    const platformFee = snapshot.platformFeeBasePaise;
+    const taxAmount = snapshot.totalTaxPaise;
+    const totalAmount = snapshot.grandTotalPaise;
+
+    const maskedCustomerRef = customer.email.replace(/(.{2})(.*)(?=@)/, '$1***');
     const orderNumber = `SG-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
     // Initialize Razorpay SDK if keys are configured
@@ -253,7 +269,7 @@ export async function POST(req: NextRequest) {
             paymentStatus: 'CREATED',
             couponCode: appliedCouponCode || null,
             assignedManagerName: appliedManagerName || null,
-            financialSnapshot: feeBreakdown as any,
+            financialSnapshot: snapshot as any,
             items: {
               create: verifiedLineItems.map((item) => ({
                 productId: item.productId,
@@ -273,6 +289,20 @@ export async function POST(req: NextRequest) {
                 amount: totalAmount,
                 currency: 'INR',
                 status: 'PENDING',
+              },
+            },
+            platformTransaction: {
+              create: {
+                orderNumber,
+                customerRef: maskedCustomerRef,
+                grossOrderAmountPaise: totalAmount,
+                platformFeePaise: snapshot.platformFeeBasePaise,
+                platformGstRate: snapshot.platformGstRate,
+                platformGstPaise: snapshot.platformGstPaise,
+                totalPlatformServicePaise: snapshot.platformTotalPaise,
+                currency: 'INR',
+                paymentStatus: 'CREATED',
+                settlementStatus: 'PENDING',
               },
             },
           },
@@ -302,26 +332,26 @@ export async function POST(req: NextRequest) {
       customerPhone: customer.phone,
       shippingAddress: address,
       subtotal,
-      shippingCost: feeBreakdown.bundledShippingTotal,
-      shippingBase: feeBreakdown.bundledShippingBase,
-      shippingGst: feeBreakdown.bundledShippingGst,
-      delhiveryCourierFreight: feeBreakdown.shippingTotal,
+      shippingCost: snapshot.deliveryTotalPaise,
+      shippingBase: snapshot.deliveryBasePaise,
+      shippingGst: snapshot.deliveryGstPaise,
+      delhiveryCourierFreight: snapshot.deliveryTotalPaise,
       carrier: chosenMode === 'Surface' ? 'Delhivery One (Surface)' : 'Delhivery One (Air Express)',
       shippingMode: chosenMode,
       shippingZone: delhiveryPricing.zone,
       delhiveryStatus: 'Payment Pending',
-      platformFee: feeBreakdown.platformBase,
-      platformFeeGst: feeBreakdown.platformGst,
-      platformTotal: feeBreakdown.platformTotal,
-      pgBase: feeBreakdown.pgBase,
-      pgGst: feeBreakdown.pgGst,
-      pgTotal: feeBreakdown.pgTotal,
-      taxAmount: feeBreakdown.totalTax,
+      platformFee: snapshot.platformFeeBasePaise,
+      platformFeeGst: snapshot.platformGstPaise,
+      platformTotal: snapshot.platformTotalPaise,
+      pgBase: 0,
+      pgGst: 0,
+      pgTotal: 0,
+      taxAmount: snapshot.totalTaxPaise,
       discountAmount,
       couponCode: appliedCouponCode,
       assignedManagerName: appliedManagerName,
       totalAmount,
-      feeBreakdown,
+      financialSnapshot: snapshot,
       delhiveryPricing,
       paymentMethod: 'ONLINE',
       orderStatus: 'PENDING',
@@ -367,7 +397,7 @@ export async function POST(req: NextRequest) {
       discountAmount,
       appliedCouponCode,
       appliedManagerName,
-      feeBreakdown,
+      financialSnapshot: snapshot,
     });
   } catch (err: any) {
     return NextResponse.json({ error: 'Checkout order creation failed', details: err.message }, { status: 500 });

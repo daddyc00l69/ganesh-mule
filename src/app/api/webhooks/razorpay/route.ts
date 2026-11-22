@@ -88,6 +88,16 @@ export async function POST(req: NextRequest) {
                 orderStatus: 'PROCESSING',
               },
             });
+
+            await prisma.platformTransaction.updateMany({
+              where: { orderId: payment.orderId },
+              data: {
+                paymentStatus: 'PAID',
+                paymentRef: razorpayPaymentId,
+                settlementStatus: 'SETTLED',
+                updatedAt: new Date(),
+              },
+            });
           }
         } catch {}
 

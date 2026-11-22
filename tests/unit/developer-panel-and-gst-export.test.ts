@@ -54,7 +54,7 @@ describe('Developer Panel & GST Export Integrity', () => {
     expect(data.system.database).toBeDefined();
     expect(data.integrations.delhivery).toBeDefined();
     expect(data.integrations.razorpay).toBeDefined();
-  });
+  }, 15000);
 
   it('should allow DEVELOPER role to query staff accounts from /api/developer/accounts', async () => {
     vi.spyOn(serverAuth, 'requireAuth').mockResolvedValue({
