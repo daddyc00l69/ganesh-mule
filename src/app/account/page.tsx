@@ -622,7 +622,7 @@ export default function CustomerAccountPage() {
                       <div className="text-xs space-y-2 text-stone-600">
                         <div className="flex justify-between">
                           <span className="text-stone-500">Logistics Carrier:</span>
-                          <span className="font-semibold text-stone-900">{trackedOrder.carrier || 'Insured Express Courier'}</span>
+                          <span className="font-semibold text-stone-900">{trackedOrder.carrier || 'Insured Surface Courier'}</span>
                         </div>
                         {trackedOrder.trackingNumber && (
                           <div className="flex justify-between">
@@ -773,7 +773,7 @@ export default function CustomerAccountPage() {
                               </span>
                               {order.trackingNumber && (
                                 <span className="text-[11px] font-mono text-amber-800 font-bold">
-                                  {order.carrier || 'Insured Express Courier'} • AWB: {order.trackingNumber}
+                                  {order.carrier || 'Insured Surface Courier'} • AWB: {order.trackingNumber}
                                 </span>
                               )}
                             </div>
@@ -847,7 +847,7 @@ export default function CustomerAccountPage() {
                               </div>
                             )}
                             <div className="flex justify-between">
-                              <span>Shipping &amp; Delivery (Insured Express):</span>
+                              <span>Shipping &amp; Delivery (Insured Surface):</span>
                               <span className="text-stone-900 font-medium font-mono">
                                 {formatCurrency(order.shippingCost || 7000)} (incl. 18% GST)
                               </span>
@@ -948,7 +948,7 @@ export default function CustomerAccountPage() {
 
                       <div className="text-xs space-y-2">
                         <p className="text-stone-900 font-medium">
-                          Carrier: <strong className="font-bold">{trackedOrder.carrier || 'Insured Express Courier'}</strong>
+                          Carrier: <strong className="font-bold">{trackedOrder.carrier || 'Insured Surface Courier'}</strong>
                         </p>
                         {trackedOrder.trackingNumber ? (
                           <p className="text-amber-800 font-mono font-bold">

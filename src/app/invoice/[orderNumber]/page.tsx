@@ -348,7 +348,7 @@ export default function InvoicePage() {
                   <span className="font-medium">Place of Supply:</span> {invoice.customer.placeOfSupply}
                 </p>
                 <p className="text-[10px] text-stone-500 font-mono">
-                  Delivery PIN: {invoice.customer.pincode} • Carrier: Insured Express Courier
+                  Delivery PIN: {invoice.customer.pincode} • Carrier: {invoice.delhiveryLogistics?.carrier || order?.carrier || 'Insured Surface Courier'}
                 </p>
               </div>
             </div>
@@ -490,7 +490,7 @@ export default function InvoicePage() {
                     <div className="flex justify-between items-center text-stone-900 font-semibold font-sans">
                       <span className="flex items-center gap-1">
                         <Truck className="w-3 h-3 text-amber-700" />
-                        <span>Insured Express Logistics:</span>
+                        <span>Insured Surface Logistics:</span>
                       </span>
                       <span>{invoice.delhiveryLogistics.zone}</span>
                     </div>
@@ -628,7 +628,7 @@ export default function InvoicePage() {
                 <div className="text-xs space-y-1 text-stone-700">
                   <p>
                     <span className="font-medium text-stone-900">Courier Partner:</span>{' '}
-                    {invoice.delhiveryLogistics?.carrier || order?.carrier || 'Insured Express Courier'}
+                    {invoice.delhiveryLogistics?.carrier || order?.carrier || 'Insured Surface Courier'}
                   </p>
                   <p>
                     <span className="font-medium text-stone-900">Waybill / Tracking:</span>{' '}

@@ -49,7 +49,7 @@ export async function POST(
     }
 
     let activeTrackingNumber = trackingNumber?.trim() || order.trackingNumber || '';
-    let activeCarrier = carrier?.trim() || order.carrier || 'Delhivery One (Air Express)';
+    let activeCarrier = carrier?.trim() || order.carrier || 'Delhivery One (Surface)';
 
     // Business Invariant 2: If shipping without an explicit tracking number, auto-generate via Delhivery One
     if (status === 'SHIPPED' && !activeTrackingNumber) {
@@ -60,7 +60,7 @@ export async function POST(
       } catch (shipErr) {
         // Resilient fallback: auto-allocate authoritative Delhivery AWB so shipping is never blocked
         activeTrackingNumber = generateDelhiveryWaybill(order.orderNumber);
-        activeCarrier = activeCarrier || 'Delhivery One (Air Express)';
+        activeCarrier = activeCarrier || 'Delhivery One (Surface)';
       }
     }
 

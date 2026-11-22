@@ -182,11 +182,12 @@ export async function GET(req: NextRequest) {
   const city = order.shippingAddress?.city || 'Mumbai';
   const state = order.shippingAddress?.state || 'Maharashtra';
 
-  // Explicit shipping mode detection: Surface vs Express
-  const isSurface =
-    (order.carrier || '').toLowerCase().includes('surface') ||
-    (order as any).shippingMode === 'Surface' ||
-    liveDelhiveryPkg?.mot === 'S';
+  // Explicit shipping mode detection: Surface vs Express (Default: SURFACE for raw honey in solid glass)
+  const isAirExplicit =
+    (order.carrier || '').toLowerCase().includes('air') ||
+    (order as any).shippingMode === 'Express' ||
+    liveDelhiveryPkg?.mot === 'E';
+  const isSurface = !isAirExplicit;
   const modeText = isSurface ? 'SURFACE' : 'EXPRESS';
   const isCod = false;
 

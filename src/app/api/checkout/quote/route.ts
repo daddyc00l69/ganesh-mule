@@ -25,7 +25,7 @@ const QuoteRequestSchema = z.object({
     .min(1),
   destinationPin: z.string().optional(),
   destinationState: z.string().optional(),
-  shippingMode: z.enum(['Express', 'Surface']).optional().default('Express'),
+  shippingMode: z.enum(['Express', 'Surface']).optional().default('Surface'),
   couponCode: z.string().optional(),
   customerEmail: z.string().optional(),
 });

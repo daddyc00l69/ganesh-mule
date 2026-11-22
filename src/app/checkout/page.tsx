@@ -1193,7 +1193,7 @@ function CheckoutContent() {
               <div className="flex justify-between items-center pb-3 border-b border-[#d2d2d7]/50 text-xs">
                 <span className="text-[#86868b]">Dispatched Via</span>
                 <span className="font-semibold text-[#1d1d1f]">
-                  Insured Express Courier Delivery
+                  Insured Surface Courier Delivery
                 </span>
               </div>
               <div className="flex justify-between items-center text-xs pt-1">
@@ -2100,7 +2100,7 @@ function CheckoutContent() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="font-semibold text-xs text-stone-900">
-                          Shipping &amp; Delivery (Insured Express)
+                          Shipping &amp; Delivery ({shippingMode === 'Express' ? 'Insured Air Express' : 'Insured Surface'})
                         </span>
                         {hasDeliveryGst && (
                           <span className="text-[9px] px-1.5 py-0.2 rounded bg-stone-100 text-stone-700 font-bold font-mono whitespace-nowrap border border-stone-200">
@@ -2131,7 +2131,7 @@ function CheckoutContent() {
                       ) : (
                         <p className="text-[10px] text-[#86868b] mt-0.5 leading-relaxed">
                           {isCalculatingFreight
-                            ? 'Calculating live express freight...'
+                            ? 'Calculating live freight...'
                             : isFreeShipping
                               ? 'Free Insured Delivery Applied'
                               : postalCode.length === 6 && isValidIndianPin(postalCode)
@@ -2265,7 +2265,7 @@ function CheckoutContent() {
                         {isFreeShipping
                           ? 'All taxes & free delivery included'
                           : postalCode.length === 6 && isValidIndianPin(postalCode)
-                            ? 'All taxes & express delivery included'
+                            ? 'All taxes & insured delivery included'
                             : hasProductGst
                               ? `Includes ${productGstRate}% GST • Delivery calculated upon PIN entry`
                               : 'Delivery calculated upon PIN entry'}

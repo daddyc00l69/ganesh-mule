@@ -75,7 +75,7 @@ export default function AdminSettingsPage() {
             setDelhiveryClientId(data.settings.clientId || 'GANESHMULE_ONE');
             setDelhiveryPickupLocation(data.settings.pickupLocation || 'Ganesh Mule Apiary Dispatch Center, Pune');
             setDelhiveryAutoShipping(data.settings.autoShipping ?? true);
-            setDelhiveryShippingMode(data.settings.shippingMode || 'Express');
+            setDelhiveryShippingMode(data.settings.shippingMode || 'Surface');
             setDelhiveryEnvironment(data.settings.environment || 'production');
           }
         }

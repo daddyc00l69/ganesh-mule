@@ -27,7 +27,7 @@ export const DEFAULT_DELHIVERY_SETTINGS: DelhiverySettings = {
   clientId: process.env.DELHIVERY_CLIENT_ID || 'GANESHMULE_ONE',
   pickupLocation: 'Ganesh Mule Apiary Dispatch Center, Pune',
   autoShipping: true, // Automatic shipping enabled by default
-  shippingMode: 'Express',
+  shippingMode: 'Surface',
   environment: 'production',
   originPincode: '411004',
   originCity: 'Pune',
@@ -1256,7 +1256,7 @@ export async function calculateDelhiveryShippingCost(params: {
   const originPin = params.originPincode || settings.originPincode || '411004';
   const destPin = params.destinationPincode.replace(/\D/g, '').slice(0, 6);
   const weightGrams = Math.max(100, params.weightGrams || 600); // Default single 300g jar package is 600g
-  const mode = params.mode || settings.shippingMode || 'Express';
+  const mode = params.mode || settings.shippingMode || 'Surface';
 
   const zoneInfo = determineDelhiveryZone(originPin, destPin);
 

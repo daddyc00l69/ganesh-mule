@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
     const weightGrams = weightParam ? parseInt(weightParam, 10) : 600; // Default 600g (300g jar package)
 
     const modeParam = searchParams.get('mode') || searchParams.get('md');
-    const mode = modeParam?.toLowerCase() === 'surface' || modeParam === 'S' ? 'Surface' : 'Express';
+    const mode = modeParam?.toLowerCase() === 'express' || modeParam === 'E' ? 'Express' : 'Surface';
 
     const originPin = searchParams.get('originPin') || searchParams.get('o_pin') || undefined;
 

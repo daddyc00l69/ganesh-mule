@@ -43,7 +43,7 @@ const CheckoutSchema = z.object({
     postalCode: z.string(),
     country: z.string().default('India'),
   }),
-  shippingMode: z.enum(['Express', 'Surface']).optional().default('Express'),
+  shippingMode: z.enum(['Express', 'Surface']).optional().default('Surface'),
   paymentMethod: z.literal('ONLINE').optional().default('ONLINE'),
   couponCode: z.string().optional(),
 });
@@ -279,12 +279,67 @@ export async function POST(req: NextRequest) {
 
     // Persist Order in Database & In-Memory Registry
     let internalOrderId = `ord-${Date.now()}`;
+    let resolvedUserId = currentUser?.id;
+
     if (dbOnline) {
       try {
+        // 1. Ensure User exists for foreign key constraint (Order.userId)
+        if (!resolvedUserId) {
+          const guestEmail = (customer.email || 'customer@ganeshmule.com').toLowerCase().trim();
+          let guestUser = await prisma.user.findUnique({ where: { email: guestEmail } });
+          if (!guestUser) {
+            guestUser = await prisma.user.create({
+              data: {
+                email: guestEmail,
+                name: customer.name?.trim() || 'Valued Customer',
+                role: 'CUSTOMER',
+                isActive: true,
+              },
+            });
+          }
+          resolvedUserId = guestUser.id;
+        }
+
+        // 2. Ensure each product item exists in Product table
+        for (const item of verifiedLineItems) {
+          const pExists = await prisma.product.findUnique({ where: { id: item.productId } });
+          if (!pExists) {
+            const fallbackProd = await prisma.product.findFirst({
+              where: {
+                OR: [
+                  { slug: item.productId },
+                  { slug: item.productId.replace(/^prod-/, '') },
+                  { id: `prod-${item.productId}` },
+                ],
+              },
+            });
+            if (fallbackProd) {
+              item.productId = fallbackProd.id;
+            } else {
+              const createdP = await prisma.product.create({
+                data: {
+                  id: item.productId,
+                  name: item.name,
+                  slug: item.productId.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+                  sku: item.sku || `GM-${item.productId.toUpperCase().replace(/[^A-Z0-9]+/g, '-')}`,
+                  description: '100% pure raw wild forest honey.',
+                  price: item.price,
+                  categoryId: 'cat-forest',
+                  weight: item.weight || '1kg',
+                  weightGrams: item.weightGrams || 1000,
+                  stockQuantity: 100,
+                  isPublished: true,
+                },
+              });
+              item.productId = createdP.id;
+            }
+          }
+        }
+
         const order = await prisma.order.create({
           data: {
             orderNumber,
-            userId: currentUser?.id || 'usr-guest-checkout',
+            userId: resolvedUserId,
             customerName: customer.name,
             customerEmail: customer.email,
             customerPhone: customer.phone,
@@ -296,6 +351,7 @@ export async function POST(req: NextRequest) {
             totalAmount,
             orderStatus: 'PENDING',
             paymentStatus: 'CREATED',
+            carrier: chosenMode === 'Express' ? 'Delhivery One (Air Express)' : 'Delhivery One (Surface)',
             couponCode: appliedCouponCode || null,
             assignedManagerName: appliedManagerName || null,
             financialSnapshot: snapshot as any,
@@ -346,8 +402,8 @@ export async function POST(req: NextRequest) {
             });
           } catch { }
         }
-      } catch {
-        // In-memory fallback if DB is offline
+      } catch (dbErr: any) {
+        console.error('[Create Order DB Error]:', dbErr);
       }
     }
 
@@ -355,7 +411,7 @@ export async function POST(req: NextRequest) {
     const orderRecord: any = {
       id: internalOrderId,
       orderNumber,
-      userId: currentUser?.id || 'usr-guest-checkout',
+      userId: resolvedUserId || currentUser?.id || 'usr-guest-checkout',
       customerName: customer.name,
       customerEmail: customer.email,
       customerPhone: customer.phone,

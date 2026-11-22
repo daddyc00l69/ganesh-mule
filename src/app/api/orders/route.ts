@@ -12,8 +12,8 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const email = searchParams.get('email')?.toLowerCase().trim();
 
-    // Strict Security Guard: Only authenticated ADMIN/MANAGER or verified customer for their own email
-    const isStaff = user && (user.role === 'ADMIN' || user.role === 'MANAGER');
+    // Strict Security Guard: Only authenticated ADMIN/MANAGER/DEVELOPER or verified customer for their own email
+    const isStaff = user && (user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'DEVELOPER');
     const isOwnerCustomer = user && email && user.email.toLowerCase() === email;
 
     if (!isStaff && !isOwnerCustomer) {
@@ -45,25 +45,26 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // If database is online, we can optionally synchronize with DB
+    // Query PostgreSQL Database as primary authoritative source
     try {
       const dbOnline = await isDatabaseOnline();
       if (dbOnline) {
         const dbOrders = await prisma.order.findMany({
           include: { items: true, payments: true },
           orderBy: { createdAt: 'desc' },
-          take: limit || 100,
+          take: limit && limit > 0 ? limit * 2 : 100,
         });
+
         if (dbOrders.length > 0) {
-          // Merge db orders into live orders store
-          for (const dbo of dbOrders) {
-            addLiveOrder({
+          // Sync into live order store and build authoritative list
+          const mappedDbOrders = dbOrders.map((dbo) => {
+            const mappedOrder: any = {
               id: dbo.id,
               orderNumber: dbo.orderNumber,
               userId: dbo.userId || 'usr-guest',
               customerName: dbo.customerName,
               customerEmail: dbo.customerEmail,
-              customerPhone: dbo.customerPhone,
+              customerPhone: dbo.customerPhone || '',
               shippingAddress: dbo.shippingAddress as any,
               subtotal: dbo.subtotal,
               shippingCost: dbo.shippingCost,
@@ -72,8 +73,13 @@ export async function GET(req: NextRequest) {
               totalAmount: dbo.totalAmount,
               orderStatus: dbo.orderStatus as any,
               paymentStatus: dbo.paymentStatus as any,
-              carrier: dbo.carrier || undefined,
+              carrier: dbo.carrier || 'Delhivery One (Surface)',
               trackingNumber: dbo.trackingNumber || undefined,
+              delhiveryWaybill: dbo.trackingNumber || undefined,
+              delhiveryStatus: dbo.orderStatus === 'DELIVERED' ? 'Delivered' : dbo.orderStatus === 'SHIPPED' ? 'In Transit via Insured Surface' : 'Manifested / Ready for Courier Pickup',
+              assignedManagerName: dbo.assignedManagerName || undefined,
+              couponCode: dbo.couponCode || undefined,
+              financialSnapshot: dbo.financialSnapshot as any,
               notes: dbo.notes || undefined,
               items: dbo.items.map((it) => ({
                 id: it.id,
@@ -84,6 +90,8 @@ export async function GET(req: NextRequest) {
                 price: it.price,
                 quantity: it.quantity,
                 total: it.total,
+                weight: it.weight || undefined,
+                weightGrams: it.weightGrams || undefined,
               })),
               payments: dbo.payments.map((p) => ({
                 id: p.id,
@@ -96,12 +104,23 @@ export async function GET(req: NextRequest) {
               })),
               createdAt: dbo.createdAt.toISOString(),
               updatedAt: dbo.updatedAt.toISOString(),
-            });
+            };
+            addLiveOrder(mappedOrder);
+            return mappedOrder;
+          });
+
+          // Also merge any memory-only orders not yet written to DB
+          const memoryOrders = getLiveOrders();
+          for (const mo of memoryOrders) {
+            if (!mappedDbOrders.some((d: any) => d.orderNumber === mo.orderNumber || d.id === mo.id)) {
+              mappedDbOrders.push(mo);
+            }
           }
-          orders = getLiveOrders();
+          orders = mappedDbOrders;
         }
       }
-    } catch {
+    } catch (dbErr) {
+      console.warn('[Orders API DB Fallback]', dbErr);
       // Use in-memory live orders
     }
 

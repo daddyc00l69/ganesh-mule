@@ -3,6 +3,7 @@ import { getLiveOrderById } from '@/lib/orders/store';
 import { createDelhiveryShipment } from '@/lib/shipping/delhivery';
 import { getCurrentUser } from '@/lib/auth/server';
 import { MOCK_AUDIT_LOGS } from '@/lib/mock-data';
+import { prisma, isDatabaseOnline } from '@/lib/db';
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,7 +39,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await createDelhiveryShipment(order, { mode, forceRegenerate });
+    const effectiveMode: 'Express' | 'Surface' =
+      mode || (order as any).shippingMode || (order.carrier?.toLowerCase().includes('air') ? 'Express' : 'Surface');
+    const result = await createDelhiveryShipment(order, { mode: effectiveMode, forceRegenerate });
+
+    // Update PostgreSQL database if online so changes persist across all serverless instances
+    try {
+      const dbOnline = await isDatabaseOnline();
+      if (dbOnline) {
+        await prisma.order.updateMany({
+          where: { orderNumber: order.orderNumber },
+          data: {
+            trackingNumber: result.waybill,
+            carrier: result.carrier,
+            orderStatus: 'SHIPPED',
+          },
+        });
+      }
+    } catch (dbErr) {
+      console.warn('[Delhivery Ship Route] DB sync warning:', dbErr);
+    }
 
     // Record audit event
     MOCK_AUDIT_LOGS.unshift({

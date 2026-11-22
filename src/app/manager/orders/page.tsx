@@ -126,7 +126,7 @@ export default function ManagerOrdersPage() {
   // Order Details / Transition Modal
   const [activeOrder, setActiveOrder] = useState<OrderRecord | null>(null);
   const [newStatus, setNewStatus] = useState<OrderStatus>('CONFIRMED');
-  const [carrier, setCarrier] = useState('Delhivery Surface');
+  const [carrier, setCarrier] = useState('Delhivery One (Surface)');
   const [trackingNumber, setTrackingNumber] = useState('');
   const [transitionError, setTransitionError] = useState<string | null>(null);
   const [transitionNotice, setTransitionNotice] = useState<string | null>(null);
@@ -186,7 +186,7 @@ export default function ManagerOrdersPage() {
 
   const handleOpenFulfill = (order: OrderRecord) => {
     setActiveOrder(order);
-    setCarrier(order.carrier || 'Delhivery Surface');
+    setCarrier(order.carrier || 'Delhivery One (Surface)');
     setTrackingNumber(order.trackingNumber || '');
     setTransitionError(null);
 
@@ -219,7 +219,7 @@ export default function ManagerOrdersPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             orderNumber: activeOrder.orderNumber,
-            mode: carrier.toLowerCase().includes('surface') ? 'Surface' : 'Express',
+            mode: carrier.toLowerCase().includes('air') ? 'Express' : 'Surface',
           }),
         });
         const shipData = await shipRes.json();
@@ -304,7 +304,7 @@ export default function ManagerOrdersPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           orderNumber: order.orderNumber,
-          mode: order.carrier?.toLowerCase().includes('surface') ? 'Surface' : 'Express',
+          mode: order.carrier?.toLowerCase().includes('air') ? 'Express' : 'Surface',
           forceRegenerate: true,
         }),
       });
@@ -358,7 +358,7 @@ export default function ManagerOrdersPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             orderNumber: order.orderNumber,
-            mode: order.carrier?.toLowerCase().includes('surface') ? 'Surface' : 'Express',
+            mode: order.carrier?.toLowerCase().includes('air') ? 'Express' : 'Surface',
             forceRegenerate: true,
           }),
         });
@@ -882,7 +882,7 @@ export default function ManagerOrdersPage() {
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({
                             orderNumber: activeOrder.orderNumber,
-                            mode: carrier.toLowerCase().includes('surface') ? 'Surface' : 'Express',
+                            mode: carrier.toLowerCase().includes('air') ? 'Express' : 'Surface',
                             forceRegenerate: true,
                           }),
                         });
@@ -919,8 +919,8 @@ export default function ManagerOrdersPage() {
                       onChange={(e) => setCarrier(e.target.value)}
                       className="glass-input w-full h-10 px-3 text-sm rounded-control text-foreground outline-none bg-card"
                     >
+                      <option value="Delhivery One (Surface)">Delhivery One (Surface) [Default - Liquid Glass Honey]</option>
                       <option value="Delhivery One (Air Express)">Delhivery One (Air Express)</option>
-                      <option value="Delhivery One (Surface)">Delhivery One (Surface)</option>
                       <option value="Blue Dart Apex">Blue Dart Apex</option>
                       <option value="DTDC Express">DTDC Express</option>
                       <option value="Shadowfax Local">Shadowfax Local</option>

@@ -258,7 +258,7 @@ export default function AdminOrdersPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           orderNumber: order.orderNumber,
-          mode: order.carrier?.toLowerCase().includes('surface') ? 'Surface' : 'Express',
+          mode: order.carrier?.toLowerCase().includes('air') ? 'Express' : 'Surface',
           forceRegenerate: true,
         }),
       });

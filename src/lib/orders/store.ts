@@ -4,6 +4,7 @@
  * separate browsers, incognito sessions, Checkout, Admin, and Manager consoles.
  */
 
+import path from 'path';
 import { OrderRecord, OrderStatus, PaymentStatus } from '@/types';
 import { MOCK_ORDERS } from '@/lib/mock-data';
 import {
@@ -69,6 +70,14 @@ function readOrdersFromDisk(): OrderRecord[] {
   // 1. Read tmp fallback first (if any), then let VPS persistent DATA_DIR take precedence
   loadFromFile(TMP_ORDERS_FILE_PATH);
   loadFromFile(ORDERS_FILE_PATH);
+
+  // If running on Vercel, also check bundled .data/orders.json as disk fallback
+  try {
+    const bundledPath = path.join(process.cwd(), '.data', ORDERS_FILENAME);
+    if (bundledPath !== ORDERS_FILE_PATH) {
+      loadFromFile(bundledPath);
+    }
+  } catch {}
 
   if (orderMap.size > 0) {
     return Array.from(orderMap.values());
