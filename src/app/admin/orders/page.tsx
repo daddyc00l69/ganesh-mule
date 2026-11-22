@@ -265,10 +265,17 @@ export default function AdminOrdersPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to book live Delhivery shipment');
       if (data?.shipment?.waybill) {
-        setStatusBanner({
-          type: 'success',
-          message: `✓ Live Delhivery shipment booked! AWB: ${data.shipment.waybill} (${data.shipment.carrier})`,
-        });
+        if (data.shipment.remarks) {
+          setStatusBanner({
+            type: 'warning',
+            message: data.shipment.remarks,
+          });
+        } else {
+          setStatusBanner({
+            type: 'success',
+            message: `✓ Live Delhivery shipment booked! AWB: ${data.shipment.waybill} (${data.shipment.carrier})`,
+          });
+        }
         fetchLiveOrders();
       }
     } catch (err: any) {

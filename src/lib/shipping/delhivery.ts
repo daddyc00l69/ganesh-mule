@@ -385,15 +385,29 @@ export async function createDelhiveryShipment(
         } else if (pkg?.remarks?.length) {
           const rawRemark = pkg.remarks.join('; ');
           const lowerRemark = rawRemark.toLowerCase();
+
+          // Extract specific exception detail from Delhivery (e.g. exception '413304 is non serviceable pincode')
+          const exceptionMatch = rawRemark.match(/exception\s*['"]([^'"]+)['"]/i);
+          const innerDetail = exceptionMatch ? exceptionMatch[1].trim() : null;
+
           if (
             lowerRemark.includes('insufficient balance') ||
-            lowerRemark.includes('crashing while saving package') ||
-            lowerRemark.includes('prepaid client manifest') ||
-            lowerRemark.includes('exception') ||
-            lowerRemark.includes('wallet')
+            lowerRemark.includes('prepaid client manifest charge api failed') ||
+            (lowerRemark.includes('wallet') && lowerRemark.includes('recharge'))
           ) {
             (order as any).delhiveryRemarks =
               'Delhivery One Notice: Insufficient wallet balance on one.delhivery.com. Please recharge your Delhivery One prepaid wallet. An authoritative consignment tracking ID (AWB) has been allocated for immediate solid glass packaging and dispatch.';
+          } else if (
+            lowerRemark.includes('non serviceable pincode') ||
+            lowerRemark.includes('not serviceable') ||
+            lowerRemark.includes('embargo') ||
+            (innerDetail && (innerDetail.toLowerCase().includes('non serviceable') || innerDetail.toLowerCase().includes('embargo')))
+          ) {
+            (order as any).delhiveryRemarks =
+              `Delhivery Notice: Pincode ${safePin} is currently non-serviceable by Delhivery (${innerDetail || 'Hub Embargo'}). Consignment allocated AWB ${assignedAwb} for dispatch via India Post Speed Post or alternate courier.`;
+          } else if (innerDetail) {
+            (order as any).delhiveryRemarks =
+              `Delhivery Notice: ${innerDetail}. Consignment allocated tracking AWB: ${assignedAwb}.`;
           } else {
             (order as any).delhiveryRemarks = rawRemark;
           }

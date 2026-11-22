@@ -920,6 +920,7 @@ export default function ManagerOrdersPage() {
                       className="glass-input w-full h-10 px-3 text-sm rounded-control text-foreground outline-none bg-card"
                     >
                       <option value="Delhivery One (Surface)">Delhivery One (Surface) [Default - Liquid Glass Honey]</option>
+                      <option value="India Post (Speed Post)">India Post (Speed Post) [100% All-India Coverage]</option>
                       <option value="Delhivery One (Air Express)">Delhivery One (Air Express)</option>
                       <option value="Blue Dart Apex">Blue Dart Apex</option>
                       <option value="DTDC Express">DTDC Express</option>
