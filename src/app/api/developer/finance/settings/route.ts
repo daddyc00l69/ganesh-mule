@@ -7,6 +7,7 @@ import {
   getPlatformBusinessProfile,
   updatePlatformBusinessProfile,
 } from '@/lib/finance/settings-store';
+import { updateServerFeeSettings } from '@/lib/config/fee-settings-server';
 import { prisma, isDatabaseOnline } from '@/lib/db';
 
 const UpdateSettingsSchema = z.object({
@@ -131,6 +132,18 @@ export async function POST(req: NextRequest) {
 
     if (settingsUpdates) {
       updatedSettings = await updatePlatformFinanceSettings(settingsUpdates, actor);
+      if (typeof settingsUpdates.platformFeeEnabled === 'boolean') {
+        try {
+          updateServerFeeSettings({
+            platformFeeEnabled: settingsUpdates.platformFeeEnabled,
+            platformBaseFee: settingsUpdates.platformFeeEnabled
+              ? Math.round((settingsUpdates.fixedFeePaise || 3000) / 1.18)
+              : 0,
+          }, `Developer Sync (${auth.user.email})`);
+        } catch (e) {
+          console.warn('[Developer Settings] Fee settings sync warning:', e);
+        }
+      }
     }
     if (profileUpdates) {
       updatedProfile = await updatePlatformBusinessProfile(profileUpdates, actor);

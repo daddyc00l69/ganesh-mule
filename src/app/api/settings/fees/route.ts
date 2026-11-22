@@ -4,6 +4,7 @@ import {
   getServerFeeSettings,
   updateServerFeeSettings,
 } from '@/lib/config/fee-settings-server';
+import { getPlatformFinanceSettings } from '@/lib/finance/settings-store';
 import { requireAuthInProduction } from '@/lib/auth/server';
 import { PERMISSIONS } from '@/lib/permissions';
 
@@ -23,7 +24,23 @@ const UpdateFeeSettingsSchema = z.object({
 
 export async function GET() {
   try {
-    const settings = getServerFeeSettings();
+    const settings = { ...getServerFeeSettings() };
+
+    // Synchronize with authoritative Developer Finance Settings
+    try {
+      const devSettings = await getPlatformFinanceSettings();
+      if (devSettings) {
+        settings.platformFeeEnabled = Boolean(devSettings.platformFeeEnabled);
+        if (!devSettings.platformFeeEnabled) {
+          settings.platformBaseFee = 0;
+        } else if (devSettings.fixedFeePaise) {
+          settings.platformBaseFee = Math.round(devSettings.fixedFeePaise / 1.18);
+        }
+      }
+    } catch (syncErr) {
+      console.warn('[FeeSettingsAPI] Sync with developer finance settings warning:', syncErr);
+    }
+
     return NextResponse.json({ success: true, settings });
   } catch (err: any) {
     return NextResponse.json({ error: 'Failed to retrieve fee settings', details: err.message }, { status: 500 });

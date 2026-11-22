@@ -112,8 +112,12 @@ function CheckoutContent() {
   // Payment Method: Strictly 100% Prepaid (UPI, Cards, NetBanking via Razorpay)
   const paymentMethod: 'ONLINE' = 'ONLINE';
 
-  // Dynamic fee configuration manageable by operations managers
-  const [feeSettings, setFeeSettings] = useState<FeeSettings>(DEFAULT_FEE_SETTINGS);
+  // Dynamic fee configuration manageable by operations managers & developer finance
+  const [feeSettings, setFeeSettings] = useState<FeeSettings>({
+    ...DEFAULT_FEE_SETTINGS,
+    platformFeeEnabled: false,
+    platformBaseFee: 0,
+  });
   const [showGstBreakdown, setShowGstBreakdown] = useState(false);
 
   // Customer & Contact Details
@@ -559,18 +563,18 @@ function CheckoutContent() {
 
   const platformFeeBase = hasServerSnapshot
     ? snap.platformFeeBasePaise
-    : 0;
+    : (effectiveFeeSettings.platformFeeEnabled ? fallbackBreakdown.platformBase : 0);
 
   const platformFeeGst = hasServerSnapshot
     ? snap.platformGstPaise
-    : 0;
+    : (effectiveFeeSettings.platformFeeEnabled ? fallbackBreakdown.platformGst : 0);
 
   const platformFeeTotal = hasServerSnapshot
     ? snap.platformTotalPaise
-    : 0;
+    : (effectiveFeeSettings.platformFeeEnabled ? fallbackBreakdown.platformTotal : 0);
 
   const showPlatformFee = Boolean(
-    serverQuote?.disclosures?.showPlatformFee && platformFeeBase > 0
+    (serverQuote?.disclosures?.showPlatformFee || effectiveFeeSettings.platformFeeEnabled) && platformFeeBase > 0
   );
 
   const productGstEnabled = hasServerSnapshot
@@ -593,17 +597,19 @@ function CheckoutContent() {
     ? (serverQuote?.disclosures?.deliveryGstRate ?? snap.deliveryGstRate ?? 18)
     : 18;
 
+  const hasProductGst = productGstEnabled && productGst > 0 && customerGstBreakdownVisible;
+  const hasDeliveryGst = deliveryGstEnabled && bundledShippingGst > 0 && customerGstBreakdownVisible;
+  const visiblePlatformGst = showPlatformFee ? platformFeeGst : 0;
+
   const totalTax = hasServerSnapshot
     ? snap.totalTaxPaise
-    : fallbackBreakdown.totalTax;
+    : ((hasProductGst ? productGst : 0) + (hasDeliveryGst ? bundledShippingGst : 0) + visiblePlatformGst);
 
   const totalAmount = hasServerSnapshot
     ? snap.grandTotalPaise
-    : fallbackBreakdown.grandTotal;
+    : (discountedSubtotal + bundledShippingTotal + platformFeeTotal);
 
   const hasTaxBreakdown = customerGstBreakdownVisible && totalTax > 0;
-  const hasProductGst = productGstEnabled && productGst > 0 && customerGstBreakdownVisible;
-  const hasDeliveryGst = deliveryGstEnabled && bundledShippingGst > 0 && customerGstBreakdownVisible;
 
   // Strict Form Validation for Pay button and Preview Card gating
   const isContactComplete = Boolean(

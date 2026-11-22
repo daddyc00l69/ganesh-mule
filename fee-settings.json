@@ -1,0 +1,15 @@
+{
+  "shippingBaseFee": 7000,
+  "shippingGstRate": 18,
+  "freeShippingThreshold": 0,
+  "freeShippingEnabled": false,
+  "platformBaseFee": 0,
+  "platformGstRate": 18,
+  "platformFeeEnabled": false,
+  "paymentGatewayPercent": 0,
+  "paymentGatewayGstRate": 18,
+  "paymentGatewayFeeEnabled": false,
+  "feeMode": "FLAT_20",
+  "updatedAt": "2026-11-22T17:42:18.663Z",
+  "updatedBy": "Developer Settings Sync (Platform Fee OFF)"
+}
