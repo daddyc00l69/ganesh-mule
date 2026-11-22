@@ -97,14 +97,15 @@ export function calculateConsignmentWeightGrams(items: OrderRecord['items']): nu
     const sku = (item.sku || '').toLowerCase();
     const qty = item.quantity || 1;
 
-    if (name.includes('1kg') || sku.includes('1kg') || name.includes('1050') || sku.includes('1050')) {
-      // 1kg / 1050g honey package in solid glass -> 1500g Delhivery 1.5kg billable slab
+    // Accurate commercial weight slabs for Delhivery One:
+    if (name.includes('1050') || sku.includes('1050') || name.includes('1.5kg') || name.includes('2kg')) {
+      // 1050g / 1.5kg family jars -> 1500g Delhivery billable slab
       totalGrams += 1500 * qty;
-    } else if (name.includes('500g') || sku.includes('500g') || name.includes('750') || sku.includes('750')) {
-      // 500g / 750g honey package in solid glass -> 1000g Delhivery 1.0kg billable slab
+    } else if (name.includes('1kg') || sku.includes('1kg') || name.includes('1000') || sku.includes('1000') || name.includes('750') || sku.includes('750')) {
+      // 750g to 1000g (1kg) honey package -> 1000g Delhivery 1.0kg billable slab
       totalGrams += 1000 * qty;
     } else {
-      // 250g / 300g sampler package in solid glass -> 500g Delhivery 0.5kg billable slab
+      // 250g, 300g, 500g honey package -> 500g Delhivery standard base billable slab
       totalGrams += 500 * qty;
     }
   }
@@ -192,25 +193,33 @@ export async function checkDelhiveryServiceability(
         const data = await response.json();
         const pinData = data?.delivery_codes?.[0]?.postal_code;
         if (pinData) {
-          const isPrepaid = pinData.pre_paid === 'Y';
-          const cod = pinData.cod === 'Y';
-          const apiAir = (pinData.express === 'Y' || isPrepaid) && airCheck.available;
+          const isEmbargo = Boolean(
+            pinData.remarks?.toLowerCase().includes('embargo') ||
+            (pinData.max_amount === 0 && pinData.max_weight === 0)
+          );
+          const isPrepaid = pinData.pre_paid === 'Y' && !isEmbargo;
+          const cod = pinData.cod === 'Y' && !isEmbargo;
+          const apiAir = (pinData.express === 'Y' || isPrepaid) && airCheck.available && !isEmbargo;
           return {
             pincode: cleanPin,
-            serviceable: isPrepaid,
+            serviceable: !isEmbargo && isPrepaid,
             prepaidAvailable: isPrepaid,
             codAvailable: false, // Strict invariant: Ganesh Mule is strictly prepaid
-            expectedDeliveryDays: settings.shippingMode === 'Express' ? 2 : 4,
-            deliverySpeed: settings.shippingMode === 'Express' ? 'Delhivery One Air Express' : 'Delhivery One Surface',
+            expectedDeliveryDays: isEmbargo ? 5 : (settings.shippingMode === 'Express' ? 2 : 4),
+            deliverySpeed: isEmbargo
+              ? 'India Post Speed Post (Delhivery Hub Embargo)'
+              : (settings.shippingMode === 'Express' ? 'Delhivery One Air Express' : 'Delhivery One Surface'),
             city: pinData.city || pinData.district || 'India',
             state: pinData.state_code || 'India',
             district: pinData.district || pinData.city || 'District City',
-            districtVerified: isPrepaid,
+            districtVerified: !isEmbargo && isPrepaid,
             hasAir: apiAir,
-            hasSurface: true,
-            airRestrictionReason: !apiAir ? 'Air cargo unserviceable for this PIN by Delhivery One' : undefined,
-            carrier: 'Delhivery One',
-            providerUrl: DELHIVERY_URLS.PORTAL,
+            hasSurface: !isEmbargo,
+            airRestrictionReason: isEmbargo
+              ? 'Delhivery Hub Embargo: Destination PIN currently suspended by Delhivery network.'
+              : (!apiAir ? 'Air cargo unserviceable for this PIN by Delhivery One' : undefined),
+            carrier: isEmbargo ? 'India Post (Speed Post)' : 'Delhivery One',
+            providerUrl: isEmbargo ? 'https://www.indiapost.gov.in' : DELHIVERY_URLS.PORTAL,
           };
         }
       }
@@ -377,6 +386,8 @@ export async function createDelhiveryShipment(
     assignedAwb = generateDelhiveryWaybill(order.orderNumber);
   }
 
+  let isPinEmbargo = false;
+
   // If live Delhivery API key is provided, attempt live CMU shipment creation
   if (settings.apiKey && !settings.apiKey.includes('placeholder')) {
     try {
@@ -452,7 +463,7 @@ export async function createDelhiveryShipment(
       if (res.ok) {
         const json = await res.json();
         const pkg = json?.packages?.[0];
-        if (pkg?.waybill) {
+        if (pkg?.waybill && (pkg.status === 'Success' || !pkg.remarks?.length)) {
           assignedAwb = pkg.waybill;
           (order as any).delhiveryRemarks = undefined;
           if (pkg.sort_code) {
@@ -479,8 +490,9 @@ export async function createDelhiveryShipment(
             lowerRemark.includes('embargo') ||
             (innerDetail && (innerDetail.toLowerCase().includes('non serviceable') || innerDetail.toLowerCase().includes('embargo')))
           ) {
+            isPinEmbargo = true;
             (order as any).delhiveryRemarks =
-              `Delhivery Notice: Pincode ${safePin} is currently non-serviceable by Delhivery (${innerDetail || 'Hub Embargo'}). Consignment allocated AWB ${assignedAwb} for dispatch via India Post Speed Post or alternate courier.`;
+              `Delhivery Notice: Pincode ${safePin} is currently non-serviceable by Delhivery (${innerDetail || 'Hub Embargo'}). Consignment routed to India Post Speed Post.`;
           } else if (innerDetail) {
             (order as any).delhiveryRemarks =
               `Delhivery Notice: ${innerDetail}. Consignment allocated tracking AWB: ${assignedAwb}.`;
@@ -494,7 +506,14 @@ export async function createDelhiveryShipment(
     }
   }
 
-  const trackingUrl = `${DELHIVERY_URLS.TRACKING_BASE}/${assignedAwb}`;
+  const effectiveCarrier = isPinEmbargo ? 'India Post (Speed Post)' : carrierName;
+  const effectiveStatus = isPinEmbargo
+    ? 'Delhivery Hub Embargo: Routed to India Post Speed Post'
+    : 'Manifested / Slotted for Pickup';
+
+  const trackingUrl = isPinEmbargo
+    ? `https://www.indiapost.gov.in/_layouts/15/dpt.ptc.trackandtrace/tracking.aspx`
+    : `${DELHIVERY_URLS.TRACKING_BASE}/${assignedAwb}`;
   const labelUrl = `/api/shipping/delhivery/label?orderNumber=${order.orderNumber}`;
   const estimatedDays = mode === 'Express' ? 2 : 4;
   const deliveryDate = new Date(Date.now() + estimatedDays * 24 * 60 * 60 * 1000)
@@ -503,18 +522,18 @@ export async function createDelhiveryShipment(
 
   // Mutate order record with resolved values
   order.trackingNumber = assignedAwb;
-  order.carrier = carrierName;
+  order.carrier = effectiveCarrier;
   order.delhiveryWaybill = assignedAwb;
-  order.delhiveryStatus = 'Manifested / Slotted for Pickup';
+  order.delhiveryStatus = effectiveStatus;
   order.delhiveryEstimatedDelivery = deliveryDate;
   order.delhiveryLabelUrl = labelUrl;
 
   // Update order record atomically in store
   updateLiveOrderStatus(order.orderNumber, {
     trackingNumber: assignedAwb,
-    carrier: carrierName,
+    carrier: effectiveCarrier,
     delhiveryWaybill: assignedAwb,
-    delhiveryStatus: 'Manifested / Slotted for Pickup',
+    delhiveryStatus: effectiveStatus,
     delhiveryEstimatedDelivery: deliveryDate,
     delhiveryLabelUrl: labelUrl,
   });
