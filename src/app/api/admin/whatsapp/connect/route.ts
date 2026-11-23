@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { initializeBaileys, getBaileysStatus } from '@/lib/whatsapp/baileys-service';
+import { initializeBaileys } from '@/lib/whatsapp/baileys-service';
 
 export async function POST() {
   try {
-    const status = await initializeBaileys();
+    const status = await initializeBaileys({ waitForQR: true });
     return NextResponse.json({ success: true, status });
   } catch (error: any) {
     return NextResponse.json(

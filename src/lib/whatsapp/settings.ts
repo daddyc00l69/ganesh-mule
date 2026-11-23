@@ -1,13 +1,22 @@
 import fs from 'fs';
 import path from 'path';
 import { WhatsAppAlertSettings, WhatsAppMessageLog } from '@/types/whatsapp';
+import { getDataDir } from '@/lib/storage/json-store';
 
-const DATA_DIR = process.env.DATA_DIR
-  ? path.resolve(process.env.DATA_DIR)
-  : path.resolve(process.cwd(), '.data');
+function getStorageDir(): string {
+  const dir = getDataDir();
+  try {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+  } catch (err) {
+    console.warn('[WhatsAppSettings] Warning creating storage dir:', err);
+  }
+  return dir;
+}
 
-const SETTINGS_FILE = path.join(DATA_DIR, 'whatsapp-settings.json');
-const LOGS_FILE = path.join(DATA_DIR, 'whatsapp-logs.json');
+const getSettingsFile = () => path.join(getStorageDir(), 'whatsapp-settings.json');
+const getLogsFile = () => path.join(getStorageDir(), 'whatsapp-logs.json');
 
 export const DEFAULT_WHATSAPP_SETTINGS: WhatsAppAlertSettings = {
   enabled: true,
@@ -22,21 +31,11 @@ export const DEFAULT_WHATSAPP_SETTINGS: WhatsAppAlertSettings = {
   updatedBy: 'System Default',
 };
 
-function ensureDataDir(): void {
-  try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-  } catch (err) {
-    console.warn('[WhatsAppSettings] Warning creating data dir:', err);
-  }
-}
-
 export function getWhatsAppSettings(): WhatsAppAlertSettings {
-  ensureDataDir();
+  const settingsFile = getSettingsFile();
   try {
-    if (fs.existsSync(SETTINGS_FILE)) {
-      const raw = fs.readFileSync(SETTINGS_FILE, 'utf-8');
+    if (fs.existsSync(settingsFile)) {
+      const raw = fs.readFileSync(settingsFile, 'utf-8');
       const data = JSON.parse(raw);
       return { ...DEFAULT_WHATSAPP_SETTINGS, ...data };
     }
@@ -47,7 +46,7 @@ export function getWhatsAppSettings(): WhatsAppAlertSettings {
 }
 
 export function saveWhatsAppSettings(updates: Partial<WhatsAppAlertSettings>, updatedBy = 'Staff Admin'): WhatsAppAlertSettings {
-  ensureDataDir();
+  const settingsFile = getSettingsFile();
   const current = getWhatsAppSettings();
   const next: WhatsAppAlertSettings = {
     ...current,
@@ -57,13 +56,13 @@ export function saveWhatsAppSettings(updates: Partial<WhatsAppAlertSettings>, up
   };
 
   try {
-    const tempFile = `${SETTINGS_FILE}.tmp.${Date.now()}`;
+    const tempFile = `${settingsFile}.tmp.${Date.now()}`;
     fs.writeFileSync(tempFile, JSON.stringify(next, null, 2), 'utf-8');
-    fs.renameSync(tempFile, SETTINGS_FILE);
+    fs.renameSync(tempFile, settingsFile);
   } catch (err) {
     console.error('[WhatsAppSettings] Failed to save settings atomically:', err);
     try {
-      fs.writeFileSync(SETTINGS_FILE, JSON.stringify(next, null, 2), 'utf-8');
+      fs.writeFileSync(settingsFile, JSON.stringify(next, null, 2), 'utf-8');
     } catch {}
   }
 
@@ -71,10 +70,10 @@ export function saveWhatsAppSettings(updates: Partial<WhatsAppAlertSettings>, up
 }
 
 export function getWhatsAppLogs(limit = 50): WhatsAppMessageLog[] {
-  ensureDataDir();
+  const logsFile = getLogsFile();
   try {
-    if (fs.existsSync(LOGS_FILE)) {
-      const raw = fs.readFileSync(LOGS_FILE, 'utf-8');
+    if (fs.existsSync(logsFile)) {
+      const raw = fs.readFileSync(logsFile, 'utf-8');
       const list: WhatsAppMessageLog[] = JSON.parse(raw);
       if (Array.isArray(list)) {
         return list.slice(0, limit);
@@ -87,7 +86,7 @@ export function getWhatsAppLogs(limit = 50): WhatsAppMessageLog[] {
 }
 
 export function appendWhatsAppLog(log: Omit<WhatsAppMessageLog, 'id' | 'timestamp'>): WhatsAppMessageLog {
-  ensureDataDir();
+  const logsFile = getLogsFile();
   const entry: WhatsAppMessageLog = {
     ...log,
     id: `wal-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
@@ -97,9 +96,9 @@ export function appendWhatsAppLog(log: Omit<WhatsAppMessageLog, 'id' | 'timestam
   try {
     const current = getWhatsAppLogs(100);
     const updated = [entry, ...current].slice(0, 100);
-    const tempFile = `${LOGS_FILE}.tmp.${Date.now()}`;
+    const tempFile = `${logsFile}.tmp.${Date.now()}`;
     fs.writeFileSync(tempFile, JSON.stringify(updated, null, 2), 'utf-8');
-    fs.renameSync(tempFile, LOGS_FILE);
+    fs.renameSync(tempFile, logsFile);
   } catch (err) {
     console.warn('[WhatsAppLogs] Failed to append log:', err);
   }

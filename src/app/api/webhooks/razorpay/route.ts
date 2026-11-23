@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
           processed: true,
         },
       });
-    } catch {}
+    } catch { }
 
     // Process specific Razorpay Webhook Event Types
     if (eventType === 'order.paid' || eventType === 'payment.captured') {
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
               },
             });
           }
-        } catch {}
+        } catch { }
 
         // Resolve or populate Live Order record
         const liveOrders = getLiveOrders();
@@ -166,7 +166,7 @@ export async function POST(req: NextRequest) {
               orderRecord = loadedRecord;
               addLiveOrder(loadedRecord);
             }
-          } catch {}
+          } catch { }
         }
 
         if (orderRecord) {
@@ -230,7 +230,7 @@ export async function POST(req: NextRequest) {
                     paymentStatus: 'PAID',
                   },
                 });
-              } catch {}
+              } catch { }
             } catch (shipErr) {
               console.error('[Webhook Delhivery Auto-Ship Error]', shipErr);
             }
@@ -264,7 +264,7 @@ export async function POST(req: NextRequest) {
               customerPhone: orderRecord.customerPhone || undefined,
               totalPaise: orderRecord.totalAmount,
               items: (orderRecord.items || []).map((i: any) => ({ name: i.productName || i.name || 'Pure Honey Jar', quantity: i.quantity || 1 })),
-              paymentId: razorpayPaymentId || orderRecord.payments?.[0]?.razorpayPaymentId || 'Verified',
+              paymentId: razorpayPaymentId || (orderRecord as any).payments?.[0]?.razorpayPaymentId || 'Verified',
               destinationCity: (orderRecord as any).shippingAddress?.city || (orderRecord as any).shippingCity || (orderRecord as any).city || 'India',
               destinationPin: (orderRecord as any).shippingAddress?.postalCode || (orderRecord as any).shippingPostalCode || (orderRecord as any).postalCode || '',
               shippingMode: (orderRecord as any).shippingMode || 'Surface',
@@ -290,7 +290,7 @@ export async function POST(req: NextRequest) {
               errorDescription,
             },
           });
-        } catch {}
+        } catch { }
 
         // Update in-memory mock order
         const mockOrder = MOCK_ORDERS.find(

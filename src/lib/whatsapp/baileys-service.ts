@@ -11,6 +11,7 @@ import {
   appendWhatsAppLog,
   getWhatsAppLogs,
 } from './settings';
+import { getDataDir } from '@/lib/storage/json-store';
 
 // Global singleton registry to prevent socket recreation on hot module reload
 interface GlobalBaileysState {
@@ -44,18 +45,20 @@ if (!g.__GANESH_BAILEYS__) {
 
 const baileysState = g.__GANESH_BAILEYS__;
 
-const AUTH_DIR = process.env.DATA_DIR
-  ? path.resolve(process.env.DATA_DIR, 'baileys_auth')
-  : path.resolve(process.cwd(), '.data', 'baileys_auth');
+function getAuthDir(): string {
+  return path.join(getDataDir(), 'baileys_auth');
+}
 
-function ensureAuthDir(): void {
+function ensureAuthDir(): string {
+  const dir = getAuthDir();
   try {
-    if (!fs.existsSync(AUTH_DIR)) {
-      fs.mkdirSync(AUTH_DIR, { recursive: true });
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
     }
   } catch (err) {
     console.warn('[Baileys] Warning ensuring auth directory:', err);
   }
+  return dir;
 }
 
 /**
@@ -95,11 +98,16 @@ export function getBaileysStatus(): WhatsAppServiceStatus {
 /**
  * Initializes or restarts the Baileys WhatsApp Web Multi-Device socket
  */
-export async function initializeBaileys(options: { phoneNumberForPairing?: string } = {}): Promise<WhatsAppServiceStatus> {
-  ensureAuthDir();
+export async function initializeBaileys(options: { phoneNumberForPairing?: string; waitForQR?: boolean } = {}): Promise<WhatsAppServiceStatus> {
+  const authDir = ensureAuthDir();
 
   // If already connected, return current status
   if (baileysState.socket && baileysState.state === 'CONNECTED') {
+    return getBaileysStatus();
+  }
+
+  // If already waiting for scan and QR is ready, return current status immediately unless pairing requested
+  if (baileysState.socket && baileysState.qrCodeDataUrl && !options.phoneNumberForPairing && baileysState.state === 'SCAN_QR_CODE') {
     return getBaileysStatus();
   }
 
@@ -107,16 +115,16 @@ export async function initializeBaileys(options: { phoneNumberForPairing?: strin
   baileysState.lastError = undefined;
 
   try {
-    // Dynamically require Baileys and QRCode to preserve bundling flexibility
+    // Dynamically require Baileys, QRCode, and Pino
     const baileys = await import('@whiskeysockets/baileys');
     const qrcode = await import('qrcode');
     const pino = await import('pino');
 
     const makeWASocket = baileys.default || baileys.makeWASocket;
-    const { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = baileys;
+    const { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, Browsers } = baileys;
 
     const logger = pino.default({ level: 'silent' });
-    const { state: authState, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
+    const { state: authState, saveCreds } = await useMultiFileAuthState(authDir);
 
     let version: [number, number, number] = [2, 3000, 1015901307];
     try {
@@ -124,12 +132,14 @@ export async function initializeBaileys(options: { phoneNumberForPairing?: strin
       if (v?.version) version = v.version;
     } catch {}
 
+    const browser: [string, string, string] = (Browsers ? Browsers.ubuntu('Chrome') : ['Ubuntu', 'Chrome', '22.04.4']) as [string, string, string];
+
     const sock = makeWASocket({
       version,
       logger,
       auth: authState,
       printQRInTerminal: false,
-      browser: ['Ganesh Mule Pure Honey', 'Operations Dashboard', '1.0.0'],
+      browser,
       syncFullHistory: false,
       generateHighQualityLinkPreview: true,
       connectTimeoutMs: 60_000,
@@ -173,7 +183,7 @@ export async function initializeBaileys(options: { phoneNumberForPairing?: strin
         const user = sock.user;
         if (user) {
           baileysState.userPhone = user.id ? user.id.split(':')[0] : undefined;
-          baileysState.userName = user.name || 'Ganesh Mule Desk';
+          baileysState.userName = user.name || 'Ganesh Mule Operations';
         }
         console.log(`[Baileys WhatsApp] Connected successfully as ${baileysState.userName || baileysState.userPhone}`);
       }
@@ -192,7 +202,10 @@ export async function initializeBaileys(options: { phoneNumberForPairing?: strin
         if (statusCode === DisconnectReason.loggedOut) {
           // Clear credentials on logout
           try {
-            fs.rmSync(AUTH_DIR, { recursive: true, force: true });
+            const dir = getAuthDir();
+            if (fs.existsSync(dir)) {
+              fs.rmSync(dir, { recursive: true, force: true });
+            }
           } catch {}
           baileysState.socket = null;
         } else if (shouldReconnect && getWhatsAppSettings().autoReconnect) {
@@ -219,7 +232,22 @@ export async function initializeBaileys(options: { phoneNumberForPairing?: strin
           console.error('[Baileys] Pairing code error:', pairErr);
           baileysState.lastError = `Failed to generate pairing code: ${pairErr.message}`;
         }
-      }, 3000);
+      }, 1500);
+    }
+
+    // If waiting for QR code (default true unless pairing phone specified), await initial QR or connection
+    const shouldWait = options.waitForQR !== false && !options.phoneNumberForPairing;
+    if (shouldWait) {
+      await new Promise<void>((resolve) => {
+        const timeout = setTimeout(() => resolve(), 7000);
+        const interval = setInterval(() => {
+          if (baileysState.qrCodeDataUrl || baileysState.state === 'CONNECTED' || baileysState.state === 'DISCONNECTED') {
+            clearTimeout(timeout);
+            clearInterval(interval);
+            resolve();
+          }
+        }, 200);
+      });
     }
 
     return getBaileysStatus();
@@ -256,8 +284,9 @@ export async function disconnectBaileys(logout = false): Promise<WhatsAppService
 
   if (logout) {
     try {
-      if (fs.existsSync(AUTH_DIR)) {
-        fs.rmSync(AUTH_DIR, { recursive: true, force: true });
+      const dir = getAuthDir();
+      if (fs.existsSync(dir)) {
+        fs.rmSync(dir, { recursive: true, force: true });
       }
     } catch {}
   }
@@ -275,10 +304,10 @@ export async function requestPairingCode(phoneNumber: string): Promise<{ success
   }
 
   await disconnectBaileys(false);
-  const status = await initializeBaileys({ phoneNumberForPairing: cleanPhone });
+  await initializeBaileys({ phoneNumberForPairing: cleanPhone, waitForQR: false });
 
-  // Wait a short moment for pairing code to generate
-  for (let i = 0; i < 15; i++) {
+  // Wait for pairing code to generate
+  for (let i = 0; i < 20; i++) {
     if (baileysState.pairingCode) {
       return { success: true, pairingCode: baileysState.pairingCode };
     }
