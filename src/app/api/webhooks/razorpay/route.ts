@@ -6,6 +6,7 @@ import { getLiveOrders, updateLiveOrderStatus, addLiveOrder } from '@/lib/orders
 import { decrementProductStock } from '@/lib/inventory/store';
 import { sendEmail, ADMIN_NOTIFICATION_EMAIL } from '@/lib/email/resend';
 import { getPaymentFailedEmailHtml, getOrderConfirmationEmailHtml, getNewOrderAdminAlertEmailHtml } from '@/lib/email/templates';
+import { sendOrderPaidWhatsAppAlert } from '@/lib/whatsapp/baileys-service';
 import { getDelhiverySettings, createDelhiveryShipment } from '@/lib/shipping/delhivery';
 import { OrderRecord } from '@/types';
 
@@ -256,6 +257,19 @@ export async function POST(req: NextRequest) {
               },
               'ADMIN_ORDER_ALERT'
             ).catch((e) => console.warn('Webhook admin alert warning:', e));
+            // Dispatch Baileys WhatsApp alert to backend operations
+            sendOrderPaidWhatsAppAlert({
+              orderNumber: orderRecord.orderNumber,
+              customerName: orderRecord.customerName,
+              customerPhone: orderRecord.customerPhone || undefined,
+              totalPaise: orderRecord.totalAmount,
+              items: (orderRecord.items || []).map((i: any) => ({ name: i.productName || i.name || 'Pure Honey Jar', quantity: i.quantity || 1 })),
+              paymentId: razorpayPaymentId || orderRecord.payments?.[0]?.razorpayPaymentId || 'Verified',
+              destinationCity: (orderRecord as any).shippingAddress?.city || (orderRecord as any).shippingCity || (orderRecord as any).city || 'India',
+              destinationPin: (orderRecord as any).shippingAddress?.postalCode || (orderRecord as any).shippingPostalCode || (orderRecord as any).postalCode || '',
+              shippingMode: (orderRecord as any).shippingMode || 'Surface',
+              awbNumber: orderRecord.trackingNumber || orderRecord.delhiveryWaybill || undefined,
+            }).catch((e) => console.warn('[Webhook WhatsApp Alert Warning]', e));
           } catch (emailErr) {
             console.warn('[Webhook Email Dispatch Exception]', emailErr);
           }

@@ -21,6 +21,7 @@ import {
   Sparkles,
   TicketPercent,
   Star,
+  Smartphone,
 } from 'lucide-react';
 import { GlassBadge } from '@/components/ui/glass-badge';
 import { cn } from '@/lib/utils';
@@ -68,6 +69,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, isOpen, onClose }) => {
     { title: 'Product Reviews', href: '/admin/reviews', icon: Star },
     { title: 'Discount Coupons', href: '/admin/coupons', icon: TicketPercent },
     { title: 'Reports', href: '/admin/reports', icon: BarChart3 },
+    { title: 'WhatsApp Bot', href: '/admin/whatsapp', icon: Smartphone },
     { title: 'Audit Logs', href: '/admin/audit-logs', icon: ShieldAlert },
     { title: 'Settings', href: '/admin/settings', icon: Settings },
   ];
@@ -94,6 +96,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ role, isOpen, onClose }) => {
     { title: 'Fees & Shipping', href: '/manager/settings', icon: Settings },
     { title: 'Customer Support', href: '/manager/support', icon: MessageSquare },
     { title: 'Operations Reports', href: '/manager/reports', icon: BarChart3 },
+    { title: 'WhatsApp Bot', href: '/manager/whatsapp', icon: Smartphone },
   ];
 
   const navItems =

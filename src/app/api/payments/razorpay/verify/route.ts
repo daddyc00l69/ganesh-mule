@@ -7,6 +7,7 @@ import { getLiveOrders, getLiveOrderById, updateLiveOrderStatus, addLiveOrder } 
 import { decrementProductStock } from '@/lib/inventory/store';
 import { sendEmail, ADMIN_NOTIFICATION_EMAIL } from '@/lib/email/resend';
 import { getOrderConfirmationEmailHtml, getNewOrderAdminAlertEmailHtml } from '@/lib/email/templates';
+import { sendOrderPaidWhatsAppAlert } from '@/lib/whatsapp/baileys-service';
 import { getDelhiverySettings, createDelhiveryShipment } from '@/lib/shipping/delhivery';
 
 const VerifySchema = z.object({
@@ -64,7 +65,7 @@ export async function POST(req: NextRequest) {
               errorDescription: 'Invalid cryptographic payment signature verification failed',
             },
           });
-        } catch {}
+        } catch { }
       }
 
       return NextResponse.json(
@@ -77,61 +78,61 @@ export async function POST(req: NextRequest) {
     if (dbOnline) {
       try {
         await prisma.$transaction(async (tx) => {
-        // Update payment
-        const payment = await tx.payment.findFirst({
-          where: { razorpayOrderId },
-        });
-
-        if (payment) {
-          await tx.payment.update({
-            where: { id: payment.id },
-            data: {
-              razorpayPaymentId,
-              status: 'PAID',
-              updatedAt: new Date(),
-            },
+          // Update payment
+          const payment = await tx.payment.findFirst({
+            where: { razorpayOrderId },
           });
 
-          // Advance order to PROCESSING
-          const order = await tx.order.update({
-            where: { id: payment.orderId },
-            data: {
-              paymentStatus: 'PAID',
-              orderStatus: 'PROCESSING',
-            },
-            include: { items: true },
-          });
-
-          // Update Platform Financial Transaction Ledger
-          await tx.platformTransaction.updateMany({
-            where: { orderId: payment.orderId },
-            data: {
-              paymentStatus: 'PAID',
-              paymentRef: razorpayPaymentId,
-              settlementStatus: 'SETTLED',
-              updatedAt: new Date(),
-            },
-          });
-
-          // Log inventory reservation movements
-          for (const item of order.items) {
-            await tx.inventoryMovement.create({
+          if (payment) {
+            await tx.payment.update({
+              where: { id: payment.id },
               data: {
-                productId: item.productId,
-                delta: -item.quantity,
-                quantityAfter: 0, // Recorded snapshot
-                reason: 'ORDER_RESERVATION',
-                referenceId: order.orderNumber,
-                notes: `Razorpay verified payment: ${razorpayPaymentId}`,
+                razorpayPaymentId,
+                status: 'PAID',
+                updatedAt: new Date(),
               },
             });
+
+            // Advance order to PROCESSING
+            const order = await tx.order.update({
+              where: { id: payment.orderId },
+              data: {
+                paymentStatus: 'PAID',
+                orderStatus: 'PROCESSING',
+              },
+              include: { items: true },
+            });
+
+            // Update Platform Financial Transaction Ledger
+            await tx.platformTransaction.updateMany({
+              where: { orderId: payment.orderId },
+              data: {
+                paymentStatus: 'PAID',
+                paymentRef: razorpayPaymentId,
+                settlementStatus: 'SETTLED',
+                updatedAt: new Date(),
+              },
+            });
+
+            // Log inventory reservation movements
+            for (const item of order.items) {
+              await tx.inventoryMovement.create({
+                data: {
+                  productId: item.productId,
+                  delta: -item.quantity,
+                  quantityAfter: 0, // Recorded snapshot
+                  reason: 'ORDER_RESERVATION',
+                  referenceId: order.orderNumber,
+                  notes: `Razorpay verified payment: ${razorpayPaymentId}`,
+                },
+              });
+            }
           }
-        }
-      });
-    } catch {
-      // Database offline fallback
+        });
+      } catch {
+        // Database offline fallback
+      }
     }
-  }
 
     // Always update in-memory live order registry as well
     const liveOrders = getLiveOrders();
@@ -270,7 +271,7 @@ export async function POST(req: NextRequest) {
                   paymentStatus: 'PAID',
                 },
               });
-            } catch {}
+            } catch { }
           }
         } catch (shipErr) {
           console.error('[Delhivery Auto-Ship Critical Exception]', shipErr);
@@ -298,6 +299,19 @@ export async function POST(req: NextRequest) {
           },
           'ADMIN_ORDER_ALERT'
         ).catch((e) => console.warn('Admin email warning:', e));
+        // Dispatch Baileys WhatsApp alert to backend operations
+        sendOrderPaidWhatsAppAlert({
+          orderNumber: mockOrder.orderNumber,
+          customerName: mockOrder.customerName,
+          customerPhone: mockOrder.customerPhone || undefined,
+          totalPaise: mockOrder.totalAmount,
+          items: (mockOrder.items || []).map((i: any) => ({ name: i.productName || i.name || 'Pure Honey Jar', quantity: i.quantity || 1 })),
+          paymentId: razorpayPaymentId,
+          destinationCity: (mockOrder as any).shippingAddress?.city || (mockOrder as any).shippingCity || (mockOrder as any).city || 'India',
+          destinationPin: (mockOrder as any).shippingAddress?.postalCode || (mockOrder as any).shippingPostalCode || (mockOrder as any).postalCode || '',
+          shippingMode: (mockOrder as any).shippingMode || 'Surface',
+          awbNumber: mockOrder.trackingNumber || mockOrder.delhiveryWaybill || undefined,
+        }).catch((e) => console.warn('[WhatsApp Alert Warning]', e));
       } catch (emailErr) {
         console.warn('[Payment Email Dispatch Exception]', emailErr);
       }

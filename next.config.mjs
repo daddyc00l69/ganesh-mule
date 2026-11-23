@@ -26,6 +26,7 @@ const nextConfig = {
     ];
   },
   experimental: {},
+  serverExternalPackages: ['@whiskeysockets/baileys', 'pino', 'qrcode'],
 };
 
 export default nextConfig;

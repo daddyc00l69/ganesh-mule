@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLiveOrderById } from '@/lib/orders/store';
 import { createDelhiveryShipment } from '@/lib/shipping/delhivery';
+import { sendDelhiveryDispatchWhatsAppAlert } from '@/lib/whatsapp/baileys-service';
 import { getCurrentUser } from '@/lib/auth/server';
 import { MOCK_AUDIT_LOGS } from '@/lib/mock-data';
 import { prisma, isDatabaseOnline } from '@/lib/db';
@@ -42,6 +43,16 @@ export async function POST(req: NextRequest) {
     const effectiveMode: 'Express' | 'Surface' =
       mode || (order as any).shippingMode || (order.carrier?.toLowerCase().includes('air') ? 'Express' : 'Surface');
     const result = await createDelhiveryShipment(order, { mode: effectiveMode, forceRegenerate });
+
+    // Dispatch Baileys WhatsApp dispatch alert to backend operations
+    sendDelhiveryDispatchWhatsAppAlert({
+      orderNumber: order.orderNumber,
+      awbNumber: result.waybill,
+      carrier: result.carrier,
+      originPin: '411004',
+      destinationPin: (order as any).shippingAddress?.postalCode || (order as any).shippingPostalCode || (order as any).postalCode || '',
+      destinationCity: (order as any).shippingAddress?.city || (order as any).shippingCity || (order as any).city || 'India',
+    }).catch((e) => console.warn('[Delhivery WhatsApp Dispatch Alert Warning]', e));
 
     // Update PostgreSQL database if online so changes persist across all serverless instances
     try {

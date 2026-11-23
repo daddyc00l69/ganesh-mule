@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { timingSafeEqual } from 'crypto';
 import { runWarehouseReconcileBatch } from '@/lib/warehouse/schedule';
 import { getCurrentUser } from '@/lib/auth/server';
+import { sendReconcileWhatsAppAlert } from '@/lib/whatsapp/baileys-service';
 
 function hasValidCronSecret(req: NextRequest): boolean {
   const configuredSecret = process.env.CRON_SECRET?.trim();
@@ -37,6 +38,13 @@ export async function POST(req: NextRequest) {
     } catch {}
 
     const result = await runWarehouseReconcileBatch(actor);
+
+    // Dispatch Baileys WhatsApp 12:30 AM summary to backend operations
+    sendReconcileWhatsAppAlert({
+      reconciledCount: (result as any).reconciledOrdersCount || (result as any).summary?.reconciledOrders || 0,
+      totalRevenuePaise: (result as any).totalRevenueReconciledPaise || (result as any).summary?.totalRevenuePaise || 0,
+      date: new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
+    }).catch((e) => console.warn('[Warehouse WhatsApp Reconcile Alert Warning]', e));
 
     return NextResponse.json({
       success: true,
