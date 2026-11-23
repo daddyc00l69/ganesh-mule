@@ -360,6 +360,26 @@ export async function requestPairingCode(phoneNumber: string): Promise<{ success
   };
 }
 
+/**
+ * Discovers and lists all WhatsApp groups the connected account belongs to
+ */
+export async function fetchBaileysGroups(): Promise<Array<{ jid: string; name: string; participantsCount: number }>> {
+  if (!baileysState.socket || baileysState.state !== 'CONNECTED') {
+    return [];
+  }
+  try {
+    const groups = await baileysState.socket.groupFetchAllParticipating();
+    return Object.values(groups).map((g: any) => ({
+      jid: g.id,
+      name: g.subject || 'Staff Operations Group',
+      participantsCount: (g.participants || []).length,
+    }));
+  } catch (err) {
+    console.warn('[Baileys] Error fetching participating groups:', err);
+    return [];
+  }
+}
+
 export interface BackendAlertPayload {
   alertType: 'ORDER_PAID' | 'DELHIVERY_DISPATCH' | 'LOW_STOCK' | 'WAREHOUSE_RECONCILE' | 'WALLET_LOW' | 'TEST';
   title: string;
@@ -415,23 +435,28 @@ export async function sendBackendWhatsAppAlert(payload: BackendAlertPayload): Pr
     .map((r) => normalizePhoneNumber(r))
     .filter((r) => r.length >= 10);
 
-  if (validRecipients.length === 0) {
+  const staffGroups = settings.staffGroups || [];
+
+  if (validRecipients.length === 0 && staffGroups.length === 0) {
     appendWhatsAppLog({
       recipient: 'NONE',
       alertType: payload.alertType,
       status: 'FAILED',
       preview: payload.message.slice(0, 100),
-      errorMessage: 'No configured admin phone numbers found',
+      errorMessage: 'No configured admin phone numbers or staff groups found',
     });
-    return { success: false, sentCount: 0, totalRecipients: 0, recipients: [], skippedReason: 'No admin numbers configured' };
+    return { success: false, sentCount: 0, totalRecipients: 0, recipients: [], skippedReason: 'No admin numbers or groups configured' };
   }
 
   // Check if live socket is connected
   const isLive = baileysState.socket && baileysState.state === 'CONNECTED';
   let sentCount = 0;
+  const loggedRecipients: string[] = [];
 
+  // 1. Dispatch to individual staff phone numbers
   for (const phone of validRecipients) {
     const jid = `${phone}@s.whatsapp.net`;
+    loggedRecipients.push(phone);
 
     if (isLive) {
       try {
@@ -469,11 +494,52 @@ export async function sendBackendWhatsAppAlert(payload: BackendAlertPayload): Pr
     }
   }
 
+  // 2. Dispatch to Staff WhatsApp Groups
+  for (const group of staffGroups) {
+    const groupJid = group.jid.endsWith('@g.us') ? group.jid : `${group.jid}@g.us`;
+    const label = `[Group] ${group.name || group.jid}`;
+    loggedRecipients.push(label);
+
+    if (isLive) {
+      try {
+        await baileysState.socket.sendMessage(groupJid, { text: payload.message });
+        sentCount++;
+        baileysState.totalSent++;
+        baileysState.lastSentAt = new Date().toISOString();
+
+        appendWhatsAppLog({
+          recipient: label,
+          alertType: payload.alertType,
+          status: 'SENT',
+          preview: payload.message.slice(0, 120),
+        });
+      } catch (groupErr: any) {
+        console.error(`[Baileys WhatsApp] Failed to send to group ${groupJid}:`, groupErr);
+        baileysState.totalFailed++;
+        appendWhatsAppLog({
+          recipient: label,
+          alertType: payload.alertType,
+          status: 'FAILED',
+          preview: payload.message.slice(0, 120),
+          errorMessage: groupErr.message,
+        });
+      }
+    } else {
+      appendWhatsAppLog({
+        recipient: label,
+        alertType: payload.alertType,
+        status: 'SKIPPED_DISCONNECTED',
+        preview: payload.message.slice(0, 120),
+        errorMessage: 'WhatsApp Web socket not currently connected',
+      });
+    }
+  }
+
   return {
     success: isLive ? sentCount > 0 : false,
     sentCount,
-    totalRecipients: validRecipients.length,
-    recipients: validRecipients,
+    totalRecipients: loggedRecipients.length,
+    recipients: loggedRecipients,
     skippedReason: !isLive ? 'Socket not connected. Please scan QR in /admin/whatsapp' : undefined,
   };
 }

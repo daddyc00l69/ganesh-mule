@@ -24,6 +24,7 @@ import {
   Check,
   Sparkles,
   ExternalLink,
+  Users,
 } from 'lucide-react';
 import { GlassCard } from '@/components/ui/glass-card';
 import { GlassButton } from '@/components/ui/glass-button';
@@ -52,6 +53,13 @@ export default function WhatsAppManagementPage() {
   const [newPhoneInput, setNewPhoneInput] = useState('');
   const [savingSettings, setSavingSettings] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Staff Groups state
+  const [newGroupJid, setNewGroupJid] = useState('');
+  const [newGroupName, setNewGroupName] = useState('');
+  const [discoveredGroups, setDiscoveredGroups] = useState<{ jid: string; name: string }[]>([]);
+  const [discoveringGroups, setDiscoveringGroups] = useState(false);
+  const [groupActionLoading, setGroupActionLoading] = useState(false);
 
   // Auto-poll status when waiting for QR or connecting
   const pollTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -218,6 +226,65 @@ export default function WhatsAppManagementPage() {
   const handleRemovePhoneNumber = (phone: string) => {
     const current = status?.settings.adminPhoneNumbers || [];
     handleSaveSettings({ adminPhoneNumbers: current.filter((p) => p !== phone) });
+  };
+
+  const handleDiscoverGroups = async () => {
+    setDiscoveringGroups(true);
+    try {
+      const res = await fetch('/api/admin/whatsapp/groups');
+      const data = await res.json();
+      if (data.success && data.groups) {
+        setDiscoveredGroups(data.groups);
+      }
+    } catch (e) {
+      console.error('Failed to discover groups', e);
+    } finally {
+      setDiscoveringGroups(false);
+    }
+  };
+
+  const handleAddGroup = async (jidToAdd?: string, nameToAdd?: string) => {
+    const targetJid = jidToAdd || newGroupJid;
+    const targetName = nameToAdd || newGroupName;
+    if (!targetJid.trim()) return;
+
+    setGroupActionLoading(true);
+    try {
+      const res = await fetch('/api/admin/whatsapp/groups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jid: targetJid, name: targetName }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setStatus((prev) => (prev ? { ...prev, settings: data.settings } : prev));
+        setNewGroupJid('');
+        setNewGroupName('');
+      } else {
+        alert(data.error || 'Failed to add group');
+      }
+    } catch (e: any) {
+      alert(e.message || 'Error adding group');
+    } finally {
+      setGroupActionLoading(false);
+    }
+  };
+
+  const handleRemoveGroup = async (jidToRemove: string) => {
+    setGroupActionLoading(true);
+    try {
+      const res = await fetch(`/api/admin/whatsapp/groups?jid=${encodeURIComponent(jidToRemove)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (data.success) {
+        setStatus((prev) => (prev ? { ...prev, settings: data.settings } : prev));
+      }
+    } catch (e: any) {
+      alert(e.message || 'Error removing group');
+    } finally {
+      setGroupActionLoading(false);
+    }
   };
 
   const handleSendTestMessage = async () => {
@@ -773,6 +840,140 @@ export default function WhatsAppManagementPage() {
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add Number</span>
+              </button>
+            </form>
+          </GlassCard>
+
+          {/* Staff Operations WhatsApp Groups */}
+          <GlassCard className="p-6 space-y-4 bg-white border border-[#d2d2d7]/70 rounded-3xl shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-100 pb-3">
+              <div>
+                <h2 className="text-sm font-bold text-[#1d1d1f] flex items-center gap-2">
+                  <Users className="w-4 h-4 text-emerald-600" />
+                  <span>Staff WhatsApp Groups (Team Broadcast)</span>
+                </h2>
+                <p className="text-xs text-[#86868b] mt-0.5">
+                  Order alerts, Delhivery tracking links, and warehouse pings are automatically posted into these group chats.
+                </p>
+              </div>
+              {isConnected && (
+                <button
+                  type="button"
+                  onClick={handleDiscoverGroups}
+                  disabled={discoveringGroups}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold transition-colors cursor-pointer shrink-0"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${discoveringGroups ? 'animate-spin text-emerald-600' : ''}`} />
+                  <span>{discoveringGroups ? 'Scanning...' : 'Discover My Groups'}</span>
+                </button>
+              )}
+            </div>
+
+            {/* Configured Groups */}
+            <div className="space-y-2 pt-1">
+              {!status?.settings.staffGroups || status.settings.staffGroups.length === 0 ? (
+                <div className="p-3.5 rounded-2xl bg-stone-50 border border-stone-200/60 text-center">
+                  <p className="text-xs text-stone-500 font-medium">No staff groups configured yet.</p>
+                  <p className="text-[11px] text-stone-400 mt-0.5">
+                    Add a group ID (ending with @g.us) below or click &quot;Discover My Groups&quot; when bot is connected.
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {status.settings.staffGroups.map((grp) => (
+                    <div
+                      key={grp.jid}
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-emerald-50 text-emerald-950 font-medium text-xs border border-emerald-200 shadow-xs"
+                    >
+                      <Users className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-stone-900">{grp.name}</span>
+                        <span className="font-mono text-[10px] text-stone-500">{grp.jid}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveGroup(grp.jid)}
+                        disabled={groupActionLoading}
+                        className="text-stone-400 hover:text-rose-600 transition-colors cursor-pointer ml-1.5 p-1"
+                        title="Remove group"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Discovered Groups Picker (if scanned) */}
+            {discoveredGroups.length > 0 && (
+              <div className="p-3.5 rounded-2xl bg-amber-50/60 border border-amber-200/80 space-y-2">
+                <p className="text-xs font-semibold text-amber-900 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Found {discoveredGroups.length} Active WhatsApp Groups on this account:</span>
+                </p>
+                <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                  {discoveredGroups.map((dg) => {
+                    const isAlreadyAdded = status?.settings.staffGroups?.some((g) => g.jid === dg.jid);
+                    return (
+                      <div
+                        key={dg.jid}
+                        className="flex items-center justify-between p-2 rounded-xl bg-white border border-amber-200/60 text-xs"
+                      >
+                        <div className="truncate mr-2">
+                          <p className="font-semibold text-stone-800 truncate">{dg.name}</p>
+                          <p className="font-mono text-[10px] text-stone-400 truncate">{dg.jid}</p>
+                        </div>
+                        {isAlreadyAdded ? (
+                          <span className="text-[11px] font-semibold text-emerald-600 flex items-center gap-1 shrink-0">
+                            <Check className="w-3 h-3" /> Added
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleAddGroup(dg.jid, dg.name)}
+                            disabled={groupActionLoading}
+                            className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white text-[11px] font-semibold hover:bg-emerald-700 transition-colors shrink-0 flex items-center gap-1 cursor-pointer"
+                          >
+                            <Plus className="w-3 h-3" /> Add
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Manual Add Group Form */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleAddGroup();
+              }}
+              className="flex flex-col sm:flex-row gap-2 pt-2"
+            >
+              <input
+                type="text"
+                placeholder="Group Name (e.g. Warehouse Staff)"
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+                className="w-full sm:w-1/3 px-3 py-2 rounded-xl border border-stone-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#0071e3] bg-stone-50/50"
+              />
+              <input
+                type="text"
+                placeholder="Group JID (e.g. 12036302838381@g.us)"
+                value={newGroupJid}
+                onChange={(e) => setNewGroupJid(e.target.value)}
+                className="flex-1 px-3 py-2 rounded-xl border border-stone-200 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#0071e3] bg-stone-50/50"
+              />
+              <button
+                type="submit"
+                disabled={groupActionLoading || !newGroupJid.trim()}
+                className="px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 disabled:opacity-50 flex items-center justify-center gap-1 cursor-pointer shadow-xs transition-colors shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Group</span>
               </button>
             </form>
           </GlassCard>

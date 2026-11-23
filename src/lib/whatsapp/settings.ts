@@ -21,6 +21,7 @@ const getLogsFile = () => path.join(getStorageDir(), 'whatsapp-logs.json');
 export const DEFAULT_WHATSAPP_SETTINGS: WhatsAppAlertSettings = {
   enabled: true,
   adminPhoneNumbers: ['919876543210'], // Default operations desk WhatsApp
+  staffGroups: [], // WhatsApp groups for team alerts e.g. [{ jid: '120363...@g.us', name: 'Staff Operations Group' }]
   notifyNewOrders: true,
   notifyDispatches: true,
   notifyLowStock: true,
