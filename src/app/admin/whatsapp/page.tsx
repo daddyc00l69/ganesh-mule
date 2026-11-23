@@ -60,8 +60,18 @@ export default function WhatsAppManagementPage() {
     try {
       const res = await fetch('/api/admin/whatsapp/status');
       const data = await res.json();
-      if (data.success) {
-        setStatus(data.status);
+      if (data.success && data.status) {
+        setStatus((prev) => {
+          // If server returned DISCONNECTED with no QR, but client already has a valid QR code, preserve it
+          if (!data.status.qrCodeDataUrl && prev?.qrCodeDataUrl && prev?.state === 'SCAN_QR_CODE' && data.status.state !== 'CONNECTED') {
+            return {
+              ...data.status,
+              qrCodeDataUrl: prev.qrCodeDataUrl,
+              state: 'SCAN_QR_CODE',
+            };
+          }
+          return data.status;
+        });
         if (data.logs) setLogs(data.logs);
       }
     } catch (err) {

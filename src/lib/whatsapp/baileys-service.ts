@@ -61,6 +61,36 @@ function ensureAuthDir(): string {
   return dir;
 }
 
+function getLiveQrFilePath(): string {
+  return path.join(getDataDir(), 'whatsapp-live-qr.json');
+}
+
+function getSavedQrData(): { qrCodeDataUrl?: string; pairingCode?: string } {
+  try {
+    const qrFile = getLiveQrFilePath();
+    if (fs.existsSync(qrFile)) {
+      const raw = fs.readFileSync(qrFile, 'utf-8');
+      const data = JSON.parse(raw);
+      // Valid for 60 seconds
+      if (data.timestamp && Date.now() - data.timestamp < 60_000) {
+        return { qrCodeDataUrl: data.qrCodeDataUrl, pairingCode: data.pairingCode };
+      }
+    }
+  } catch {}
+  return {};
+}
+
+function saveLiveQrData(qrCodeDataUrl?: string, pairingCode?: string) {
+  try {
+    const qrFile = getLiveQrFilePath();
+    if (qrCodeDataUrl || pairingCode) {
+      fs.writeFileSync(qrFile, JSON.stringify({ qrCodeDataUrl, pairingCode, timestamp: Date.now() }), 'utf-8');
+    } else if (fs.existsSync(qrFile)) {
+      fs.unlinkSync(qrFile);
+    }
+  } catch {}
+}
+
 /**
  * Normalizes phone number into standard international format without symbols
  * e.g., "+91 98765-43210" -> "919876543210"
@@ -78,12 +108,19 @@ export function normalizePhoneNumber(raw: string): string {
  * Returns the current status of the Baileys WhatsApp backend service
  */
 export function getBaileysStatus(): WhatsAppServiceStatus {
+  const saved = getSavedQrData();
+  const effectiveQr = baileysState.qrCodeDataUrl || saved.qrCodeDataUrl;
+  const effectivePairing = baileysState.pairingCode || saved.pairingCode;
+  const effectiveState = baileysState.state === 'CONNECTED'
+    ? 'CONNECTED'
+    : (effectiveQr ? 'SCAN_QR_CODE' : baileysState.state);
+
   return {
-    state: baileysState.state,
+    state: effectiveState,
     userPhone: baileysState.userPhone,
     userName: baileysState.userName,
-    qrCodeDataUrl: baileysState.qrCodeDataUrl,
-    pairingCode: baileysState.pairingCode,
+    qrCodeDataUrl: effectiveQr,
+    pairingCode: effectivePairing,
     lastConnectedAt: baileysState.lastConnectedAt,
     lastError: baileysState.lastError,
     settings: getWhatsAppSettings(),
@@ -168,6 +205,7 @@ export async function initializeBaileys(options: { phoneNumberForPairing?: strin
           });
           baileysState.qrCodeDataUrl = qrDataUrl;
           baileysState.state = 'SCAN_QR_CODE';
+          saveLiveQrData(qrDataUrl, undefined);
         } catch (qrErr) {
           console.error('[Baileys] Error rendering QR code data URL:', qrErr);
         }
@@ -179,6 +217,7 @@ export async function initializeBaileys(options: { phoneNumberForPairing?: strin
         baileysState.pairingCode = undefined;
         baileysState.lastConnectedAt = new Date().toISOString();
         baileysState.reconnectAttempts = 0;
+        saveLiveQrData(undefined, undefined);
 
         const user = sock.user;
         if (user) {
@@ -281,6 +320,7 @@ export async function disconnectBaileys(logout = false): Promise<WhatsAppService
   baileysState.pairingCode = undefined;
   baileysState.userPhone = undefined;
   baileysState.userName = undefined;
+  saveLiveQrData(undefined, undefined);
 
   if (logout) {
     try {
